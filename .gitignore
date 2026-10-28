@@ -1,0 +1,37 @@
+# Compiled class files
+*.class
+
+# Build output / packaged archives
+*.jar
+/out/
+/bin/
+/build/
+/target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs / temp
+*.log
+*.tmp
+
+# Test build output
+/out-test/
+
+# AI-generated documents and assistant settings
+/docs/
+/CLAUDE.md
+.claude/
+
+# PDF files (assignment spec, lecture slides, exported documents)
+*.pdf
