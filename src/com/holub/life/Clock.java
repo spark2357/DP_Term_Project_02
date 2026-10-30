@@ -26,7 +26,7 @@ import com.holub.tools.Publisher;
  * @include /etc/license.txt
  */
 
-public class Clock
+public class Clock implements TickSource
 {	private Timer			clock		= new Timer();
 	private TimerTask		tick		= null;
 
