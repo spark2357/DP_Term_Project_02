@@ -9,34 +9,24 @@ import java.awt.event.*;
 import com.holub.io.Files;
 import com.holub.ui.MenuSite;
 
-import com.holub.life.Cell;
-import com.holub.life.Storable;
+import com.holub.life.Board;
 import com.holub.life.Clock;
-import com.holub.life.Neighborhood;
-import com.holub.life.Resident;
 
 /**
- * The Universe is a mediator that sits between the Swing
- * event model and the Life classes. It is also a singleton,
- * accessed via Universe.instance(). It handles all
- * Swing events and translates them into requests to the
- * outermost Neighborhood. It also creates the Composite
- * Neighborhood.
+ * The Universe is the Swing view of the game. It is also a
+ * singleton, accessed via Universe.instance(). It draws the
+ * Board, handles all Swing events (mouse clicks, Grid menu,
+ * file dialogs), and translates them into requests to the
+ * Board. The game logic itself (building the Composite
+ * Neighborhood, advancing a generation, loading and storing)
+ * lives in the Board.
  *
  * @include /etc/license.txt
  */
 
 public class Universe extends JPanel
-{	private 		final Cell  	outermostCell;
+{	private 		final Board  	board;
 	private static	final Universe 	theInstance = new Universe();
-
-	/** The default height and width of a Neighborhood in cells.
-	 *  If it's too big, you'll run too slowly because
-	 *  you have to update the entire block as a unit, so there's more
-	 *  to do. If it's too small, you have too many blocks to check.
-	 *  I've found that 8 is a good compromise.
-	 */
-	private static final int  DEFAULT_GRID_SIZE = 8;
 
 	/** The size of the smallest "atomic" cell---a Resident object.
 	 *  This size is extrinsic to a Resident (It's passed into the
@@ -48,23 +38,12 @@ public class Universe extends JPanel
 	// only by an outer-class method [Neighborhood.createUniverse()].
 
 	private Universe()
-	{	// Create the nested Cells that comprise the "universe." A bug
-		// in the current implementation causes the program to fail
-		// miserably if the overall size of the grid is too big to fit
-		// on the screen.
-
-		outermostCell = new Neighborhood
-						(	DEFAULT_GRID_SIZE,
-							new Neighborhood
-							(	DEFAULT_GRID_SIZE,
-								new Resident()
-							)
-						);
+	{	board = new Board();
 
 		final Dimension PREFERRED_SIZE =
 						new Dimension
-						(  outermostCell.widthInCells() * DEFAULT_CELL_SIZE,
-						   outermostCell.widthInCells() * DEFAULT_CELL_SIZE
+						(  board.widthInCells() * DEFAULT_CELL_SIZE,
+						   board.widthInCells() * DEFAULT_CELL_SIZE
 						);
 
 		addComponentListener
@@ -77,8 +56,8 @@ public class Universe extends JPanel
 					// total size must be an even multiple of 63.
 
 					Rectangle bounds = getBounds();
-					bounds.height /= outermostCell.widthInCells();
-					bounds.height *= outermostCell.widthInCells();
+					bounds.height /= board.widthInCells();
+					bounds.height *= board.widthInCells();
 					bounds.width  =  bounds.height;
 					setBounds( bounds );
 				}
@@ -94,10 +73,13 @@ public class Universe extends JPanel
 		addMouseListener					//{=Universe.mouse}
 		(	new MouseAdapter()
 			{	public void mousePressed(MouseEvent e)
-				{	Rectangle bounds = getBounds();
-					bounds.x = 0;
-					bounds.y = 0;
-					outermostCell.userClicked(e.getPoint(),bounds);
+				{	// Translate the pixel position into a cell position.
+					// Knowing the size of the panel is the view's job.
+
+					int pixelsPerCell = getBounds().width / board.widthInCells();
+					int row		= e.getY() / pixelsPerCell;
+					int column	= e.getX() / pixelsPerCell;
+					board.toggle( row, column );
 					repaint();
 				}
 			}
@@ -106,7 +88,7 @@ public class Universe extends JPanel
 		MenuSite.addLine( this, "Grid", "Clear",
 			new ActionListener()
 			{	public void actionPerformed(ActionEvent e)
-				{	outermostCell.clear();
+				{	board.clear();
 					repaint();
 				}
 			}
@@ -142,14 +124,8 @@ public class Universe extends JPanel
 		Clock.instance().addClockListener //{=Universe.clock.subscribe}
 		(	new Clock.Listener()
 			{	public void tick()
-				{	if( outermostCell.figureNextState
-						   ( Cell.DUMMY,Cell.DUMMY,Cell.DUMMY,Cell.DUMMY,
-							 Cell.DUMMY,Cell.DUMMY,Cell.DUMMY,Cell.DUMMY
-						   )
-					  )
-					{	if( outermostCell.transition() )
-							refreshNow();
-					}
+				{	if( board.step() )
+						refreshNow();
 				}
 			}
 		);
@@ -170,11 +146,7 @@ public class Universe extends JPanel
 			   Files.userSelected(".",".life","Life File","Load"));
 
 			Clock.instance().stop();		// stop the game and
-			outermostCell.clear();			// clear the board.
-
-			Storable memento = outermostCell.createMemento();
-			memento.load( in );
-			outermostCell.transfer( memento, new Point(0,0), Cell.LOAD );
+			board.load( in );				// replace the board.
 
 			in.close();
 		}
@@ -192,10 +164,7 @@ public class Universe extends JPanel
 				  Files.userSelected(".",".life","Life File","Write"));
 
 			Clock.instance().stop();		// stop the game
-
-			Storable memento = outermostCell.createMemento();
-			outermostCell.transfer( memento, new Point(0,0), Cell.STORE );
-			memento.flush(out);
+			board.store( out );
 
 			out.close();
 		}
@@ -205,10 +174,9 @@ public class Universe extends JPanel
 		}
 	}
 
-	/** Override paint to ask the outermost Neighborhood
-	 *  (and any subcells) to draw themselves recursively.
+	/** Override paint to ask the Board to draw itself.
 	 *  All knowledge of screen size is also encapsulated.
-	 *  (The size is passed into the outermost <code>Cell</code>.)
+	 *  (The size is passed into the Board.)
 	 */
 
 	public void paint(Graphics g)
@@ -220,7 +188,7 @@ public class Universe extends JPanel
 		// corner of the screen. Pretend that it's at (0,0)
 		panelBounds.x = 0;
 		panelBounds.y = 0;
-		outermostCell.redraw(g, panelBounds, true);		//{=Universe.redraw1}
+		board.redraw(g, panelBounds, true);		//{=Universe.redraw1}
 	}
 
 	/** Force a screen refresh by queing a request on
@@ -244,7 +212,7 @@ public class Universe extends JPanel
 						Rectangle panelBounds = getBounds();
 						panelBounds.x = 0;
 						panelBounds.y = 0;
-						outermostCell.redraw(g, panelBounds, false); //{=Universe.redraw2}
+						board.redraw(g, panelBounds, false); //{=Universe.redraw2}
 					}
 					finally
 					{	g.dispose();
