@@ -11,21 +11,24 @@ import com.holub.ui.MenuSite;
 
 import com.holub.life.Board;
 import com.holub.life.Clock;
+import com.holub.life.LifeGame;
 
 /**
  * The Universe is the Swing view of the game. It is also a
  * singleton, accessed via Universe.instance(). It draws the
  * Board, handles all Swing events (mouse clicks, Grid menu,
  * file dialogs), and translates them into requests to the
- * Board. The game logic itself (building the Composite
+ * LifeGame facade. The game logic itself (building the Composite
  * Neighborhood, advancing a generation, loading and storing)
- * lives in the Board.
+ * lives in the Board, and the order in which the Board and the
+ * Clock must be used lives in LifeGame.
  *
  * @include /etc/license.txt
  */
 
 public class Universe extends JPanel
-{	private 		final Board  	board;
+{	private 		final Board  	board;	// used directly only for drawing
+	private 		final LifeGame	game;	// every request that changes the game
 	private static	final Universe 	theInstance = new Universe();
 
 	/** The size of the smallest "atomic" cell---a Resident object.
@@ -79,7 +82,7 @@ public class Universe extends JPanel
 					int pixelsPerCell = getBounds().width / board.widthInCells();
 					int row		= e.getY() / pixelsPerCell;
 					int column	= e.getX() / pixelsPerCell;
-					board.toggle( row, column );
+					game.toggle( row, column );
 					repaint();
 				}
 			}
@@ -88,7 +91,7 @@ public class Universe extends JPanel
 		MenuSite.addLine( this, "Grid", "Clear",
 			new ActionListener()
 			{	public void actionPerformed(ActionEvent e)
-				{	board.clear();
+				{	game.clear();
 					repaint();
 				}
 			}
@@ -121,10 +124,16 @@ public class Universe extends JPanel
 			}
 		);
 
+		// The Clock is created (and puts its Go menu on the menu bar) the
+		// first time Clock.instance() is called, so the game is created
+		// here, after the Grid menu is set up, to keep the menu order.
+
+		game = new LifeGame( board, Clock.instance() );
+
 		Clock.instance().addClockListener //{=Universe.clock.subscribe}
 		(	new Clock.Listener()
 			{	public void tick()
-				{	if( board.step() )
+				{	if( game.step() )
 						refreshNow();
 				}
 			}
@@ -145,8 +154,7 @@ public class Universe extends JPanel
 			FileInputStream in = new FileInputStream(
 			   Files.userSelected(".",".life","Life File","Load"));
 
-			Clock.instance().stop();		// stop the game and
-			board.load( in );				// replace the board.
+			game.load( in );				// stops the game, then loads
 
 			in.close();
 		}
@@ -163,8 +171,7 @@ public class Universe extends JPanel
 			FileOutputStream out = new FileOutputStream(
 				  Files.userSelected(".",".life","Life File","Write"));
 
-			Clock.instance().stop();		// stop the game
-			board.store( out );
+			game.store( out );				// stops the game, then stores
 
 			out.close();
 		}
