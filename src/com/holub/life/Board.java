@@ -2,6 +2,8 @@ package com.holub.life;
 
 import java.io.*;
 import java.awt.*;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * The Board is the model of the Game of Life. It creates the
@@ -75,6 +77,30 @@ public class Board
 	{	int width = widthInCells();
 		outermostCell.userClicked( new Point(column, row),
 								   new Rectangle(0, 0, width, width) );
+	}
+
+	/** Return the positions of all live cells on the board. Each
+	 *  position is a Point whose x is the column and whose y is the
+	 *  row (in cells, not pixels), the same coordinates used by
+	 *  {@link #toggle}.
+	 *
+	 *  The returned set is a new copy. Changing it does not change
+	 *  the board, and no internal Cell is exposed. The live cells are
+	 *  collected through the same memento that {@link #store} uses,
+	 *  so no cell changes state.
+	 */
+	public Set<Point> liveCells()
+	{	Cell.Memento memento = (Cell.Memento) outermostCell.createMemento();
+		Set<Point>	 live	 = new HashSet<Point>();
+		int			 width	 = widthInCells();
+
+		for( int row = 0; row < width; ++row )
+			for( int column = 0; column < width; ++column )
+			{	Point here = new Point( column, row );
+				if( memento.isAlive( here ) )
+					live.add( here );
+			}
+		return live;
 	}
 
 	/** Kill every cell on the board.

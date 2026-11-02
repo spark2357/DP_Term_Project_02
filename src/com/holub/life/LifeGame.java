@@ -1,6 +1,8 @@
 package com.holub.life;
 
 import java.io.*;
+import java.awt.Point;
+import java.util.Set;
 
 /**
  * LifeGame is a Facade over the game subsystem: the Board (the
@@ -51,6 +53,12 @@ public class LifeGame
 	 */
 	public void toggle( int row, int column )
 	{	board.toggle( row, column );
+	}
+
+	/** Return the positions of all live cells (x = column, y = row).
+	 */
+	public Set<Point> liveCells()
+	{	return board.liveCells();
 	}
 
 	/** Kill every cell on the board.
