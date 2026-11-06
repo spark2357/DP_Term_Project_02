@@ -10,7 +10,6 @@ import java.awt.Rectangle;
 import java.util.Set;
 import java.util.TreeSet;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.Test;
  *
  * [테스트 시나리오]
  *   1. 블록 안 blinker 하나만 움직이면 그 블록만 계산되어야 함. 원본은 2세대부터 64블록을 모두 계산 (결함)
- *   2. 원본은 무언가 움직이는 동안 매 tick 64블록을 모두 계산함 (원본 동작)
  *   원인: Resident.transition()이 바뀌지 않은 셀에 true를 반환함 (ResidentTest에서 확인).
  *         바깥 Neighborhood.transition()은 계산하지 않은 블록까지 모든 블록에 transition()을 부르므로,
  *         1세대 적용 때 64블록 모두 가장자리 표시가 켜지고 2세대부터 전부 계산됨
@@ -38,7 +36,6 @@ class BlockSkippingCountTest {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 512, 512);
 
 	@Test
-	@Tag("known-defect")
 	@DisplayName("figureNextState() (결함): 블록 안 blinker 하나만 움직이면 그 블록만 계산되어야 한다 (원본: 2세대부터 64블록을 모두 계산)")
 	void onlyTheBlockWithBlinkerIsComputed() {
 		// Given: 블록 (0,0) 안쪽(가장자리가 아닌 곳)에 blinker
@@ -56,25 +53,6 @@ class BlockSkippingCountTest {
 			// Then: 계산된 블록은 (0,0) 하나뿐이어야 함
 			assertEquals(Set.of("(0,0)"), computed, generation + "세대에 계산된 블록");
 		}
-	}
-
-	@Test
-	@DisplayName("figureNextState() (원본 동작): 무언가 움직이는 동안 원본은 매 tick 64블록을 모두 계산한다")
-	void originalComputesEveryBlockWhileAnythingMoves() {
-		// Given: 블록 (0,0) 안쪽에 blinker 하나
-		Set<String> computed = new TreeSet<>();
-		Neighborhood board = countingBoard(computed);
-		click(board, 3, 2);
-		click(board, 3, 3);
-		click(board, 3, 4);
-
-		// When: 1세대를 진행한 뒤, 2세대에 계산된 블록을 셈
-		tick(board);
-		computed.clear();
-		tick(board);
-
-		// Then: blinker 하나 때문에 64블록이 모두 계산됨
-		assertEquals(64, computed.size());
 	}
 
 	// ---- 헬퍼 메서드

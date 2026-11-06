@@ -77,8 +77,9 @@ public final class Resident implements Cell
 		return this;
 	}
 
+	// [수정] 2026-11-06: isStable()은 "안 바뀜"인데 그대로 반환해 블록 건너뛰기가 동작하지 않았음. 바뀌었을 때 true를 반환하도록 수정
 	public boolean transition()
-	{	boolean changed = isStable();
+	{	boolean changed = !isStable();
 		amAlive = willBeAlive;
 		return changed;
 	}
