@@ -198,10 +198,12 @@ public class Universe extends JPanel
 		board.redraw(g, panelBounds, true);		//{=Universe.redraw1}
 	}
 
-	/** Force a screen refresh by queing a request on
-	 *  the Swing event queue. This is an example of the
-	 *  Active Object pattern (not covered by the Gang of Four).
-	 *  This method is called on every clock tick. Note that
+	/** Force a screen refresh by queuing a request on
+	 *  the Swing event queue. This method is called on every
+	 *  clock tick, which already runs on the Swing event thread,
+	 *  so the request simply runs after the current tick has
+	 *  finished. (In the original code ticks came from another
+	 *  thread, and this queue was used as an Active Object.) Note that
 	 *  the redraw() method on a given <code>Cell</code>
 	 *  does nothing if the <code>Cell</code> doesn't
 	 *  have to be refreshed.

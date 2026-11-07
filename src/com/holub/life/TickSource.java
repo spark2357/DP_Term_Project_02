@@ -6,6 +6,10 @@ package com.holub.life;
  * the application. Tests can supply a fake implementation instead,
  * so that code which needs to stop or start the clock (such as
  * LifeGame) can be used without a real timer.
+ * <p>
+ * Ticks must be delivered on the Swing event thread (EDT). The Board
+ * is not thread-safe: drawing, mouse clicks and menu actions all use
+ * it on the EDT, so a tick from another thread would race with them.
  *
  * @include /etc/license.txt
  */

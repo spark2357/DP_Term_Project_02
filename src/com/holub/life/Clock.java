@@ -3,8 +3,7 @@ package com.holub.life;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import java.util.*;
-import java.util.Timer;		// overrides java.awt.timer
+import javax.swing.Timer;		// not java.util.Timer: ticks must run on the Swing event thread
 import com.holub.ui.MenuSite;
 import com.holub.tools.Publisher;
 
@@ -13,6 +12,12 @@ import com.holub.tools.Publisher;
  * updates. It creates its own menu (which sets the clock speed),
  * and sends notifications off to any observers every time the
  * clock "ticks."
+ * <p>
+ * Ticks are delivered by a <code>javax.swing.Timer</code>, so every
+ * listener runs on the Swing event thread (EDT), one event at a time,
+ * together with painting, mouse clicks and menu actions. If the EDT
+ * is busy, pending ticks are coalesced into one instead of being run
+ * back to back.
  *
  * <h2>Revisions</h2>
  * <p>
@@ -27,8 +32,15 @@ import com.holub.tools.Publisher;
  */
 
 public class Clock implements TickSource
-{	private Timer			clock		= new Timer();
-	private TimerTask		tick		= null;
+{
+	// [수정] 2026-11-07: java.util.Timer는 별도 스레드에서 tick을 실행해 그리기, 마우스 클릭(EDT)과 같은 셀을 동시에 건드렸음.
+	// javax.swing.Timer로 바꿔 tick도 EDT의 이벤트 큐에서 하나씩 실행되게 함 (그리기, 클릭, 메뉴와 한 줄로 처리)
+	private Timer clock = new Timer
+	(	0,
+		new ActionListener()
+		{	public void actionPerformed(ActionEvent e){ tick(); }
+		}
+	);
 
 	// The clock can't be an everything-is-static singleton because
 	// it creates a menu, and it can't do that until the menus
@@ -57,16 +69,12 @@ public class Clock implements TickSource
 	 */
 
 	public void startTicking( int millisecondsBetweenTicks )
-	{	if(tick != null)
-		{	tick.cancel();
-			tick=null;
-		}
+	{	clock.stop();
 
 		if( millisecondsBetweenTicks > 0 )
-		{	tick =	new TimerTask()
-					{	public void run(){ tick(); }
-					};
-			clock.scheduleAtFixedRate( tick, 0, millisecondsBetweenTicks);
+		{	clock.setDelay( millisecondsBetweenTicks );
+			clock.setInitialDelay( 0 );		// first tick right away, as before
+			clock.start();
 		}
 	}
 

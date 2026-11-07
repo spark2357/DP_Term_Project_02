@@ -7,9 +7,12 @@ import java.util.Set;
 /**
  * LifeGame is a Facade over the game subsystem: the Board (the
  * model) and the TickSource (the clock that drives it). Some
- * operations must use both parts in a fixed order. For example,
- * the clock must be stopped before the board is loaded or stored.
- * LifeGame captures that order in a single call, so callers (the
+ * operations must use both parts together. For example, loading or
+ * storing a pattern also stops the clock, so the game is halted
+ * afterwards. (Ticks run on the Swing event thread, so a tick can
+ * never overlap a load or store; stopping is a rule of the game,
+ * not a thread-safety measure.) LifeGame captures that rule in a
+ * single call, so callers (the
  * Universe, and later Commands) don't need to know it.
  *
  * LifeGame adds no game features of its own. New features go into
