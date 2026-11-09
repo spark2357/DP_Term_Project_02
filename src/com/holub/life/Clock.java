@@ -122,24 +122,32 @@ public class Clock implements TickSource
 
 	/** Add a listener that's notified every time the clock ticks:
 	 *  <PRE>
-	 *  Clock.instance().addClockListener
-	 *  (	new Clock.Listener()
+	 *  clock.addTickListener
+	 *  (	new TickSource.Listener()
 	 *  	{	public void tick()
 	 *  		{	System.out.println("tick!");
 	 *  		}
-   	 *		}
+	 *		}
 	 *  );
 	 *  </PRE>
 	 */
-	public void addClockListener( Listener observer )
+	public void addTickListener( TickSource.Listener observer )
 	{	publisher.subscribe(observer);
 	}
 
+	/** Same as {@link #addTickListener}. Kept for existing callers.
+	 */
+	public void addClockListener( Listener observer )
+	{	addTickListener( observer );
+	}
+
 	/** Implement this interface to be notified about clock ticks.
+	 *  It is the same as {@link TickSource.Listener}, and is kept
+	 *  for existing callers.
 	 *  @see Clock
 	 */
-	public interface Listener
-	{	void tick();
+	public interface Listener extends TickSource.Listener
+	{
 	}
 
 	/** Force the clock to "tick," even if it's not time for
@@ -151,7 +159,7 @@ public class Clock implements TickSource
 		(	new Publisher.Distributor()
 			{	public void deliverTo( Object subscriber )
 				{	if( !menuIsActive() )
-						((Listener)subscriber).tick();
+						((TickSource.Listener)subscriber).tick();
 				}
 			}
 		);

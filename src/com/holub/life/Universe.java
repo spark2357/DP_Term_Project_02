@@ -10,7 +10,6 @@ import com.holub.io.Files;
 import com.holub.ui.MenuSite;
 
 import com.holub.life.Board;
-import com.holub.life.Clock;
 import com.holub.life.LifeGame;
 
 /**
@@ -22,7 +21,9 @@ import com.holub.life.LifeGame;
  * LifeGame facade. The game logic itself (building the Composite
  * Neighborhood, advancing a generation, loading and storing)
  * lives in the Board, and the order in which the Board and the
- * Clock must be used lives in LifeGame.
+ * Clock must be used lives in LifeGame. The Universe does not
+ * listen to the clock: LifeGame advances the game on every tick and
+ * tells the Universe when the board changed, so it can redraw.
  *
  * @include /etc/license.txt
  */
@@ -129,11 +130,13 @@ public class Universe extends JPanel
 			}
 		);
 
-		Clock.instance().addClockListener //{=Universe.clock.subscribe}
-		(	new Clock.Listener()
-			{	public void tick()
-				{	if( game.step() )
-						refreshNow();
+		// [수정] 2026-11-09: Clock을 직접 구독해 game.step()을 부르던 것을, LifeGame의 알림을 받도록 변경.
+		// 세대 진행은 LifeGame이 맡고, 화면은 "보드가 바뀌었다"는 알림에 다시 그리기만 함
+
+		game.addGameListener
+		(	new LifeGame.Listener()
+			{	public void boardChanged()
+				{	refreshNow();
 				}
 			}
 		);
