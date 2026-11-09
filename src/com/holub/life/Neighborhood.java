@@ -473,6 +473,12 @@ public final class Neighborhood implements Cell
 		return m;
 	}
 
+	// [수정] 2026-11-10: 기존 .life 형식을 LifeFormatAdapter가 쓸 수 있도록 빈 Memento를 만드는 factory 추가.
+	// NeighborhoodState는 private으로 두고 Cell.Memento 인터페이스로만 내줌
+	static Cell.Memento createEmptyMemento()
+	{	return new NeighborhoodState();
+	}
+
 	/**
 	 * The NeighborhoodState stores the state of this neighborhood
 	 * and all its sub-neighborhoods. For the moment, I'm storing
