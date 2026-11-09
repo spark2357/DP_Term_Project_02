@@ -113,10 +113,9 @@ public class Board
 	 *  from <code>in</code>. The stream is not closed.
 	 */
 	public void load( InputStream in ) throws IOException
-	{	outermostCell.clear();
-
-		Storable memento = outermostCell.createMemento();
+	{	Storable memento = outermostCell.createMemento();
 		memento.load( in );
+		outermostCell.clear();
 		outermostCell.transfer( memento, new Point(0,0), Cell.LOAD );
 	}
 
@@ -125,7 +124,6 @@ public class Board
 	 */
 	public void store( OutputStream out ) throws IOException
 	{	Storable memento = outermostCell.createMemento();
-		outermostCell.transfer( memento, new Point(0,0), Cell.STORE );
 		memento.flush( out );
 	}
 

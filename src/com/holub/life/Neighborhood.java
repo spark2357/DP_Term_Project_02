@@ -496,7 +496,7 @@ public final class Neighborhood implements Cell
 			{	// This exception shouldn't be rethrown as
 				// a ClassNotFoundException because the
 				// outside world shouldn't know (or care) that we're
-				// using serialization to load the object. Nothring
+				// using serialization to load the object. Nothing
 				// wrong with treating it as an I/O error, however.
 
 				throw new IOException(
