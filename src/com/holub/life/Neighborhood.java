@@ -496,17 +496,26 @@ public final class Neighborhood implements Cell
 		public void load( InputStream in ) throws IOException
 		{	try
 			{	ObjectInputStream source = new ObjectInputStream( in );
-				liveCells = (Collection)( source.readObject() );
+				Collection read = (Collection)( source.readObject() );
+
+				// [수정] 2026-11-10: Point가 아닌 원소가 든 파일은 오류 없이 읽혀 보드가 빈 채로 Load되었음.
+				// 원소를 모두 확인하고 통과해야 liveCells를 바꿈
+				for( Object cell : read )
+					if( !(cell instanceof Point) )
+						throw new IOException( "Not a Life file: expected Points" );
+
+				liveCells = read;
 			}
-			catch(ClassNotFoundException e)
+			// [수정] 2026-11-10: Collection이 아닌 객체가 든 파일이면 캐스팅에서 ClassCastException이 나서
+			// Universe가 IOException만 잡는 탓에 오류 창 없이 실패했음. ClassCastException도 IOException으로 바꿔 던짐
+			catch( ClassNotFoundException | ClassCastException e )
 			{	// This exception shouldn't be rethrown as
 				// a ClassNotFoundException because the
 				// outside world shouldn't know (or care) that we're
 				// using serialization to load the object. Nothing
 				// wrong with treating it as an I/O error, however.
 
-				throw new IOException(
-							"Internal Error: Class not found on load");
+				throw new IOException( "Not a Life file", e );
 			}
 		}
 

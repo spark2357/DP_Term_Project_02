@@ -8,7 +8,6 @@ import java.awt.Point;
 import java.io.*;
 import java.util.ArrayList;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -20,14 +19,14 @@ import org.junit.jupiter.api.Test;
  *   - markAsAlive(Point)  : 좌표를 liveCells에 추가
  *   - isAlive(Point)      : liveCells.contains()로 조회
  *   - flush(OutputStream) : liveCells를 ObjectOutputStream으로 직렬화 (.life 파일 내용)
- *   - load(InputStream)   : 역직렬화한 객체를 검사 없이 (Collection)으로 캐스팅해 liveCells에 넣음
+ *   - load(InputStream)   : 역직렬화한 객체가 Point만 든 Collection인지 확인한 뒤 liveCells에 넣음. 아니면 IOException
  *   - toString()          : 디버깅용 문자열
  *
  * [테스트 시나리오]
  *   1. 정상 파일: 기록한 좌표가 flush → load 뒤에도 그대로 남음
  *   2. 직렬화 파일이 아닌 입력(텍스트): IOException
- *   3. Collection이 아닌 객체를 직렬화한 파일: IOException이어야 하지만 원본은 ClassCastException (결함)
- *   4. Point가 아닌 원소가 든 Collection: 오류 없이 읽히고 아무 셀도 살지 않음 (원본 동작: 내용 검증 없음)
+ *   3. Collection이 아닌 객체를 직렬화한 파일: IOException (원본은 ClassCastException)
+ *   4. Point가 아닌 원소가 든 Collection: IOException, 기존 내용 유지 (원본은 오류 없이 읽히고 아무 셀도 살지 않음)
  *
  * [커버리지]
  *   - NeighborhoodStateTest.java 테스트 대상: markAsAlive, isAlive, flush, load(정상 입력 1가지, 잘못된 입력 3가지)
@@ -71,33 +70,35 @@ class NeighborhoodStateTest {
 	}
 
 	@Test
-	@Tag("known-defect")
-	@DisplayName("load() (결함): 다른 타입의 직렬화 객체도 IOException으로 실패해야 한다 (원본: ClassCastException이 나서 Universe가 오류 창 없이 실패함)")
-	void otherSerializedObjectShouldThrowIOException() throws IOException {
+	@DisplayName("load(): 다른 타입의 직렬화 객체는 IOException으로 실패한다 (원본: ClassCastException이 나서 Universe가 오류 창 없이 실패함)")
+	void otherSerializedObjectThrowsIOException() throws IOException {
 		// Given: Collection이 아닌 객체(String)를 직렬화한 파일
 		byte[] wrongFile = serialize("not a collection");
 		Cell.Memento memento = emptyMemento();
 
-		// When, Then
-		// 원본은 검사 없이 (Collection)으로 캐스팅해서 ClassCastException이 남 (Neighborhood.java:491)
-		// Universe.doLoad()는 IOException만 잡으므로 오류 창 없이 실패함
+		// When, Then: Universe.doLoad()는 IOException만 잡으므로 IOException이어야 오류 창이 뜸
 		assertThrows(IOException.class,
 				() -> memento.load(new ByteArrayInputStream(wrongFile)));
 	}
 
 	@Test
-	@DisplayName("load(), isAlive() (원본 동작): Point가 아닌 원소가 든 파일도 오류 없이 읽히고, 아무 셀도 살지 않는다. load()에서 내용을 검증하지 않음")
-	void collectionOfNonPointsLoadsSilently() throws IOException {
-		// Given: Point 대신 String이 들어 있는 리스트
-		ArrayList<String> notPoints = new ArrayList<>();
-		notPoints.add("(0,0)");
-		byte[] wrongFile = serialize(notPoints);
+	@DisplayName("load(): Point가 아닌 원소가 든 파일은 IOException으로 실패하고, 기존 내용은 바뀌지 않는다 (원본: 오류 없이 읽혀 빈 보드가 됨)")
+	void collectionOfNonPointsThrowsIOException() throws IOException {
+		// Given: 셀 하나가 기록된 memento와, Point 하나와 String 하나가 섞인 리스트를 직렬화한 파일
 		Cell.Memento memento = emptyMemento();
+		memento.markAsAlive(new Point(5, 5));
 
-		// When: 예외 없이 읽힘
-		memento.load(new ByteArrayInputStream(wrongFile));
+		ArrayList<Object> mixed = new ArrayList<>();
+		mixed.add(new Point(0, 0));
+		mixed.add("(1,1)");
+		byte[] wrongFile = serialize(mixed);
 
-		// Then: 사용자는 파일이 잘못됐다는 것을 알 수 없음
+		// When, Then
+		assertThrows(IOException.class,
+				() -> memento.load(new ByteArrayInputStream(wrongFile)));
+
+		// Then: 검사에 실패하면 읽은 내용으로 바꾸지 않음
+		assertTrue(memento.isAlive(new Point(5, 5)));
 		assertFalse(memento.isAlive(new Point(0, 0)));
 	}
 
