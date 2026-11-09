@@ -9,7 +9,7 @@ import java.awt.event.*;
 import com.holub.io.Files;
 import com.holub.ui.MenuSite;
 
-import com.holub.life.Board;
+import com.holub.life.BoardView;
 import com.holub.life.LifeGame;
 
 /**
@@ -29,7 +29,9 @@ import com.holub.life.LifeGame;
  */
 
 public class Universe extends JPanel
-{	private 		final Board  	board;	// used directly only for drawing
+{	// [수정] 2026-11-09: Board 대신 읽기 전용 BoardView로 받음. 보드를 바꾸는 요청은
+	// LifeGame을 거칠 수밖에 없도록 컴파일 단계에서 강제함
+	private 		final BoardView	board;	// read only: used just for drawing
 	private 		final LifeGame	game;	// every request that changes the game
 
 	/** The size of the smallest "atomic" cell---a Resident object.
@@ -42,10 +44,11 @@ public class Universe extends JPanel
 	// 화면(View)이 모델을 직접 만들지 않고, 조립은 Life.main에서 함
 
 	/** Create the view of a game that is already assembled.
-	 *  @param board drawn directly by {@link #paint} (read only).
+	 *  @param board drawn directly by {@link #paint}. It is a
+	 *  			 read-only view, so the Universe cannot change it.
 	 *  @param game  receives every request that changes the game.
 	 */
-	public Universe( Board board, LifeGame game )
+	public Universe( BoardView board, LifeGame game )
 	{	this.board = board;
 		this.game  = game;
 
