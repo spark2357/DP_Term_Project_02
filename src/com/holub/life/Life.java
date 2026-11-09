@@ -11,11 +11,29 @@ import com.holub.ui.MenuSite;
  */
 
 public final class Life extends JFrame
-{	
-	private static JComponent universe;
+{
+	// [수정] 2026-11-09: 게임 조립(Board, LifeGame, Universe)을 Universe 싱글톤에서 이곳으로 옮김.
+	// 무엇이 어떤 순서로 만들어지는지 한곳에서 보이고, Universe는 받은 것만 씀.
+	// Swing 객체는 이벤트 스레드(EDT)에서 만들어야 하므로 invokeLater 안에서 조립함
 
 	public static void main( String[] arguments )
-	{	new Life();
+	{	SwingUtilities.invokeLater
+		(	new Runnable()
+			{	public void run()
+				{	Life frame = new Life();	// establishes the MenuSite
+
+					// Reserve the Grid menu first, so that it stays to the
+					// left of the Go menu that the Clock creates.
+					MenuSite.addMenu( frame, "Grid" );
+
+					Board		board	 = new Board();
+					LifeGame	game	 = new LifeGame( board, Clock.instance() );
+					Universe	universe = new Universe( board, game );
+
+					frame.install( universe );
+				}
+			}
+		);
 	}
 
 	private Life()
@@ -28,8 +46,12 @@ public final class Life extends JFrame
 
 		setDefaultCloseOperation	( EXIT_ON_CLOSE 		);
 		getContentPane().setLayout	( new BorderLayout()	);
-		getContentPane().add( Universe.instance(), BorderLayout.CENTER); //{=life.java.install}
+	}
 
+	/** Put the view into the frame and show the frame.
+	 */
+	private void install( JComponent universe )
+	{	getContentPane().add( universe, BorderLayout.CENTER); //{=life.java.install}
 		pack();
 		setVisible( true );
 	}

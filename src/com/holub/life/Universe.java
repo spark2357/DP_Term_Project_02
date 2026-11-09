@@ -14,8 +14,9 @@ import com.holub.life.Clock;
 import com.holub.life.LifeGame;
 
 /**
- * The Universe is the Swing view of the game. It is also a
- * singleton, accessed via Universe.instance(). It draws the
+ * The Universe is the Swing view of the game. It does not create
+ * the game: the Board and the LifeGame are built in Life.main and
+ * passed in. It draws the
  * Board, handles all Swing events (mouse clicks, Grid menu,
  * file dialogs), and translates them into requests to the
  * LifeGame facade. The game logic itself (building the Composite
@@ -29,7 +30,6 @@ import com.holub.life.LifeGame;
 public class Universe extends JPanel
 {	private 		final Board  	board;	// used directly only for drawing
 	private 		final LifeGame	game;	// every request that changes the game
-	private static	final Universe 	theInstance = new Universe();
 
 	/** The size of the smallest "atomic" cell---a Resident object.
 	 *  This size is extrinsic to a Resident (It's passed into the
@@ -37,11 +37,16 @@ public class Universe extends JPanel
 	 */
 	private static final int  DEFAULT_CELL_SIZE = 8;
 
-	// The constructor is private so that the universe can be created
-	// only by an outer-class method [Neighborhood.createUniverse()].
+	// [수정] 2026-11-09: 싱글톤을 없애고 Board와 LifeGame을 생성자로 받음.
+	// 화면(View)이 모델을 직접 만들지 않고, 조립은 Life.main에서 함
 
-	private Universe()
-	{	board = new Board();
+	/** Create the view of a game that is already assembled.
+	 *  @param board drawn directly by {@link #paint} (read only).
+	 *  @param game  receives every request that changes the game.
+	 */
+	public Universe( Board board, LifeGame game )
+	{	this.board = board;
+		this.game  = game;
 
 		final Dimension PREFERRED_SIZE =
 						new Dimension
@@ -124,12 +129,6 @@ public class Universe extends JPanel
 			}
 		);
 
-		// The Clock is created (and puts its Go menu on the menu bar) the
-		// first time Clock.instance() is called, so the game is created
-		// here, after the Grid menu is set up, to keep the menu order.
-
-		game = new LifeGame( board, Clock.instance() );
-
 		Clock.instance().addClockListener //{=Universe.clock.subscribe}
 		(	new Clock.Listener()
 			{	public void tick()
@@ -138,14 +137,6 @@ public class Universe extends JPanel
 				}
 			}
 		);
-	}
-
-	/** Singleton Accessor. The Universe object itself is manufactured
-	 *  in Neighborhood.createUniverse()
-	 */
-
-	public static Universe instance()
-	{	return theInstance;
 	}
 
 	private void doLoad()
