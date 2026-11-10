@@ -1,15 +1,12 @@
 package com.holub.life;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.*;
 import java.io.*;
-import javax.swing.*;
 
 import com.holub.io.Files;
 import com.holub.life.Cell;
-import com.holub.ui.MenuSite;
-import com.holub.ui.Colors;
 import com.holub.asynch.ConditionVariable;
 
 import com.holub.life.Cell;
@@ -327,13 +324,13 @@ public final class Neighborhood implements Cell
 	/** Redraw the current neighborhood only if necessary (something
 	 *  changed in the last transition).
 	 *
-	 *  @param g Draw onto this graphics.
+	 *  @param painter Draw using this painter.
 	 *  @param here Bounding rectangle for current Neighborhood.
 	 *  @param drawAll force a redraw, even if nothing has changed.
 	 *  @see #transition
 	 */
 
-	public void redraw(Graphics g, Rectangle here, boolean drawAll)
+	public void redraw(CellPainter painter, Rectangle here, boolean drawAll)
 	{	
 		// If the current neighborhood is stable (nothing changed
 		// in the last transition stage), then there's nothing
@@ -364,23 +361,13 @@ public final class Neighborhood implements Cell
 
 			for( int row = 0; row < gridSize; ++row )
 			{   for( int column = 0; column < gridSize; ++column )
-				{   grid[row][column].redraw( g, subcell, drawAll );	// {=Neighborhood.redraw3}
+				{   grid[row][column].redraw( painter, subcell, drawAll );	// {=Neighborhood.redraw3}
 				    subcell.translate( subcell.width, 0);
 				}
 				subcell.translate(-compoundWidth, subcell.height);
 			}
 
-			g = g.create();
-			g.setColor( Colors.LIGHT_ORANGE );
-			g.drawRect( here.x, here.y, here.width, here.height );
-
-			if( amActive )
-			{	g.setColor( Color.BLUE );
-				g.drawRect(	here.x+1,	  here.y+1,
-							here.width-2, here.height-2 );
-			}
-
-			g.dispose();
+			painter.paintBorder( here, amActive );
 		}
 		catch( InterruptedException e ) 
 		{	// thrown from waitForTrue. Just

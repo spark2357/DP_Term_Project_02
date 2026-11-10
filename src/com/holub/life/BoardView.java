@@ -1,6 +1,5 @@
 package com.holub.life;
 
-import java.awt.Graphics;
 import java.awt.Rectangle;
 
 /**
@@ -23,5 +22,5 @@ public interface BoardView
 	 *  <code>drawAll</code> is false, only the blocks that changed
 	 *  in the last transition are redrawn.
 	 */
-	void redraw( Graphics g, Rectangle here, boolean drawAll );
+	void redraw( CellPainter painter, Rectangle here, boolean drawAll );
 }
