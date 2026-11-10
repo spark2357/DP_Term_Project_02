@@ -40,6 +40,16 @@ public class RleFormat implements PatternFormat {
     }
 
     @Override
+    public String extension() {
+        return "rle";
+    }
+
+    @Override
+    public String description() {
+        return "RLE Pattern Files";
+    }
+
+    @Override
     public Set<Point> read(InputStream in) throws IOException {
         // 스트림은 닫지 않음 (연 쪽이 닫음)
         // UTF-8은 ASCII를 포함하므로 RLE를 그대로 읽고, 주석의 비ASCII 문자도 깨지지 않음

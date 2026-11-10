@@ -4,14 +4,13 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;		// not java.util.Timer: ticks must run on the Swing event thread
-import com.holub.ui.MenuSite;
 import com.holub.tools.Publisher;
 
 /***
  * The <code>Clock</code> class handles the timing of gameboard
- * updates. It creates its own menu (which sets the clock speed),
- * and sends notifications off to any observers every time the
- * clock "ticks."
+ * updates. It sends notifications off to any observers every
+ * time the clock "ticks." (The Go menu that sets the clock speed
+ * is created by GoMenu.)
  * <p>
  * Ticks are delivered by a <code>javax.swing.Timer</code>, so every
  * listener runs on the Swing event thread (EDT), one event at a time,
@@ -42,12 +41,10 @@ public class Clock implements TickSource
 		}
 	);
 
-	// The clock can't be an everything-is-static singleton because
-	// it creates a menu, and it can't do that until the menus
-	// are established.
-	//
+	// [수정] 2026-11-10: Go 메뉴 만들기(createMenus)를 GoMenu로 옮김. 메뉴 이름의 첫 글자로
+	// 동작을 고르던 분기를 항목마다 Command 객체로 바꿈. Clock은 이제 메뉴(MenuSite)를 모름
 	private Clock()
-	{	createMenus();
+	{
 	}
 
 	private static Clock instance;
@@ -84,39 +81,6 @@ public class Clock implements TickSource
 	public void stop()
 	{	startTicking( 0 );
 	}
-
-	/** Create the menu that controls the clock speed and
-	 *  put it onto the menu site. 
-	 */
-	private void createMenus()
-	{
-		// First set up a single listener that will handle all the
-		// menu-selection events except "Exit"
-
-		ActionListener modifier =									//{=startSetup}
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-				{
-					String name = ((JMenuItem)e.getSource()).getName();
-					char toDo = name.charAt(0);
-
-					if( toDo=='T' )
-						tick();				      // single tick
-					else
-						startTicking(   toDo=='A' ? 500:	  // agonizing
-										toDo=='S' ? 150:	  // slow
-										toDo=='M' ? 70 :	  // medium
-										toDo=='F' ? 30 : 0 ); // fast
-				}
-			};
-																	// {=midSetup}
-		MenuSite.addLine(this,"Go","Halt",  			modifier);
-		MenuSite.addLine(this,"Go","Tick (Single Step)",modifier);
-		MenuSite.addLine(this,"Go","Agonizing",	 	  	modifier);
-		MenuSite.addLine(this,"Go","Slow",		 		modifier);
-		MenuSite.addLine(this,"Go","Medium",	 	 	modifier);
-		MenuSite.addLine(this,"Go","Fast",				modifier); // {=endSetup}
-	}	//{=endCreateMenus}
 
 	private Publisher publisher = new Publisher();
 

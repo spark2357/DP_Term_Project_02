@@ -98,6 +98,16 @@ public class LifeGame
 	{	ticker.stop();
 	}
 
+	// [수정] 2026-11-10: Go → Tick (Single Step)을 Facade에 추가. 원본처럼 시계를 한 번 tick하므로
+	// 메뉴가 열려 있으면 건너뛰는 Clock의 규칙도 그대로 적용됨
+
+	/** Advance the game by one generation (single step) by
+	 *  ticking the TickSource once. The game is not started.
+	 */
+	public void tick()
+	{	ticker.tick();
+	}
+
 	/** Toggle the cell at the indicated row and column (in cells).
 	 */
 	public void toggle( int row, int column )
@@ -116,19 +126,22 @@ public class LifeGame
 	{	board.clear();
 	}
 
+	// [수정] 2026-11-10: 파일 형식(.life, .rle)을 인자로 받음. 어떤 형식인지는 부르는 쪽(파일 이름)이 정함
+
 	/** Stop the game, then replace the board with the pattern read
-	 *  from <code>in</code>. The stream is not closed.
+	 *  from <code>in</code> in the given format. If reading fails,
+	 *  the board is left unchanged. The stream is not closed.
 	 */
-	public void load( InputStream in ) throws IOException
+	public void load( InputStream in, PatternFormat format ) throws IOException
 	{	ticker.stop();
-		board.load( in );
+		board.load( in, format );
 	}
 
-	/** Stop the game, then write the board to <code>out</code>.
-	 *  The stream is not closed.
+	/** Stop the game, then write the board to <code>out</code> in
+	 *  the given format. The stream is not closed.
 	 */
-	public void store( OutputStream out ) throws IOException
+	public void store( OutputStream out, PatternFormat format ) throws IOException
 	{	ticker.stop();
-		board.store( out );
+		board.store( out, format );
 	}
 }

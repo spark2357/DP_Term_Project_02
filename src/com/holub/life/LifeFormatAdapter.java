@@ -20,6 +20,16 @@ public class LifeFormatAdapter implements PatternFormat {
     }
 
     @Override
+    public String extension() {
+        return "life";
+    }
+
+    @Override
+    public String description() {
+        return "Life Files";
+    }
+
+    @Override
     public Set<Point> read(InputStream in) throws IOException {
         Cell.Memento memento = Neighborhood.createEmptyMemento();
         memento.load(in);
