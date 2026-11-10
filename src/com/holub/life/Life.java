@@ -3,6 +3,7 @@ package com.holub.life;
 import java.awt.*;
 import javax.swing.*;
 import com.holub.ui.MenuSite;
+import com.holub.life.command.GoMenu;
 
 /*******************************************************************
  * An implemenation of Conway's Game of Life.
@@ -23,12 +24,15 @@ public final class Life extends JFrame
 				{	Life frame = new Life();	// establishes the MenuSite
 
 					// Reserve the Grid menu first, so that it stays to the
-					// left of the Go menu that the Clock creates.
+					// left of the Go menu.
 					MenuSite.addMenu( frame, "Grid" );
 
 					Board		board	 = new Board();
 					LifeGame	game	 = new LifeGame( board, Clock.instance() );
 					Universe	universe = new Universe( board, game );
+
+					// [수정] 2026-11-10: Go 메뉴를 Clock 생성자 대신 이곳에서 등록함 (항목마다 Command)
+					new GoMenu( game ).register();
 
 					frame.install( universe );
 				}

@@ -1,11 +1,8 @@
 package com.holub.life.clock;
 
 import com.holub.life.*;
-import com.holub.life.support.*;
-import com.holub.ui.MenuSite;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
 
 import java.lang.reflect.Constructor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -13,7 +10,6 @@ import javax.swing.JMenuItem;
 import javax.swing.MenuElement;
 import javax.swing.MenuSelectionManager;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -21,7 +17,6 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Clock 단위 테스트: 일정 간격으로 tick을 보내는 시계 (Singleton, Observer의 Subject)
-// * 생성자가 Go 메뉴를 만들기 때문에 MenuSite가 먼저 준비되어 있어야 함 → 화면이 있는 환경에서만 실행 (gui 태그)
  * 창은 띄우지 않고, 보드나 Universe 없이 Clock만 검증함
  *
  *   필드
@@ -34,34 +29,26 @@ import org.junit.jupiter.api.Test;
  *   - stop()                     : startTicking(0). Go → Halt
  *   - tick()                     : 리스너에게 tick을 한 번 보냄. Go → Tick (Single Step). 메뉴가 열려 있으면 건너뜀
  *   - addClockListener(listener) : 리스너 등록
- *   - createMenus()              : Go 메뉴(Halt, Tick, Agonizing, Slow, Medium, Fast) 등록. 메뉴 이름의 첫 글자로 동작을 고름
  *   - menuIsActive()             : 메뉴가 열려 있는지 Swing에 물어봄 (private)
  *
  * [테스트 시나리오]
  *   1. Single Step: tick() 한 번에 리스너가 각각 정확히 한 번 호출됨
  *   2. Halt: 시작 뒤에는 tick이 계속 오고, stop() 뒤에는 오지 않음. 멈춘 상태에서 Halt해도 아무 일 없음
  *   3. 속도 변경: 속도를 바꾸면 이전 속도의 타이머가 멈춤
- *   4. Go 메뉴 연결: 메뉴 항목을 누르면 각각 맞는 동작(한 번 tick, 시작, 정지)이 일어남
- *   5. 메뉴가 열려 있을 때: tick이 미뤄지지 않고 사라짐 (원본 동작)
- *   6. 리스너 예외: 리스너 하나가 예외를 던지면 시계가 영구히 멈춤. 다른 리스너는 계속 tick을 받고 다시 시작할 수 있어야 함 (결함)
+ *   4. 메뉴가 열려 있을 때: tick이 미뤄지지 않고 사라짐 (원본 동작)
+ *   5. 리스너 예외: 리스너 하나가 예외를 던지면 시계가 영구히 멈춤. 다른 리스너는 계속 tick을 받고 다시 시작할 수 있어야 함 (결함)
  *
  * [커버리지]
- *   - ClockTest.java 테스트 대상: startTicking, stop, tick, addClockListener, Go 메뉴 리스너, menuIsActive
+ *   - ClockTest.java 테스트 대상: startTicking, stop, tick, addClockListener, menuIsActive
  *   - 테스트 제외 대상
+ *     - Go 메뉴: GoMenu가 만들므로 GoMenuTest, GoMenuInstallTest에서 확인
  *     - instance(): Singleton을 테스트끼리 공유하지 않도록 reflection으로 테스트마다 새 Clock을 만들어 씀
  *     - 속도별 실제 간격(500/150/70/30ms): 시간 측정이 컴퓨터 상태에 따라 흔들려서 "시작된다"까지만 확인
  *   - 시간이 걸리는 테스트는 실제 Timer를 쓰므로, 느린 컴퓨터에서도 실패하지 않게 기다리는 시간을 넉넉히 두고
  *     "정확히 몇 번"이 아니라 "오는가, 멈추는가"로 확인함
  */
-@Tag("gui")
 class ClockTest {
 	private Clock clock;
-
-	@BeforeAll
-	static void prepareMenuSite() {
-		assumeFalse(MenuSiteSetup.isHeadless(), "화면이 없는 환경이라 Clock을 만들 수 없음");
-		MenuSiteSetup.establishOnce();
-	}
 
 	@BeforeEach
 	void setUp() throws Exception {
@@ -71,7 +58,6 @@ class ClockTest {
 	@AfterEach
 	void tearDown() {
 		clock.stop();
-		MenuSite.removeMyMenus(clock);
 		MenuSelectionManager.defaultManager().clearSelectedPath();
 	}
 
@@ -147,32 +133,6 @@ class ClockTest {
 	}
 
 	@Test
-	@DisplayName("Go 메뉴: Tick은 한 번 tick하고, 속도 메뉴는 시작하고, Halt는 멈춘다")
-	void goMenuItemsCallTheRightActions() throws InterruptedException {
-		// Given
-		CountingListener listener = new CountingListener();
-		clock.addClockListener(listener);
-
-		// When, Then: Tick (Single Step)은 tick을 정확히 한 번 보냄
-		goMenu("Tick (Single Step)").doClick();
-		assertEquals(1, listener.count(), "Tick (Single Step)");
-
-		// When, Then: 속도 메뉴는 각각 시계를 시작하고, Halt는 멈춤
-		String[] speeds = { "Agonizing", "Slow", "Medium", "Fast" };
-		for (String speed : speeds) {
-			int before = listener.count();
-			goMenu(speed).doClick();
-			assertTrue(waitForTicks(listener, before + 2), speed + "를 누르면 시작해야 함");
-
-			goMenu("Halt").doClick();
-			pause(100);
-			int afterHalt = listener.count();
-			pause(600);		// 가장 느린 Agonizing(500ms)보다 길게 기다림
-			assertEquals(afterHalt, listener.count(), speed + " 뒤 Halt를 누르면 멈춰야 함");
-		}
-	}
-
-	@Test
 	@DisplayName("tick() (원본 동작): 메뉴가 열려 있으면 tick이 미뤄지지 않고 사라진다. menuIsActive()로 Swing 상태에 의존")
 	void tickIsDroppedWhileMenuIsOpen() {
 		// Given: 메뉴가 열려 있는 상태를 만듦 (Swing의 메뉴 선택 경로가 비어 있지 않음)
@@ -227,10 +187,6 @@ class ClockTest {
 		Constructor<Clock> constructor = Clock.class.getDeclaredConstructor();
 		constructor.setAccessible(true);
 		return constructor.newInstance();
-	}
-
-	private JMenuItem goMenu(String name) {
-		return MenuSite.getMyMenuItem(clock, "Go", name);
 	}
 
 	// 리스너가 atLeast번 이상 tick을 받을 때까지 최대 3초 기다림. 받으면 true

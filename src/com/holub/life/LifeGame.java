@@ -98,6 +98,16 @@ public class LifeGame
 	{	ticker.stop();
 	}
 
+	// [수정] 2026-11-10: Go → Tick (Single Step)을 Facade에 추가. 원본처럼 시계를 한 번 tick하므로
+	// 메뉴가 열려 있으면 건너뛰는 Clock의 규칙도 그대로 적용됨
+
+	/** Advance the game by one generation (single step) by
+	 *  ticking the TickSource once. The game is not started.
+	 */
+	public void tick()
+	{	ticker.tick();
+	}
+
 	/** Toggle the cell at the indicated row and column (in cells).
 	 */
 	public void toggle( int row, int column )

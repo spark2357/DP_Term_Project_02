@@ -28,6 +28,10 @@ public interface TickSource
 	 */
 	void stop();
 
+	// [수정] 2026-11-10: 한 번 tick(Go → Tick)을 인터페이스로 올림. Go 메뉴의 Command가
+	// 구체 클래스 Clock을 몰라도 한 단계 진행을 시킬 수 있게 하기 위함
+	void tick();
+
 	// [수정] 2026-11-09: tick 구독을 인터페이스로 올림. LifeGame이 구체 클래스 Clock을 몰라도
 	// tick을 받을 수 있게 하기 위함
 
