@@ -152,7 +152,7 @@ public class Board implements BoardView
 	 *  <code>drawAll</code> is false, only the blocks that changed
 	 *  in the last transition are redrawn.
 	 */
-	public void redraw( Graphics g, Rectangle here, boolean drawAll )
-	{	outermostCell.redraw( g, here, drawAll );
+	public void redraw( CellPainter painter, Rectangle here, boolean drawAll )
+	{	outermostCell.redraw( painter, here, drawAll );
 	}
 }

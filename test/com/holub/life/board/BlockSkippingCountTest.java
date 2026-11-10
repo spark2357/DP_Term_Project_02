@@ -4,7 +4,6 @@ import com.holub.life.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Set;
@@ -116,7 +115,7 @@ class BlockSkippingCountTest {
 
 		public Cell edge(int row, int column)						{ return block.edge(row, column); }
 		public boolean transition()									{ return block.transition(); }
-		public void redraw(Graphics g, Rectangle here, boolean all)	{ block.redraw(g, here, all); }
+		public void redraw(CellPainter p, Rectangle here, boolean all)	{ block.redraw(p, here, all); }
 		public void userClicked(Point here, Rectangle surface)		{ block.userClicked(here, surface); }
 		public boolean isAlive()									{ return block.isAlive(); }
 		public int widthInCells()									{ return block.widthInCells(); }
@@ -151,7 +150,7 @@ class BlockSkippingCountTest {
 
 		public boolean figureNextState(Cell n, Cell s, Cell e, Cell w, Cell ne, Cell nw, Cell se, Cell sw) { throw new UnsupportedOperationException(); }
 		public boolean transition()									{ throw new UnsupportedOperationException(); }
-		public void redraw(Graphics g, Rectangle here, boolean all)	{ throw new UnsupportedOperationException(); }
+		public void redraw(CellPainter p, Rectangle here, boolean all)	{ throw new UnsupportedOperationException(); }
 		public void userClicked(Point here, Rectangle surface)		{ throw new UnsupportedOperationException(); }
 		public int widthInCells()									{ throw new UnsupportedOperationException(); }
 		public Cell create()										{ throw new UnsupportedOperationException(); }
