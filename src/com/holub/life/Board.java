@@ -32,6 +32,11 @@ public class Board implements BoardView
 
 	private final Cell outermostCell;
 
+	/** load(InputStream), store(OutputStream)이 쓰는 기존 .life 형식.
+	 *  원래 Load/Store가 그대로 동작하게 함
+	 */
+	private final PatternFormat lifeFormat;
+
 	public Board()
 	{	// Create the nested Cells that comprise the "universe." A bug
 		// in the current implementation causes the program to fail
@@ -45,6 +50,7 @@ public class Board implements BoardView
 								new Resident()
 							)
 						);
+		lifeFormat = new LifeFormatAdapter( outermostCell.widthInCells() );
 	}
 
 	/** Width (and height) of the whole board, in cells.
@@ -111,24 +117,55 @@ public class Board implements BoardView
 	{	outermostCell.clear();
 	}
 
-	/** Clear the board, then replace it with the pattern read
-	 *  from <code>in</code>. The stream is not closed.
+	/** <code>in</code>에서 주어진 형식으로 패턴을 읽어 보드를 바꿈.
+	 *  다 읽은 뒤에 보드를 지우므로, 읽다 실패하면 보드는 그대로 남음.
+	 *  스트림은 닫지 않음 (연 쪽이 닫음)
 	 */
-	public void load( InputStream in ) throws IOException
-	{	outermostCell.clear();
+	public void load( InputStream in, PatternFormat format ) throws IOException
+	{	Set<Point> cells = format.read( in );
+		outermostCell.clear();
 
-		Storable memento = outermostCell.createMemento();
-		memento.load( in );
-		outermostCell.transfer( memento, new Point(0,0), Cell.LOAD );
+		// 원래 Load와 같은 transfer(LOAD) 경로로 셀을 놓음. 블록 가장자리의 옆 블록도 깨움
+		outermostCell.transfer( new CellSetMemento(cells), new Point(0,0), Cell.LOAD );
 	}
 
-	/** Write the current pattern to <code>out</code>.
-	 *  The stream is not closed.
+	/** 지금 패턴을 주어진 형식으로 <code>out</code>에 씀.
+	 *  스트림은 닫지 않음 (연 쪽이 닫음)
+	 */
+	public void store( OutputStream out, PatternFormat format ) throws IOException
+	{	format.write( liveCells(), out );
+	}
+
+	/** 기존 .life 형식으로 Load
+	 *  @see #load(InputStream, PatternFormat)
+	 */
+	public void load( InputStream in ) throws IOException
+	{	load( in, lifeFormat );
+	}
+
+	/** 기존 .life 형식으로 Store
+	 *  @see #store(OutputStream, PatternFormat)
 	 */
 	public void store( OutputStream out ) throws IOException
-	{	Storable memento = outermostCell.createMemento();
-		outermostCell.transfer( memento, new Point(0,0), Cell.STORE );
-		memento.flush( out );
+	{	store( out, lifeFormat );
+	}
+
+	/** 살아 있는 셀 집합을 transfer(LOAD)에 전달하기만 하는 Memento.
+	 *  스트림 읽기/쓰기는 PatternFormat이 맡으므로 쓰지 않음
+	 */
+	private static class CellSetMemento implements Cell.Memento
+	{	private final Set<Point> cells;
+
+		CellSetMemento( Set<Point> cells )	{ this.cells = cells;				}
+		public boolean isAlive( Point p )	{ return cells.contains( p );		}
+		public void markAsAlive( Point p )	{ cells.add( new Point(p) );		}
+
+		public void load( InputStream in )
+		{	throw new UnsupportedOperationException();
+		}
+		public void flush( OutputStream out )
+		{	throw new UnsupportedOperationException();
+		}
 	}
 
 	/** Draw the board into the rectangle <code>here</code>. If
