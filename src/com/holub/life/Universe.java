@@ -9,27 +9,30 @@ import java.awt.event.*;
 import com.holub.io.Files;
 import com.holub.ui.MenuSite;
 
-import com.holub.life.Board;
-import com.holub.life.Clock;
+import com.holub.life.BoardView;
 import com.holub.life.LifeGame;
 
 /**
- * The Universe is the Swing view of the game. It is also a
- * singleton, accessed via Universe.instance(). It draws the
+ * The Universe is the Swing view of the game. It does not create
+ * the game: the Board and the LifeGame are built in Life.main and
+ * passed in. It draws the
  * Board, handles all Swing events (mouse clicks, Grid menu,
  * file dialogs), and translates them into requests to the
  * LifeGame facade. The game logic itself (building the Composite
  * Neighborhood, advancing a generation, loading and storing)
  * lives in the Board, and the order in which the Board and the
- * Clock must be used lives in LifeGame.
+ * Clock must be used lives in LifeGame. The Universe does not
+ * listen to the clock: LifeGame advances the game on every tick and
+ * tells the Universe when the board changed, so it can redraw.
  *
  * @include /etc/license.txt
  */
 
 public class Universe extends JPanel
-{	private 		final Board  	board;	// used directly only for drawing
+{	// [수정] 2026-11-09: Board 대신 읽기 전용 BoardView로 받음. 보드를 바꾸는 요청은
+	// LifeGame을 거칠 수밖에 없도록 컴파일 단계에서 강제함
+	private 		final BoardView	board;	// read only: used just for drawing
 	private 		final LifeGame	game;	// every request that changes the game
-	private static	final Universe 	theInstance = new Universe();
 
 	/** The size of the smallest "atomic" cell---a Resident object.
 	 *  This size is extrinsic to a Resident (It's passed into the
@@ -37,11 +40,17 @@ public class Universe extends JPanel
 	 */
 	private static final int  DEFAULT_CELL_SIZE = 8;
 
-	// The constructor is private so that the universe can be created
-	// only by an outer-class method [Neighborhood.createUniverse()].
+	// [수정] 2026-11-09: 싱글톤을 없애고 Board와 LifeGame을 생성자로 받음.
+	// 화면(View)이 모델을 직접 만들지 않고, 조립은 Life.main에서 함
 
-	private Universe()
-	{	board = new Board();
+	/** Create the view of a game that is already assembled.
+	 *  @param board drawn directly by {@link #paint}. It is a
+	 *  			 read-only view, so the Universe cannot change it.
+	 *  @param game  receives every request that changes the game.
+	 */
+	public Universe( BoardView board, LifeGame game )
+	{	this.board = board;
+		this.game  = game;
 
 		final Dimension PREFERRED_SIZE =
 						new Dimension
@@ -124,28 +133,16 @@ public class Universe extends JPanel
 			}
 		);
 
-		// The Clock is created (and puts its Go menu on the menu bar) the
-		// first time Clock.instance() is called, so the game is created
-		// here, after the Grid menu is set up, to keep the menu order.
+		// [수정] 2026-11-09: Clock을 직접 구독해 game.step()을 부르던 것을, LifeGame의 알림을 받도록 변경.
+		// 세대 진행은 LifeGame이 맡고, 화면은 "보드가 바뀌었다"는 알림에 다시 그리기만 함
 
-		game = new LifeGame( board, Clock.instance() );
-
-		Clock.instance().addClockListener //{=Universe.clock.subscribe}
-		(	new Clock.Listener()
-			{	public void tick()
-				{	if( game.step() )
-						refreshNow();
+		game.addGameListener
+		(	new LifeGame.Listener()
+			{	public void boardChanged()
+				{	refreshNow();
 				}
 			}
 		);
-	}
-
-	/** Singleton Accessor. The Universe object itself is manufactured
-	 *  in Neighborhood.createUniverse()
-	 */
-
-	public static Universe instance()
-	{	return theInstance;
 	}
 
 	private void doLoad()
@@ -198,10 +195,12 @@ public class Universe extends JPanel
 		board.redraw(g, panelBounds, true);		//{=Universe.redraw1}
 	}
 
-	/** Force a screen refresh by queing a request on
-	 *  the Swing event queue. This is an example of the
-	 *  Active Object pattern (not covered by the Gang of Four).
-	 *  This method is called on every clock tick. Note that
+	/** Force a screen refresh by queuing a request on
+	 *  the Swing event queue. This method is called on every
+	 *  clock tick, which already runs on the Swing event thread,
+	 *  so the request simply runs after the current tick has
+	 *  finished. (In the original code ticks came from another
+	 *  thread, and this queue was used as an Active Object.) Note that
 	 *  the redraw() method on a given <code>Cell</code>
 	 *  does nothing if the <code>Cell</code> doesn't
 	 *  have to be refreshed.

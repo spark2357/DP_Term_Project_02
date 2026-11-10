@@ -18,8 +18,10 @@ import java.util.HashSet;
  * @include /etc/license.txt
  */
 
-public class Board
+public class Board implements BoardView
 {
+	// [수정] 2026-11-09: 그리기용 읽기 창구(BoardView)를 구현. Universe는 이 인터페이스로만 Board를 봄
+
 	/** The default height and width of a Neighborhood in cells.
 	 *  If it's too big, you'll run too slowly because
 	 *  you have to update the entire block as a unit, so there's more

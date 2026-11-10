@@ -3,19 +3,28 @@ package com.holub.life;
 import java.io.*;
 import java.awt.Point;
 import java.util.Set;
+import com.holub.tools.Publisher;
 
 /**
  * LifeGame is a Facade over the game subsystem: the Board (the
  * model) and the TickSource (the clock that drives it). Some
- * operations must use both parts in a fixed order. For example,
- * the clock must be stopped before the board is loaded or stored.
- * LifeGame captures that order in a single call, so callers (the
+ * operations must use both parts together. For example, loading or
+ * storing a pattern also stops the clock, so the game is halted
+ * afterwards. (Ticks run on the Swing event thread, so a tick can
+ * never overlap a load or store; stopping is a rule of the game,
+ * not a thread-safety measure.) LifeGame captures that rule in a
+ * single call, so callers (the
  * Universe, and later Commands) don't need to know it.
  *
  * LifeGame adds no game features of its own. New features go into
  * the Board first, and LifeGame only delegates to them. Using the
  * Board directly (for drawing or for tests) is not forbidden, but
  * anything that involves the clock should go through LifeGame.
+ * <p>
+ * LifeGame also drives the game: it listens to the TickSource and
+ * advances the board one generation on every tick. Whenever a step
+ * changes the board, it tells its own listeners (the Universe), so
+ * the view never talks to the clock.
  *
  * @include /etc/license.txt
  */
@@ -24,16 +33,56 @@ public class LifeGame
 {	private final Board 		board;
 	private final TickSource 	ticker;
 
+	private final Publisher		publisher = new Publisher();
+
+	// [수정] 2026-11-09: "tick이 오면 한 세대 진행"은 게임 규칙이므로 Universe(화면)에서 이곳으로 옮김.
+	// LifeGame이 TickSource를 구독하고, 보드가 바뀌면 자기 구독자(Universe)에게 알림
+
 	public LifeGame( Board board, TickSource ticker )
 	{	this.board  = board;
 		this.ticker = ticker;
+
+		// Every tick advances the game by one generation. (Registering
+		// here is safe: everything runs on the Swing event thread, and
+		// the clock is not started until after construction.)
+		ticker.addTickListener
+		(	new TickSource.Listener()
+			{	public void tick()
+				{	step();
+				}
+			}
+		);
 	}
 
-	/** Advance the board by one generation.
+	/** Implement this interface to be told when a step changed the
+	 *  board (so the screen needs to be refreshed).
+	 */
+	public interface Listener
+	{	void boardChanged();
+	}
+
+	/** Add a listener that is told every time a step changes the board.
+	 */
+	public void addGameListener( Listener listener )
+	{	publisher.subscribe( listener );
+	}
+
+	/** Advance the board by one generation. If anything changed,
+	 *  tell the listeners. This is called on every tick, and can also
+	 *  be called directly (for single stepping, or from tests).
 	 *  @return true if anything on the board changed state.
 	 */
 	public boolean step()
-	{	return board.step();
+	{	boolean changed = board.step();
+		if( changed )
+			publisher.publish
+			(	new Publisher.Distributor()
+				{	public void deliverTo( Object subscriber )
+					{	((Listener)subscriber).boardChanged();
+					}
+				}
+			);
+		return changed;
 	}
 
 	/** Start running the game, one generation every
