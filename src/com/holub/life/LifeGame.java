@@ -126,19 +126,22 @@ public class LifeGame
 	{	board.clear();
 	}
 
+	// [수정] 2026-11-10: 파일 형식(.life, .rle)을 인자로 받음. 어떤 형식인지는 부르는 쪽(파일 이름)이 정함
+
 	/** Stop the game, then replace the board with the pattern read
-	 *  from <code>in</code>. The stream is not closed.
+	 *  from <code>in</code> in the given format. If reading fails,
+	 *  the board is left unchanged. The stream is not closed.
 	 */
-	public void load( InputStream in ) throws IOException
+	public void load( InputStream in, PatternFormat format ) throws IOException
 	{	ticker.stop();
-		board.load( in );
+		board.load( in, format );
 	}
 
-	/** Stop the game, then write the board to <code>out</code>.
-	 *  The stream is not closed.
+	/** Stop the game, then write the board to <code>out</code> in
+	 *  the given format. The stream is not closed.
 	 */
-	public void store( OutputStream out ) throws IOException
+	public void store( OutputStream out, PatternFormat format ) throws IOException
 	{	ticker.stop();
-		board.store( out );
+		board.store( out, format );
 	}
 }

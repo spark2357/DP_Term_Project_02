@@ -29,7 +29,14 @@ public final class Life extends JFrame
 
 					Board		board	 = new Board();
 					LifeGame	game	 = new LifeGame( board, Clock.instance() );
-					Universe	universe = new Universe( board, game );
+
+					// [수정] 2026-11-10: Load/Store가 지원할 파일 형식을 이곳에서 정함 (순서대로 파일 창에 나옴).
+					// 형식을 추가할 때는 이 목록에 한 줄만 더하면 됨
+					java.util.List<PatternFormat> formats = java.util.List.of
+					(	new LifeFormatAdapter( board.widthInCells() ),
+						new RleFormat( board.widthInCells() )
+					);
+					Universe	universe = new Universe( board, game, formats );
 
 					// [수정] 2026-11-10: Go 메뉴를 Clock 생성자 대신 이곳에서 등록함 (항목마다 Command)
 					new GoMenu( game ).register();

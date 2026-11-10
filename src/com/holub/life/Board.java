@@ -32,11 +32,6 @@ public class Board implements BoardView
 
 	private final Cell outermostCell;
 
-	/** load(InputStream), store(OutputStream)이 쓰는 기존 .life 형식.
-	 *  원래 Load/Store가 그대로 동작하게 함
-	 */
-	private final PatternFormat lifeFormat;
-
 	public Board()
 	{	// Create the nested Cells that comprise the "universe." A bug
 		// in the current implementation causes the program to fail
@@ -50,7 +45,6 @@ public class Board implements BoardView
 								new Resident()
 							)
 						);
-		lifeFormat = new LifeFormatAdapter( outermostCell.widthInCells() );
 	}
 
 	/** Width (and height) of the whole board, in cells.
@@ -134,20 +128,6 @@ public class Board implements BoardView
 	 */
 	public void store( OutputStream out, PatternFormat format ) throws IOException
 	{	format.write( liveCells(), out );
-	}
-
-	/** 기존 .life 형식으로 Load
-	 *  @see #load(InputStream, PatternFormat)
-	 */
-	public void load( InputStream in ) throws IOException
-	{	load( in, lifeFormat );
-	}
-
-	/** 기존 .life 형식으로 Store
-	 *  @see #store(OutputStream, PatternFormat)
-	 */
-	public void store( OutputStream out ) throws IOException
-	{	store( out, lifeFormat );
 	}
 
 	/** 살아 있는 셀 집합을 transfer(LOAD)에 전달하기만 하는 Memento.

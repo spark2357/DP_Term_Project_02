@@ -5,6 +5,11 @@ import java.io.*;
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;			// not java.awt.List
+import java.util.Locale;
+import java.util.Optional;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.holub.io.Files;
 import com.holub.ui.MenuSite;
@@ -34,6 +39,10 @@ public class Universe extends JPanel
 	private 		final BoardView	board;	// read only: used just for drawing
 	private 		final LifeGame	game;	// every request that changes the game
 
+	// [수정] 2026-11-10: Load/Store가 쓰는 파일 형식 목록을 생성자로 받음. 어떤 형식을 지원할지는
+	// 조립(Life.main)이 정하고, 화면은 받은 목록으로 파일 창 필터를 만들고 확장자로 형식을 고르기만 함
+	private final List<PatternFormat> formats;
+
 	/** The size of the smallest "atomic" cell---a Resident object.
 	 *  This size is extrinsic to a Resident (It's passed into the
 	 *  Resident's "draw yourself" method.
@@ -47,10 +56,13 @@ public class Universe extends JPanel
 	 *  @param board drawn directly by {@link #paint}. It is a
 	 *  			 read-only view, so the Universe cannot change it.
 	 *  @param game  receives every request that changes the game.
+	 *  @param formats the file formats offered by Load and Store,
+	 *  			 in the order they appear in the file chooser.
 	 */
-	public Universe( BoardView board, LifeGame game )
-	{	this.board = board;
-		this.game  = game;
+	public Universe( BoardView board, LifeGame game, List<PatternFormat> formats )
+	{	this.board   = board;
+		this.game    = game;
+		this.formats = List.copyOf( formats );
 
 		final Dimension PREFERRED_SIZE =
 						new Dimension
@@ -145,37 +157,110 @@ public class Universe extends JPanel
 		);
 	}
 
+	// [수정] 2026-11-10: Load/Store 흐름 정리
+	// - 파일 창을 열기 전에 게임을 멈춤. 창이 떠 있는 동안에도 tick이 계속 와서, Store는 OK를 누른
+	//   순간의 보드를 저장 (Swing Timer로 바꾼 뒤에도 모달 창은 이벤트를 계속 처리함)
+	// - 취소하면 아무 일도 하지 않음.
+	// - try-with-resources로 실패해도 파일을 닫음. 원본은 예외가 나면 스트림이 열린 채 남았음
+	// - 확장자로 형식(.life, .rle)을 고르고, 오류 창에 원인 출력
+
 	private void doLoad()
-	{	try
-		{
-			FileInputStream in = new FileInputStream(
-			   Files.userSelected(".",".life","Life File","Load"));
+	{	game.stop();
 
-			game.load( in );				// stops the game, then loads
+		Optional<File> chosen = Files.userSelected( ".", "Load", fileFilters(true) );
+		if( chosen.isEmpty() )
+			return;								// cancelled: not an error
 
-			in.close();
+		File file = chosen.get();
+		Optional<PatternFormat> format = formatFor( file );
+		if( format.isEmpty() )
+		{	showError( "Can't load \"" + file.getName() + "\".\n"
+						+ "Supported files: " + extensionList() + "." );
+			return;
+		}
+
+		try( InputStream in = new FileInputStream( file ) )
+		{	game.load( in, format.get() );		// keeps the board if reading fails
 		}
 		catch( IOException theException )
-		{	JOptionPane.showMessageDialog( null, "Read Failed!",
-					"The Game of Life", JOptionPane.ERROR_MESSAGE);
+		{	showError( "Can't load \"" + file.getName() + "\".\n"
+						+ "The file may be missing or damaged, may not be a Life pattern,\n"
+						+ "or may be larger than the board ("
+						+ board.widthInCells() + "x" + board.widthInCells() + ")." );
 		}
 		repaint();
 	}
 
 	private void doStore()
-	{	try
-		{
-			FileOutputStream out = new FileOutputStream(
-				  Files.userSelected(".",".life","Life File","Write"));
+	{	game.stop();
 
-			game.store( out );				// stops the game, then stores
+		Optional<File> chosen = Files.userSelected( ".", "Store", fileFilters(false) );
+		if( chosen.isEmpty() )
+			return;								// cancelled: not an error
 
-			out.close();
+		File file = chosen.get();
+		Optional<PatternFormat> format = formatFor( file );
+		if( format.isEmpty() )
+		{	showError( "Can't save \"" + file.getName() + "\".\n"
+						+ "Use a file name that ends in " + extensionList() + "." );
+			return;
+		}
+
+		try( OutputStream out = new FileOutputStream( file ) )
+		{	game.store( out, format.get() );
 		}
 		catch( IOException theException )
-		{	JOptionPane.showMessageDialog( null, "Write Failed!",
-					"The Game of Life", JOptionPane.ERROR_MESSAGE);
+		{	showError( "Can't save \"" + file.getName() + "\".\n"
+						+ "Check that the folder exists and that you can write to it." );
 		}
+	}
+
+	private void showError( String message )
+	{	JOptionPane.showMessageDialog( null, message,
+				"The Game of Life", JOptionPane.ERROR_MESSAGE);
+	}
+
+	/** Return the format whose extension the file name ends in
+	 *  (ignoring case), or an empty Optional if there is none.
+	 */
+	private Optional<PatternFormat> formatFor( File file )
+	{	String name = file.getName().toLowerCase( Locale.ROOT );
+		for( PatternFormat format : formats )
+			if( name.endsWith( "." + format.extension() ) )
+				return Optional.of( format );
+		return Optional.empty();
+	}
+
+	/** One file chooser filter for each format. If
+	 *  <code>allFormatsFirst</code> is true, a filter that shows
+	 *  every format at once comes first (used for Load).
+	 */
+	private FileNameExtensionFilter[] fileFilters( boolean allFormatsFirst )
+	{	List<FileNameExtensionFilter> filters = new ArrayList<>();
+		if( allFormatsFirst )
+		{	String[]	 extensions = new String[ formats.size() ];
+			List<String> patterns	= new ArrayList<>();
+			for( int i = 0; i < extensions.length; ++i )
+			{	extensions[i] = formats.get(i).extension();
+				patterns.add( "*." + extensions[i] );
+			}
+			filters.add( new FileNameExtensionFilter(
+						"Pattern Files (" + String.join( ", ", patterns ) + ")", extensions ) );
+		}
+		for( PatternFormat format : formats )
+			filters.add( new FileNameExtensionFilter(
+						format.description() + " (*." + format.extension() + ")",
+						format.extension() ) );
+		return filters.toArray( new FileNameExtensionFilter[0] );
+	}
+
+	/** The supported extensions, for messages: ".life, .rle"
+	 */
+	private String extensionList()
+	{	List<String> extensions = new ArrayList<>();
+		for( PatternFormat format : formats )
+			extensions.add( "." + format.extension() );
+		return String.join( ", ", extensions );
 	}
 
 	/** Override paint to ask the Board to draw itself.

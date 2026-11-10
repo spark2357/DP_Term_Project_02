@@ -2,7 +2,8 @@ package com.holub.io;
 
 import java.io.*;
 import javax.swing.*;
-import javax.swing.filechooser.FileFilter; // disambiguate from java.io version
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.util.Optional;
 
 /*** A utility that handles various File-related operations.
  *
@@ -11,50 +12,39 @@ import javax.swing.filechooser.FileFilter; // disambiguate from java.io version
 
 public class Files
 {
-	/** Throw up a file choser and return the file that the user selects.
-	 *  @param extension File extension (text following the rightmost
-	 *  				 dot in the name) that you're looking for.
-	 *  				 Use null if any will do.
-	 *  @param description the description of what the extension means.
-	 *  				 Not used if "extension" is null.
+	// [수정] 2026-11-10: 확장자 하나만 받던 userSelected(startHere, extension, description, selectButtonText)를
+	// 필터 여러 개를 받는 이 메서드로 바꿈. .life와 .rle를 함께 고를 수 있어야 하기 때문.
+	// 또 취소를 예외(FileNotFoundException) 대신 빈 Optional로 돌려줌. 취소는 사용자의 정상적인 선택인데,
+	// 예외로 알리면 부르는 쪽이 읽기 실패와 구별하지 못해 오류 창을 띄웠음
+
+	/** @param startHere Name of initial directory in which to look.
 	 *  @param selectButtonText Replaces the "Open" on the chooser button.
-	 *  @param startHere Name of initial directory in which to look.
-	 *  @return a {@link File} representing the selected file.
-	 *  @throws FileNotFoundException if the user didn't select a file.
-	 *  		An exception toss (as compared to a null return value)
-	 *			makes it easy to do the following:
-	 *  <PRE>
-	 *  FileInputStream in =
-	 *  	new FileInputStream(
- 	 * 					 Files.userSelected(".",".txt","Text File","Open"));
-	 *  </PRE>
+	 *  @param filters the kinds of files to offer.
+	 *  @return the selected file, or an empty Optional if the user
+	 *  		cancelled the dialog. Cancelling is a normal choice,
+	 *  		not an error.
 	 */
-
-	public static File userSelected( final String startHere, 
-						final String extension,
-						final String description,
-						final String selectButtonText )
-									throws FileNotFoundException
-	{	FileFilter filter = 
-			new FileFilter()
-			{	public boolean accept(File f)
-				{	return f.isDirectory()
-							|| (extension != null 
-									&& f.getName().endsWith(extension) );
-				}
-				public String getDescription()
-				{	return description;
-				}
-			};
-
-		JFileChooser chooser = new JFileChooser(startHere);
-		chooser.setFileFilter(filter);
+	public static Optional<File> userSelected( String startHere,
+						String selectButtonText,
+						FileNameExtensionFilter... filters )
+	{	JFileChooser chooser = new JFileChooser(startHere);
+		for( FileNameExtensionFilter filter : filters )
+			chooser.addChoosableFileFilter( filter );
+		if( filters.length > 0 )
+			chooser.setFileFilter( filters[0] );
 
 		int result = chooser.showDialog(null,selectButtonText);
-		if(result == JFileChooser.APPROVE_OPTION)
-			return chooser.getSelectedFile();
+		if(result != JFileChooser.APPROVE_OPTION)
+			return Optional.empty();
 
-		throw new FileNotFoundException("No file selected by user");
+		File selected = chooser.getSelectedFile();
+		if( selected.getName().indexOf('.') < 0
+				&& chooser.getFileFilter() instanceof FileNameExtensionFilter )
+		{	FileNameExtensionFilter inUse =
+							(FileNameExtensionFilter) chooser.getFileFilter();
+			selected = new File( selected.getPath() + "." + inUse.getExtensions()[0] );
+		}
+		return Optional.of( selected );
 	}
 
 	/** A unit test class for the methods in this class. Run with
@@ -63,13 +53,13 @@ public class Files
 	static class Test
 	{	
 		public static void main(String[] args)
-		{	try
-			{	File f=Files.userSelected(".",".test","Test File","Select!");
-				System.out.println( "Selected " + f.getName() );
-			}
-			catch( FileNotFoundException e)
-			{	System.out.println( "No file selected" );
-			}
+		{	// [수정] 2026-11-10: userSelected가 필터를 받고 Optional을 돌려주도록 바뀜
+			Optional<File> f=Files.userSelected(".","Select!",
+							new FileNameExtensionFilter("Test File","test"));
+			if( f.isPresent() )
+				System.out.println( "Selected " + f.get().getName() );
+			else
+				System.out.println( "No file selected" );
 			System.exit(0); // Required to stop AWT thread & shut down.
 		}
 	}
