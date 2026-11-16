@@ -98,8 +98,9 @@ public class LifeGame
 	{	ticker.stop();
 	}
 
-	// [수정] 2026-11-10: Go → Tick (Single Step)을 Facade에 추가. 원본처럼 시계를 한 번 tick하므로
-	// 메뉴가 열려 있으면 건너뛰는 Clock의 규칙도 그대로 적용됨
+	// [수정] 2026-11-10: Go → Tick (Single Step)을 Facade에 추가. 원본처럼 시계를 한 번 tick함
+	// [수정] 2026-11-16: 메뉴가 열려 있으면 건너뛰는 규칙은 SwingTickTimer(자동 실행)로 옮겨져 여기에는 적용되지 않음.
+	// 메뉴 항목을 클릭하면 Swing이 메뉴를 먼저 닫고 동작을 실행하므로, 원본과 마찬가지로 한 단계 진행됨
 
 	/** Advance the game by one generation (single step) by
 	 *  ticking the TickSource once. The game is not started.
