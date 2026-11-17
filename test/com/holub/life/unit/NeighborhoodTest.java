@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
  *   - amActive                : 지난 계산에서 바뀐 셀이 있었는지 (없으면 다음 계산을 건너뜀)
  *   - activeEdges             : 바뀐 셀이 있는 가장자리 방향 (이웃 블록을 깨울 때 씀)
  *   - oneLastRefreshRequired  : 안정된 직후 한 번 더 그려야 하는지
- *   - readingPermitted, nestingLevel : static. transition() 중에 그리기를 막는 잠금
  *   메서드
  *   - userClicked(점, 영역)    : 픽셀 좌표로 하위 셀을 찾아 클릭을 전달하고, 가장자리 표시를 켬
  *   - clear()                  : 모든 하위 셀과 activeEdges, amActive를 지움
