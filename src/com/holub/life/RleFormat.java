@@ -18,15 +18,18 @@ import java.util.regex.Pattern;
  * RLE(Run Length Encoded) 패턴 형식. LifeWiki, Golly 등에서 쓰는 텍스트 형식
  *
  *   #N Glider          ← # 으로 시작하는 줄은 주석 (무시)
+ *   #R 30 30           ← 패턴 왼쪽 위의 보드 좌표 (열, 행). 이 앱이 Store할 때 씀
  *   x = 3, y = 3       ← 패턴의 너비, 높이 (rule은 생략 가능, 생략하면 B3/S23)
  *   bo$2bo$3o!         ← b: 죽은 칸, o: 산 칸, $: 줄 끝, !: 패턴 끝, 앞의 숫자: 반복 횟수
  *
- * RLE에는 위치가 없으므로 Load한 패턴은 보드 가운데에 놓음 (남는 한 칸은 오른쪽, 아래쪽 여백으로).
- * 보드보다 큰 패턴, B3/S23이 아닌 규칙, 형식 오류는 IOException
+ * Load할 때 #R이 있으면 그 위치에, 없으면 보드 가운데에 놓음 (남는 한 칸은 오른쪽, 아래쪽 여백으로).
+ * 보드보다 큰 패턴, #R 위치에 놓으면 보드를 벗어나는 패턴, B3/S23이 아닌 규칙, 형식 오류는 IOException
  */
 public class RleFormat implements PatternFormat {
     private static final Pattern HEADER = Pattern.compile(
             "x\\s*=\\s*(\\d{1,9})\\s*,\\s*y\\s*=\\s*(\\d{1,9})(?:\\s*,\\s*rule\\s*=\\s*(\\S+))?\\s*");
+
+    private static final Pattern POSITION = Pattern.compile("#R\\s+(-?\\d{1,9})\\s+(-?\\d{1,9})\\s*");
 
     // 이 앱은 B3/S23 규칙만 지원함. 같은 규칙의 다른 표기도 허용
     private static final Set<String> CONWAY_RULES = Set.of("B3/S23", "S23/B3", "23/3");
@@ -51,11 +54,65 @@ public class RleFormat implements PatternFormat {
 
     @Override
     public Set<Point> read(InputStream in) throws IOException {
+        Parsed parsed = parse(in);
+        return place(parsed.pattern(), parsed.position());
+    }
+
+    // 위치 정보(#R)는 버리고 패턴 모양만 읽음 (Stamp에서 씀)
+    public CellPattern readPattern(InputStream in) throws IOException {
+        return parse(in).pattern();
+    }
+
+    // 패턴을 보드에 놓은 좌표. position이 없을 때만 가운데에 놓음
+    private Set<Point> place(CellPattern pattern, Point position) throws IOException {
+        int left;
+        int top;
+        if (position == null) {
+            left = (widthInCells - pattern.width()) / 2;
+            top = (widthInCells - pattern.height()) / 2;
+        } else {
+            left = position.x;
+            top = position.y;
+            if (left < 0 || top < 0
+                    || left + pattern.width() > widthInCells || top + pattern.height() > widthInCells) {
+                throw new IOException("RLE: pattern at #R " + left + " " + top + " does not fit on the board");
+            }
+        }
+        Set<Point> cells = new HashSet<>();
+        for (Point p : pattern.cells()) {
+            cells.add(new Point(p.x + left, p.y + top));
+        }
+        return cells;
+    }
+
+    private record Parsed(CellPattern pattern, Point position) {
+    }
+
+    private Parsed parse(InputStream in) throws IOException {
         // 스트림은 닫지 않음 (연 쪽이 닫음)
         // UTF-8은 ASCII를 포함하므로 RLE를 그대로 읽고, 주석의 비ASCII 문자도 깨지지 않음
         BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
-        Matcher header = HEADER.matcher(readHeaderLine(reader));
+        Point position = null;
+        String line;
+        while (true) {
+            line = reader.readLine();
+            if (line == null) {
+                throw new IOException("RLE: header line is missing");
+            }
+            line = line.trim();
+            if (line.startsWith("#R")) {
+                Matcher matcher = POSITION.matcher(line);
+                if (!matcher.matches()) {
+                    throw new IOException("RLE: invalid #R line");
+                }
+                position = new Point(Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+            } else if (!line.isEmpty() && !line.startsWith("#")) {
+                break;
+            }
+        }
+
+        Matcher header = HEADER.matcher(line);
         if (!header.matches()) {
             throw new IOException("RLE: invalid header line");
         }
@@ -70,28 +127,7 @@ public class RleFormat implements PatternFormat {
             throw new IOException("RLE: unsupported rule " + rule);
         }
 
-        Set<Point> pattern = readBody(reader, width, height);
-
-        // 보드 가운데에 놓음
-        int left = (widthInCells - width) / 2;
-        int top = (widthInCells - height) / 2;
-        Set<Point> cells = new HashSet<>();
-        for (Point p : pattern) {
-            cells.add(new Point(p.x + left, p.y + top));
-        }
-        return cells;
-    }
-
-    // 주석 줄과 빈 줄을 건너뛰고 첫 줄(헤더)을 돌려줌
-    private static String readHeaderLine(BufferedReader reader) throws IOException {
-        String line;
-        while ((line = reader.readLine()) != null) {
-            line = line.trim();
-            if (!line.isEmpty() && !line.startsWith("#")) {
-                return line;
-            }
-        }
-        throw new IOException("RLE: header line is missing");
+        return new Parsed(new CellPattern(width, height, readBody(reader, width, height)), position);
     }
 
     // 본문을 읽어 패턴 안의 좌표(왼쪽 위가 0,0)를 돌려줌
@@ -185,6 +221,7 @@ public class RleFormat implements PatternFormat {
             maxY = Math.max(maxY, p.y);
         }
 
+        writer.write("#R " + minX + " " + minY + "\n");
         writer.write("x = " + (maxX - minX + 1) + ", y = " + (maxY - minY + 1) + ", rule = B3/S23\n");
 
         LineWrapper body = new LineWrapper(writer);

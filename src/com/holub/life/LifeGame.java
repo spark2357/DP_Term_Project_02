@@ -54,14 +54,24 @@ public class LifeGame
 		);
 	}
 
-	/** Implement this interface to be told when a step changed the
-	 *  board (so the screen needs to be refreshed).
+	// [수정] 2026-11-17: boardEdited() 추가. Clear, Load, 클릭, Stamp 뒤에도 알려서 Command가 화면을 몰라도
+	// 다시 그려지게 함. clear()는 블록의 active 표시를 지우므로 바뀐 블록만 그리는 boardChanged()로는 안 지워짐
+
+	/** Implement this interface to be told when the board changed
+	 *  (so the screen needs to be refreshed).
 	 */
 	public interface Listener
-	{	void boardChanged();
+	{	/** A step changed the board. Only the blocks that changed
+		 *  need to be redrawn. */
+		void boardChanged();
+
+		/** The board was cleared, loaded, clicked or stamped.
+		 *  The whole board must be redrawn. */
+		void boardEdited();
 	}
 
-	/** Add a listener that is told every time a step changes the board.
+	/** Add a listener that is told every time a step or an edit
+	 *  (clear, load, click, stamp) changes the board.
 	 */
 	public void addGameListener( Listener listener )
 	{	publisher.subscribe( listener );
@@ -83,6 +93,16 @@ public class LifeGame
 				}
 			);
 		return changed;
+	}
+
+	private void publishBoardEdited()
+	{	publisher.publish
+		(	new Publisher.Distributor()
+			{	public void deliverTo( Object subscriber )
+				{	((Listener)subscriber).boardEdited();
+				}
+			}
+		);
 	}
 
 	/** Start running the game, one generation every
@@ -112,6 +132,7 @@ public class LifeGame
 	 */
 	public void toggle( int row, int column )
 	{	board.toggle( row, column );
+		publishBoardEdited();
 	}
 
 	/** Return the positions of all live cells (x = column, y = row).
@@ -124,6 +145,7 @@ public class LifeGame
 	 */
 	public void clear()
 	{	board.clear();
+		publishBoardEdited();
 	}
 
 	// [수정] 2026-11-10: 파일 형식(.life, .rle)을 인자로 받음. 어떤 형식인지는 부르는 쪽(파일 이름)이 정함
@@ -135,6 +157,7 @@ public class LifeGame
 	public void load( InputStream in, PatternFormat format ) throws IOException
 	{	ticker.stop();
 		board.load( in, format );
+		publishBoardEdited();
 	}
 
 	/** Stop the game, then write the board to <code>out</code> in
@@ -143,5 +166,13 @@ public class LifeGame
 	public void store( OutputStream out, PatternFormat format ) throws IOException
 	{	ticker.stop();
 		board.store( out, format );
+	}
+
+	/** Stamp the pattern with its upper-left corner at the given
+	 *  row and column. The game keeps running, like a click.
+	 */
+	public void stamp( CellPattern pattern, int row, int column )
+	{	board.stamp( pattern, row, column );
+		publishBoardEdited();
 	}
 }

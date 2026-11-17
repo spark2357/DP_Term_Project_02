@@ -1,29 +1,20 @@
 package com.holub.life;
 
-import java.io.*;
-
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.List;			// not java.awt.List
-import java.util.Locale;
-import java.util.Optional;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
-import com.holub.io.Files;
-import com.holub.ui.MenuSite;
 
 import com.holub.life.BoardView;
 import com.holub.life.LifeGame;
+import com.holub.life.mouse.MouseController;
 
 /**
  * The Universe is the Swing view of the game. It does not create
  * the game: the Board and the LifeGame are built in Life.main and
  * passed in. It draws the
- * Board, handles all Swing events (mouse clicks, Grid menu,
- * file dialogs), and translates them into requests to the
- * LifeGame facade. The game logic itself (building the Composite
+ * Board and translates mouse events into cell positions for the
+ * MouseController. (The Grid menu and its file dialogs are
+ * Commands registered by GridMenu.) The game logic itself (building the Composite
  * Neighborhood, advancing a generation, loading and storing)
  * lives in the Board, and the order in which the Board and the
  * Clock must be used lives in LifeGame. The Universe does not
@@ -37,11 +28,10 @@ public class Universe extends JPanel
 {	// [수정] 2026-11-09: Board 대신 읽기 전용 BoardView로 받음. 보드를 바꾸는 요청은
 	// LifeGame을 거칠 수밖에 없도록 컴파일 단계에서 강제함
 	private 		final BoardView	board;	// read only: used just for drawing
-	private 		final LifeGame	game;	// every request that changes the game
 
-	// [수정] 2026-11-10: Load/Store가 쓰는 파일 형식 목록을 생성자로 받음. 어떤 형식을 지원할지는
-	// 조립(Life.main)이 정하고, 화면은 받은 목록으로 파일 창 필터를 만들고 확장자로 형식을 고르기만 함
-	private final List<PatternFormat> formats;
+	// [수정] 2026-11-17: Grid 메뉴와 Load/Store는 GridMenu의 Command로 옮기고, 클릭은 지금 마우스 모드
+	// (State 패턴)에 넘김. 화면은 픽셀을 셀 좌표로 바꾸고 다시 그리기만 함
+	private 		final MouseController mouse;
 
 	/** The size of the smallest "atomic" cell---a Resident object.
 	 *  This size is extrinsic to a Resident (It's passed into the
@@ -55,14 +45,12 @@ public class Universe extends JPanel
 	/** Create the view of a game that is already assembled.
 	 *  @param board drawn directly by {@link #paint}. It is a
 	 *  			 read-only view, so the Universe cannot change it.
-	 *  @param game  receives every request that changes the game.
-	 *  @param formats the file formats offered by Load and Store,
-	 *  			 in the order they appear in the file chooser.
+	 *  @param game  tells the Universe when the board changed.
+	 *  @param mouse receives every click (in cells, not pixels).
 	 */
-	public Universe( BoardView board, LifeGame game, List<PatternFormat> formats )
+	public Universe( BoardView board, LifeGame game, MouseController mouse )
 	{	this.board   = board;
-		this.game    = game;
-		this.formats = List.copyOf( formats );
+		this.mouse   = mouse;
 
 		final Dimension PREFERRED_SIZE =
 						new Dimension
@@ -97,53 +85,32 @@ public class Universe extends JPanel
 		addMouseListener					//{=Universe.mouse}
 		(	new MouseAdapter()
 			{	public void mousePressed(MouseEvent e)
-				{	// Translate the pixel position into a cell position.
-					// Knowing the size of the panel is the view's job.
-
-					int pixelsPerCell = getBounds().width / board.widthInCells();
-					int row		= e.getY() / pixelsPerCell;
-					int column	= e.getX() / pixelsPerCell;
-					game.toggle( row, column );
+				{	int row	   = e.getY() / pixelsPerCell();
+					int column = e.getX() / pixelsPerCell();
+					if( SwingUtilities.isRightMouseButton(e) )
+						mouse.rightClicked( row, column );
+					else
+						mouse.clicked( row, column );
 					repaint();
 				}
-			}
-		);
 
-		MenuSite.addLine( this, "Grid", "Clear",
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-				{	game.clear();
-					repaint();
+				public void mouseExited(MouseEvent e)
+				{	if( mouse.exited() )
+						repaint();
 				}
 			}
 		);
 
-		MenuSite.addLine			// {=Universe.load.setup}
-		(	this, "Grid", "Load",
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-				{	doLoad();
+		addMouseMotionListener
+		(	new MouseMotionAdapter()
+			{	public void mouseMoved(MouseEvent e)
+				{	if( mouse.moved( e.getY() / pixelsPerCell(), e.getX() / pixelsPerCell() ) )
+						repaint();
 				}
 			}
 		);
 
-		MenuSite.addLine
-		(	this, "Grid", "Store",
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-				{	doStore();
-				}
-			}
-		);
-
-		MenuSite.addLine
-		(	this, "Grid", "Exit",
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-		        {	System.exit(0);
-		        }
-			}
-		);
+		mouse.setModeListener( this::repaint );
 
 		// [수정] 2026-11-09: Clock을 직접 구독해 game.step()을 부르던 것을, LifeGame의 알림을 받도록 변경.
 		// 세대 진행은 LifeGame이 맡고, 화면은 "보드가 바뀌었다"는 알림에 다시 그리기만 함
@@ -153,114 +120,16 @@ public class Universe extends JPanel
 			{	public void boardChanged()
 				{	refreshNow();
 				}
+				public void boardEdited()
+				{	repaint();
+				}
 			}
 		);
 	}
 
-	// [수정] 2026-11-10: Load/Store 흐름 정리
-	// - 파일 창을 열기 전에 게임을 멈춤. 창이 떠 있는 동안에도 tick이 계속 와서, Store는 OK를 누른
-	//   순간의 보드를 저장 (Swing Timer로 바꾼 뒤에도 모달 창은 이벤트를 계속 처리함)
-	// - 취소하면 아무 일도 하지 않음.
-	// - try-with-resources로 실패해도 파일을 닫음. 원본은 예외가 나면 스트림이 열린 채 남았음
-	// - 확장자로 형식(.life, .rle)을 고르고, 오류 창에 원인 출력
-
-	private void doLoad()
-	{	game.stop();
-
-		Optional<File> chosen = Files.userSelected( ".", "Load", fileFilters(true) );
-		if( chosen.isEmpty() )
-			return;								// cancelled: not an error
-
-		File file = chosen.get();
-		Optional<PatternFormat> format = formatFor( file );
-		if( format.isEmpty() )
-		{	showError( "Can't load \"" + file.getName() + "\".\n"
-						+ "Supported files: " + extensionList() + "." );
-			return;
-		}
-
-		try( InputStream in = new FileInputStream( file ) )
-		{	game.load( in, format.get() );		// keeps the board if reading fails
-		}
-		catch( IOException theException )
-		{	showError( "Can't load \"" + file.getName() + "\".\n"
-						+ "The file may be missing or damaged, may not be a Life pattern,\n"
-						+ "or may be larger than the board ("
-						+ board.widthInCells() + "x" + board.widthInCells() + ")." );
-		}
-		repaint();
-	}
-
-	private void doStore()
-	{	game.stop();
-
-		Optional<File> chosen = Files.userSelected( ".", "Store", fileFilters(false) );
-		if( chosen.isEmpty() )
-			return;								// cancelled: not an error
-
-		File file = chosen.get();
-		Optional<PatternFormat> format = formatFor( file );
-		if( format.isEmpty() )
-		{	showError( "Can't save \"" + file.getName() + "\".\n"
-						+ "Use a file name that ends in " + extensionList() + "." );
-			return;
-		}
-
-		try( OutputStream out = new FileOutputStream( file ) )
-		{	game.store( out, format.get() );
-		}
-		catch( IOException theException )
-		{	showError( "Can't save \"" + file.getName() + "\".\n"
-						+ "Check that the folder exists and that you can write to it." );
-		}
-	}
-
-	private void showError( String message )
-	{	JOptionPane.showMessageDialog( null, message,
-				"The Game of Life", JOptionPane.ERROR_MESSAGE);
-	}
-
-	/** Return the format whose extension the file name ends in
-	 *  (ignoring case), or an empty Optional if there is none.
-	 */
-	private Optional<PatternFormat> formatFor( File file )
-	{	String name = file.getName().toLowerCase( Locale.ROOT );
-		for( PatternFormat format : formats )
-			if( name.endsWith( "." + format.extension() ) )
-				return Optional.of( format );
-		return Optional.empty();
-	}
-
-	/** One file chooser filter for each format. If
-	 *  <code>allFormatsFirst</code> is true, a filter that shows
-	 *  every format at once comes first (used for Load).
-	 */
-	private FileNameExtensionFilter[] fileFilters( boolean allFormatsFirst )
-	{	List<FileNameExtensionFilter> filters = new ArrayList<>();
-		if( allFormatsFirst )
-		{	String[]	 extensions = new String[ formats.size() ];
-			List<String> patterns	= new ArrayList<>();
-			for( int i = 0; i < extensions.length; ++i )
-			{	extensions[i] = formats.get(i).extension();
-				patterns.add( "*." + extensions[i] );
-			}
-			filters.add( new FileNameExtensionFilter(
-						"Pattern Files (" + String.join( ", ", patterns ) + ")", extensions ) );
-		}
-		for( PatternFormat format : formats )
-			filters.add( new FileNameExtensionFilter(
-						format.description() + " (*." + format.extension() + ")",
-						format.extension() ) );
-		return filters.toArray( new FileNameExtensionFilter[0] );
-	}
-
-	/** The supported extensions, for messages: ".life, .rle"
-	 */
-	private String extensionList()
-	{	List<String> extensions = new ArrayList<>();
-		for( PatternFormat format : formats )
-			extensions.add( "." + format.extension() );
-		return String.join( ", ", extensions );
+	// Knowing the size of the panel is the view's job.
+	private int pixelsPerCell()
+	{	return Math.max( 1, getBounds().width / board.widthInCells() );
 	}
 
 	/** Override paint to ask the Board to draw itself.
@@ -278,6 +147,7 @@ public class Universe extends JPanel
 		panelBounds.x = 0;
 		panelBounds.y = 0;
 		board.redraw(g, panelBounds, true);		//{=Universe.redraw1}
+		mouse.drawPreview( g, pixelsPerCell() );
 	}
 
 	/** Force a screen refresh by queuing a request on
@@ -304,6 +174,7 @@ public class Universe extends JPanel
 						panelBounds.x = 0;
 						panelBounds.y = 0;
 						board.redraw(g, panelBounds, false); //{=Universe.redraw2}
+						mouse.drawPreview( g, pixelsPerCell() );
 					}
 					finally
 					{	g.dispose();
