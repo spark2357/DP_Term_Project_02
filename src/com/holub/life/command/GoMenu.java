@@ -20,13 +20,21 @@ public class GoMenu {
             new Speed("Fast", 30));
 
     private final LifeGame game;
+    private final Command halt;
 
     public GoMenu(LifeGame game) {
+        this(game, new HaltCommand(game));
+    }
+
+    // [수정] 2026-11-16: Halt 메뉴가 할 일을 밖에서 받을 수 있게 함.
+    // Life.main에서 "멈추기 + 실행 리포트"(MacroCommand)를 넘김. GoMenu는 그게 묶음인지 모름
+    public GoMenu(LifeGame game, Command halt) {
         this.game = game;
+        this.halt = halt;
     }
 
     public void register() {
-        add("Halt", new HaltCommand(game));
+        add("Halt", halt);
         add("Tick (Single Step)", new TickCommand(game));
         for (Speed speed : SPEEDS) {
             add(speed.name(), new SetSpeedCommand(game, speed.millisecondsBetweenTicks()));

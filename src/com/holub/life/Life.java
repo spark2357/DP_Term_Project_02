@@ -4,6 +4,11 @@ import java.awt.*;
 import javax.swing.*;
 import com.holub.ui.MenuSite;
 import com.holub.life.command.GoMenu;
+import com.holub.life.command.Command;
+import com.holub.life.command.HaltCommand;
+import com.holub.life.command.MacroCommand;
+import com.holub.life.command.ShowRunReportCommand;
+import java.util.function.Consumer;
 
 /*******************************************************************
  * An implemenation of Conway's Game of Life.
@@ -38,10 +43,28 @@ public final class Life extends JFrame
 					);
 					Universe	universe = new Universe( board, game, formats );
 
-					// [수정] 2026-11-10: Go 메뉴를 Clock 생성자 대신 이곳에서 등록함 (항목마다 Command)
-					new GoMenu( game ).register();
+					// [수정] 2026-11-16: 실행 통계. RunRecorder가 세대마다 통계(Visitor)를 모으고, Halt를 누르거나 모든 셀이
+					// 죽으면 "멈추기 + 실행 리포트"(MacroCommand)를 실행해 창 아래 상태 표시줄에 결과를 보여 줌.
+					// 리포트 Command는 어디에 출력하는지 모르고 출력 함수(statusBar::setText)만 받음. Swing은 이곳에만 있음
+					JLabel				statusBar	= createStatusBar();
+					Consumer<String>	showStatus	= statusBar::setText;
+					RunRecorder			recorder	= new RunRecorder( game );
 
-					frame.install( universe );
+					Command haltAndReport = new MacroCommand
+					(	new HaltCommand( game ),
+						new ShowRunReportCommand( recorder, "사용자 정지", showStatus )
+					);
+					Command stopOnExtinction = new MacroCommand
+					(	new HaltCommand( game ),
+						new ShowRunReportCommand( recorder, "멸종으로 정지", showStatus )
+					);
+					recorder.whenExtinct( stopOnExtinction::execute );
+
+					// [수정] 2026-11-10: Go 메뉴를 Clock 생성자 대신 이곳에서 등록함 (항목마다 Command)
+					// [수정] 2026-11-16: Halt 메뉴에 "멈추기 + 실행 리포트"를 넘김
+					new GoMenu( game, haltAndReport ).register();
+
+					frame.install( universe, statusBar );
 				}
 			}
 		);
@@ -59,10 +82,23 @@ public final class Life extends JFrame
 		getContentPane().setLayout	( new BorderLayout()	);
 	}
 
-	/** Put the view into the frame and show the frame.
+	// [수정] 2026-11-16: 창 아래 상태 표시줄 (글자 한 줄을 보여 주는 JLabel). 실행 리포트를 보여 줌
+
+	/** Create the one-line status bar shown under the board.
 	 */
-	private void install( JComponent universe )
+	private static JLabel createStatusBar()
+	{	JLabel statusBar = new JLabel( "실행 후 Halt를 누르면 이번 실행의 통계가 여기에 표시됩니다" );
+		statusBar.setFont( statusBar.getFont().deriveFont( 11f ) );					// 글씨를 조금 작게
+		statusBar.setBorder( BorderFactory.createEmptyBorder( 3, 6, 3, 6 ) );		// 위·왼쪽·아래·오른쪽 여백
+		return statusBar;
+	}
+
+	/** Put the view into the middle of the frame and the status bar
+	 *  under it, then show the frame.
+	 */
+	private void install( JComponent universe, JComponent statusBar )
 	{	getContentPane().add( universe, BorderLayout.CENTER); //{=life.java.install}
+		getContentPane().add( statusBar, BorderLayout.SOUTH );	// 창의 아래 칸
 		pack();
 		setVisible( true );
 	}

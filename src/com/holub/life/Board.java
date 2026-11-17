@@ -105,6 +105,18 @@ public class Board implements BoardView
 		return live;
 	}
 
+	// [수정] 2026-11-17: 방문자를 Cell 트리에 넘기는 창구 하나만 둠 (Visitor). 통계처럼 트리 위에서 할 일이 늘어도
+	// Board에 메서드를 추가하지 않고, 어떤 방문자를 보낼지는 부르는 쪽(LifeGame)이 정함.
+	// 방문자는 Cell 객체를 직접 받으므로 BoardView(화면용)에는 넣지 않음. 화면은 방문자를 보낼 수 없음
+
+	/** Let the visitor visit every cell on the board, starting from
+	 *  the outermost block. Only the model (LifeGame) calls this.
+	 *  @see CellVisitor
+	 */
+	public void accept( CellVisitor visitor )
+	{	outermostCell.accept( visitor );
+	}
+
 	/** Kill every cell on the board.
 	 */
 	public void clear()

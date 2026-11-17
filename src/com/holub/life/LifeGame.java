@@ -35,6 +35,9 @@ public class LifeGame
 
 	private final Publisher		publisher = new Publisher();
 
+	// [수정] 2026-11-16: 지금까지 진행한 세대 수. 보드가 안 바뀐 세대도 셈 (실행 통계에서 세대 수와 평균을 낼 때 씀)
+	private int					generation = 0;
+
 	// [수정] 2026-11-09: "tick이 오면 한 세대 진행"은 게임 규칙이므로 Universe(화면)에서 이곳으로 옮김.
 	// LifeGame이 TickSource를 구독하고, 보드가 바뀌면 자기 구독자(Universe)에게 알림
 
@@ -73,7 +76,8 @@ public class LifeGame
 	 *  @return true if anything on the board changed state.
 	 */
 	public boolean step()
-	{	boolean changed = board.step();
+	{	++generation;
+		boolean changed = board.step();
 		if( changed )
 			publisher.publish
 			(	new Publisher.Distributor()
@@ -83,6 +87,25 @@ public class LifeGame
 				}
 			);
 		return changed;
+	}
+
+	/** Return how many generations have been advanced so far,
+	 *  including those in which nothing changed.
+	 */
+	public int generation()
+	{	return generation;
+	}
+
+	// [수정] 2026-11-16: 통계를 Facade로 노출. 바깥에서는 Board와 Visitor를 몰라도 됨
+	// [수정] 2026-11-17: 통계용 방문자(StatisticsVisitor)를 만들어 Board.accept()로 보냄. Board는 어떤 방문자인지 모름
+
+	/** Return the current statistics of the board (a snapshot),
+	 *  counted by sending a StatisticsVisitor through the board.
+	 */
+	public CellStatistics statistics()
+	{	StatisticsVisitor visitor = new StatisticsVisitor();
+		board.accept( visitor );
+		return visitor.result();
 	}
 
 	/** Start running the game, one generation every

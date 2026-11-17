@@ -108,6 +108,11 @@ public final class Resident implements Cell
 	public Cell    create()			{return new Resident();			}
 	public int 	   widthInCells()	{return 1;}
 
+	// [수정] 2026-11-16: Visitor에게 자기 자신(셀 하나)을 알려 줌 (Composite의 Leaf)
+	public void accept( CellVisitor visitor )
+	{	visitor.visitResident( this );
+	}
+
 	public Direction isDisruptiveTo()
 	{	return isStable() ? Direction.NONE : Direction.ALL ;
 	}
