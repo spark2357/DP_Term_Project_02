@@ -7,7 +7,6 @@ import java.io.*;
 
 import com.holub.io.Files;
 import com.holub.life.Cell;
-import com.holub.asynch.ConditionVariable;
 
 import com.holub.life.Cell;
 import com.holub.life.Clock;
@@ -32,13 +31,9 @@ import com.holub.life.Storable;
 
 public final class Neighborhood implements Cell
 {
-	/** Block if reading is not permitted because the grid is
-	 *  transitioning to the next state. Only one lock is
-	 *  used (for the outermost neighborhood) since all updates
-	 *  must be requested through the outermost neighborhood.
-	 */
-	private static final ConditionVariable readingPermitted =
-											new ConditionVariable(true);
+	// [수정] 2026-11-17: transition() 중에 그리기를 막던 잠금(readingPermitted, nestingLevel)을 제거함 (이슈 #5 2단계).
+	// Swing Timer로 바꾼 뒤 tick(계산)과 그리기, 클릭이 모두 EDT에서 하나씩 실행되므로 둘이 겹칠 수 없음.
+	// 잠금 때문에 그리기를 포기하면 다시 그리기 요청(oneLastRefreshRequired)이 사라지던 문제도 함께 없어짐
 
 	/** Returns true only if none of the cells in the Neighborhood
 	 *  changed state during the last transition.
@@ -248,21 +243,8 @@ public final class Neighborhood implements Cell
 	 *  @see #figureNextState
 	 */
 	public boolean transition()
-	{	
-		// The condition variable is set and reset only by the
-		// outermost neighborhood. It's actually incorrect
-		// for an inner block to touch it because the whole
-		// board has to be locked for edge cells in a subblock
-		// to compute their next state correctly. There's no
-		// race condition since the only place that transition()
-		// is called is from the clock tick, and recursively
-		// from here. As long as the recompute time is less
-		// than the tick interval, everything's copacetic.
-
+	{
 		boolean someSubcellChangedState = false;
-
-		if( ++nestingLevel == 0 )
-			readingPermitted.set(false);
 
 		activeEdges.clear();							/*(1)*/
 
@@ -273,21 +255,9 @@ public final class Neighborhood implements Cell
 					someSubcellChangedState = true;
 				}								 //{=transition.end}
 			}
-		
-		if( nestingLevel-- == 0 )
-			readingPermitted.set(true);
 
 		return someSubcellChangedState;
 	}
-	// The following variable is used only by the transition()
-	// method. Since Java doesn't support static local variables,
-	// I am forced to declare it in class scope, but I deliberately
-	// don't put it up at the top of the class defintion because
-	// it's not really an attribute of the class---it's just
-	// an implemenation detail of the immediately preceding
-	// method.
-	//
-	private static int nestingLevel = -1;
 
 
 	/** Modifies activeEdges to indicate whether the addition
@@ -342,38 +312,22 @@ public final class Neighborhood implements Cell
 			
 		if( !amActive && !oneLastRefreshRequired && !drawAll )
 			return;
-		try
-		{
-			oneLastRefreshRequired = false;
-			int compoundWidth = here.width;
-			Rectangle subcell = new Rectangle(	here.x, here.y,
-											here.width  / gridSize,
-											here.height / gridSize );
 
-			// Check to see if we can paint. If not, just return. If
-			// so, actually wait for permission (in case there's
-			// a race condition, then paint.
+		oneLastRefreshRequired = false;
+		int compoundWidth = here.width;
+		Rectangle subcell = new Rectangle(	here.x, here.y,
+										here.width  / gridSize,
+										here.height / gridSize );
 
-			if( !readingPermitted.isTrue() )	//{=Neighborhood.reading.not.permitted}
-				return;
-
-			readingPermitted.waitForTrue();
-
-			for( int row = 0; row < gridSize; ++row )
-			{   for( int column = 0; column < gridSize; ++column )
-				{   grid[row][column].redraw( painter, subcell, drawAll );	// {=Neighborhood.redraw3}
-				    subcell.translate( subcell.width, 0);
-				}
-				subcell.translate(-compoundWidth, subcell.height);
+		for( int row = 0; row < gridSize; ++row )
+		{   for( int column = 0; column < gridSize; ++column )
+			{   grid[row][column].redraw( painter, subcell, drawAll );	// {=Neighborhood.redraw3}
+			    subcell.translate( subcell.width, 0);
 			}
+			subcell.translate(-compoundWidth, subcell.height);
+		}
 
-			painter.paintBorder( here, amActive );
-		}
-		catch( InterruptedException e ) 
-		{	// thrown from waitForTrue. Just
-			// ignore it, since not printing is a
-			// reasonable reaction to an interrupt.
-		}
+		painter.paintBorder( here, amActive );
 	}
 
 	/** Return the edge cell in the indicated row and column.
