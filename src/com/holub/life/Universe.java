@@ -7,6 +7,7 @@ import java.awt.event.*;
 import com.holub.life.BoardView;
 import com.holub.life.LifeGame;
 import com.holub.life.mouse.MouseController;
+import com.holub.life.painter.SwingCellPainter;
 
 /**
  * The Universe is the Swing view of the game. It does not create
@@ -146,7 +147,7 @@ public class Universe extends JPanel
 		// corner of the screen. Pretend that it's at (0,0)
 		panelBounds.x = 0;
 		panelBounds.y = 0;
-		board.redraw(g, panelBounds, true);		//{=Universe.redraw1}
+		board.redraw(new SwingCellPainter(g), panelBounds, true);		//{=Universe.redraw1}
 		mouse.drawPreview( g, pixelsPerCell() );
 	}
 
@@ -173,7 +174,7 @@ public class Universe extends JPanel
 						Rectangle panelBounds = getBounds();
 						panelBounds.x = 0;
 						panelBounds.y = 0;
-						board.redraw(g, panelBounds, false); //{=Universe.redraw2}
+						board.redraw(new SwingCellPainter(g), panelBounds, false); //{=Universe.redraw2}
 						mouse.drawPreview( g, pixelsPerCell() );
 					}
 					finally
