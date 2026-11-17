@@ -27,8 +27,10 @@ public final class Life extends JFrame
 					// left of the Go menu.
 					MenuSite.addMenu( frame, "Grid" );
 
+					// [수정] 2026-11-16: Clock Singleton을 없애고 이곳에서 만듦. 어떤 타이머로 tick을 낼지(SwingTickTimer)도 이곳에서 정함
 					Board		board	 = new Board();
-					LifeGame	game	 = new LifeGame( board, Clock.instance() );
+					Clock		clock	 = new Clock( new SwingTickTimer() );
+					LifeGame	game	 = new LifeGame( board, clock );
 
 					// [수정] 2026-11-10: Load/Store가 지원할 파일 형식을 이곳에서 정함 (순서대로 파일 창에 나옴).
 					// 형식을 추가할 때는 이 목록에 한 줄만 더하면 됨
