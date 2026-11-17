@@ -24,20 +24,20 @@ import org.junit.jupiter.params.provider.ValueSource;
  * RleFormat 단위 테스트: RLE 패턴 형식 (PatternFormat 구현)
  *
  *   형식
- *   - # 으로 시작하는 줄은 주석
+ *   - # 으로 시작하는 줄은 주석. #R x y는 패턴 왼쪽 위의 보드 좌표(열, 행)
  *   - 헤더 x = 너비, y = 높이[, rule = 규칙]
  *   - 본문 b: 죽은 칸, o: 산 칸, $: 줄 끝, !: 패턴 끝, 앞의 숫자: 반복 횟수
  *   메서드
- *   - read(in)          : 패턴을 읽어 보드 가운데에 놓은 좌표 집합을 돌려줌. 잘못된 입력은 IOException
- *   - write(cells, out) : 셀들을 감싸는 사각형 기준으로 RLE를 씀. 한 줄 70자 이하
+ *   - read(in)          : 패턴을 읽어 #R 위치(없으면 보드 가운데)에 놓은 좌표 집합을 돌려줌. 잘못된 입력은 IOException
+ *   - write(cells, out) : 셀들을 감싸는 사각형 기준으로 RLE를 쓰고, 사각형의 왼쪽 위를 #R로 씀. 한 줄 70자 이하
  *
  * [테스트 시나리오]
- *   1. 위치: 패턴은 보드 가운데에 놓이고, 폭이 홀수면 남는 한 칸은 오른쪽(아래쪽) 여백으로 감
+ *   1. 위치: #R이 없으면 패턴은 보드 가운데에 놓이고, 폭이 홀수면 남는 한 칸은 오른쪽(아래쪽) 여백으로 감
  *   2. 본문 해석: 반복 횟수, 빈 줄(n$), 여러 줄에 나뉜 본문, 주석, CRLF, rule과 '!' 생략
  *   3. 규칙: B3/S23의 다른 표기도 읽음
- *   4. 잘못된 입력: 헤더 없음, 보드보다 큰 패턴, 다른 규칙, 모르는 글자, x를 넘는 줄은 IOException
- *   5. 쓰기: 정해진 문자열, 빈 줄 합치기, 빈 보드
- *   6. 왕복: Gosper glider gun을 쓰고 다시 읽어도 같음, 본문은 한 줄 70자 이하
+ *   4. 잘못된 입력: 헤더 없음, 보드보다 큰 패턴, 다른 규칙, 모르는 글자, x를 넘는 줄, 잘못된 #R은 IOException
+ *   5. 쓰기: 정해진 문자열(#R 포함), 빈 줄 합치기, 빈 보드
+ *   6. 왕복: Gosper glider gun을 쓰고 다시 읽어도 같음, 본문은 한 줄 70자 이하. 구석의 패턴도 같은 자리로 돌아옴
  *   7. Board와 함께: Load한 gun이 glider를 쏨, 잘못된 RLE를 Load해도 보드가 남음
  *
  * [커버리지]
@@ -125,6 +125,9 @@ class RleFormatTest {
 			"지원하지 않는 규칙        | x = 3, y = 1, rule = B36/S23\\n3o!",
 			"모르는 글자               | x = 3, y = 1\\n3x!",
 			"줄이 x보다 김             | x = 2, y = 1\\n3o!",
+			"#R 위치에서 보드를 벗어남 | #R 62 0\\nx = 3, y = 1\\n3o!",
+			"#R 음수 좌표              | #R -1 0\\nx = 1, y = 1\\no!",
+			"#R 좌표가 하나뿐          | #R 5\\nx = 1, y = 1\\no!",
 	})
 	@DisplayName("read(): 잘못된 입력은 IOException으로 실패한다")
 	void invalidInputThrowsIOException(String name, String text) {
@@ -135,13 +138,13 @@ class RleFormatTest {
 	//  5. 쓰기
 
 	@Test
-	@DisplayName("write(): glider를 표준 RLE 문자열로 쓴다 (보드 위치와 상관없이 패턴 기준)")
+	@DisplayName("write(): glider를 #R(왼쪽 위 20열, 10행)과 표준 RLE 문자열로 쓴다")
 	void writesGlider() throws IOException {
 		// Given: 보드 아무 곳에 놓인 glider
 		Set<Point> glider = Cells.fromRowColumn("10,21", "11,22", "12,20", "12,21", "12,22");
 
 		// When, Then
-		assertEquals("x = 3, y = 3, rule = B3/S23\nbo$2bo$3o!\n", write(glider));
+		assertEquals("#R 20 10\nx = 3, y = 3, rule = B3/S23\nbo$2bo$3o!\n", write(glider));
 	}
 
 	@Test
@@ -151,7 +154,7 @@ class RleFormatTest {
 		Set<Point> cells = Cells.fromRowColumn("0,0", "3,2");
 
 		// When, Then: 0행은 o 뒤의 죽은 칸 2개를 생략
-		assertEquals("x = 3, y = 4, rule = B3/S23\no3$2bo!\n", write(cells));
+		assertEquals("#R 0 0\nx = 3, y = 4, rule = B3/S23\no3$2bo!\n", write(cells));
 	}
 
 	@Test
@@ -182,8 +185,18 @@ class RleFormatTest {
 			assertTrue(line.length() <= 70, "70자를 넘는 줄: " + line);
 		}
 
-		// Then: 다시 읽으면 같음. 둘 다 가운데에 놓으므로 위치까지 같아야 함
+		// Then: 다시 읽으면 같음
 		assertEquals(gun, read(text));
+	}
+
+	@Test
+	@DisplayName("write(), read(): 오른쪽 아래 구석의 glider를 쓰고 다시 읽으면 가운데가 아니라 같은 자리에 놓인다")
+	void positionSurvivesRoundTrip() throws IOException {
+		// Given: 61~63행, 61~63열
+		Set<Point> glider = Cells.fromRowColumn("61,62", "62,63", "63,61", "63,62", "63,63");
+
+		// When, Then
+		assertEquals(glider, read(write(glider)));
 	}
 
 	//  7. Board와 함께

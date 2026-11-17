@@ -4,6 +4,10 @@ import java.awt.*;
 import javax.swing.*;
 import com.holub.ui.MenuSite;
 import com.holub.life.command.GoMenu;
+import com.holub.life.command.GridMenu;
+import com.holub.life.command.SwingDialogs;
+import com.holub.life.mouse.MouseController;
+import com.holub.life.mouse.ToggleMode;
 
 /*******************************************************************
  * An implemenation of Conway's Game of Life.
@@ -34,11 +38,17 @@ public final class Life extends JFrame
 
 					// [수정] 2026-11-10: Load/Store가 지원할 파일 형식을 이곳에서 정함 (순서대로 파일 창에 나옴).
 					// 형식을 추가할 때는 이 목록에 한 줄만 더하면 됨
-					java.util.List<PatternFormat> formats = java.util.List.of
+					RleFormat		rle		= new RleFormat( board.widthInCells() );
+					PatternFormats	formats	= new PatternFormats( java.util.List.of
 					(	new LifeFormatAdapter( board.widthInCells() ),
-						new RleFormat( board.widthInCells() )
-					);
-					Universe	universe = new Universe( board, game, formats );
+						rle
+					) );
+
+					// [수정] 2026-11-17: 마우스 모드(State)와 Grid 메뉴(Command)를 이곳에서 조립함
+					MouseController mouse	 = new MouseController( new ToggleMode( game ) );
+					Universe		universe = new Universe( board, game, mouse );
+
+					new GridMenu( game, formats, rle, mouse, new SwingDialogs() ).register();
 
 					// [수정] 2026-11-10: Go 메뉴를 Clock 생성자 대신 이곳에서 등록함 (항목마다 Command)
 					new GoMenu( game ).register();
