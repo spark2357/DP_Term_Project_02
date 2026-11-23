@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Tag;
 
 /**
  * Store/Load Contract 테스트: Grid → Store, Grid → Load가 보드를 그대로 저장하고 되살리는지 검증
- * 추상 클래스이며, 하위 클래스가 newDriver()로 검증할 구현을 정함 (원본: OriginalStoreLoadTest)
+ * 추상 클래스이며, 하위 클래스가 newDriver()로 검증할 구현을 정함 (원본: OriginalStoreLoadTest, 현재: BoardStoreLoadTest)
  * 파일 대화상자 대신 바이트 배열 스트림으로 저장하고 읽음
  *
  *   사용하는 LifeTestDriver 메서드

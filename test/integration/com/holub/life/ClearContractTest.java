@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Tag;
 
 /**
  * Clear Contract 테스트: Grid → Clear가 보드를 완전히 비우고, 그 뒤에도 게임이 정상으로 진행되는지 검증 (회귀)
- * 추상 클래스이며, 하위 클래스가 newDriver()로 검증할 구현을 정함 (원본: OriginalClearTest)
+ * 추상 클래스이며, 하위 클래스가 newDriver()로 검증할 구현을 정함 (원본: OriginalClearTest, 현재: BoardClearTest)
  *
  *   사용하는 LifeTestDriver 메서드
  *   - click(행, 열), tick(), liveCells()
