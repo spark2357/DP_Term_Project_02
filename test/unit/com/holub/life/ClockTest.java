@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
  *   - 테스트 제외 대상
  *     - 메뉴가 열려 있으면 tick을 건너뛰는 동작: SwingTickTimer(Swing)로 옮겨져서 단위 테스트에서 제외
  *     - 실제 간격(500/150/70/30ms)대로 울리는지: 타이머 구현(SwingTickTimer)의 일이라 제외
- *     - Go 메뉴에서 속도 고르기: GoMenu와 Command 쪽 테스트에서 확인
+ *     - Go 메뉴에서 속도 고르기: 아직 테스트 없음 (GoMenu는 설계 개선 이슈에서 다룸)
  */
 @Tag("original")
 class ClockTest {

@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Tag;
  * Tick Contract 테스트: 세대 진행(Go → Tick)이 B3/S23 규칙대로 동작하는지 보드 전체에서 검증
  * 추상 클래스이며, 하위 클래스가 newDriver()로 검증할 구현을 정함 (원본: OriginalTickTest, 현재: BoardTickTest)
  *
- *   사용하는 LifeDriver 메서드
+ *   사용하는 LifeTestDriver 메서드
  *   - click(행, 열)  : 패턴 배치
  *   - tick()         : 한 세대 진행
  *   - liveCells()    : 결과 확인
