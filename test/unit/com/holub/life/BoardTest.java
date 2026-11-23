@@ -8,9 +8,6 @@ import java.awt.Point;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -157,39 +154,6 @@ class BoardTest {
 	private void place(Set<Point> cells) {
 		for (Point cell : cells) {
 			board.toggle(cell.y, cell.x);
-		}
-	}
-
-	// 정해 둔 셀을 돌려주고(null이면 IOException), 받은 셀을 기억하는 가짜 형식
-	private static class FakeFormat implements PatternFormat {
-		private final Set<Point> toRead;
-		Set<Point> written;
-
-		FakeFormat(Set<Point> toRead) {
-			this.toRead = toRead;
-		}
-
-		@Override
-		public Set<Point> read(InputStream in) throws IOException {
-			if (toRead == null) {
-				throw new IOException("읽기 실패");
-			}
-			return new HashSet<>(toRead);
-		}
-
-		@Override
-		public void write(Set<Point> cells, OutputStream out) {
-			written = new HashSet<>(cells);
-		}
-
-		@Override
-		public String extension() {
-			return "fake";
-		}
-
-		@Override
-		public String description() {
-			return "Fake Files";
 		}
 	}
 }

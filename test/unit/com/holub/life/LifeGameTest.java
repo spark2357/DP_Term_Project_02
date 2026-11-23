@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * LifeGame 단위 테스트: 보드와 시계를 묶는 Facade. 보드가 바뀌면 구독자(화면)에게 알림 (Observer의 Subject)
- * 시계는 가짜(FakeTicker)로, 화면은 알림을 기록하는 가짜 리스너로 바꿔 화면·시간 없이 검증함
+ * 시계는 가짜(FakeTicker)로, 파일 형식은 가짜(FakeFormat)로, 화면은 알림을 기록하는 가짜 리스너로 바꿔 화면·시간·파일 형식 없이 검증함
  *
  *   메서드
  *   - tick()             : 시계를 한 번 tick → 한 세대 진행 (Go → Tick)
@@ -37,6 +36,7 @@ import org.junit.jupiter.api.Test;
  *   - 테스트 제외 대상
  *     - 진짜 시계(Clock)와 타이머: ClockTest에서 확인
  *     - 메뉴에서 실행: Command 테스트에서 확인
+ *     - 진짜 파일 형식(RleFormat)으로 읽기·쓰기: RleFormatTest, RleBoardLoadTest에서 확인
  */
 @Tag("original")
 class LifeGameTest {
@@ -122,12 +122,12 @@ class LifeGameTest {
 		// Given: 실행 중
 		game.start(30);
 
-		// When
-		game.load(rle("x = 1, y = 1\no!"), new RleFormat(LifeTestDriver.SIZE));
+		// When: 형식이 셀 두 개를 읽음
+		game.load(emptyInput(), new FakeFormat(Cells.fromRowColumn("10,10", "10,11")));
 
-		// Then: 1x1 패턴은 보드 가운데(31, 31)
+		// Then
 		assertFalse(ticker.running);
-		assertEquals(Cells.fromRowColumn("31,31"), game.liveCells());
+		assertEquals(Cells.fromRowColumn("10,10", "10,11"), game.liveCells());
 		assertEquals(List.of("edited"), view.events);
 	}
 
@@ -138,8 +138,8 @@ class LifeGameTest {
 		game.toggle(1, 1);
 		view.events.clear();
 
-		// When, Then
-		assertThrows(IOException.class, () -> game.load(rle("not rle"), new RleFormat(LifeTestDriver.SIZE)));
+		// When, Then: 형식이 읽다가 실패함
+		assertThrows(IOException.class, () -> game.load(emptyInput(), new FakeFormat(null)));
 		assertEquals(Cells.fromRowColumn("1,1"), game.liveCells());
 		assertEquals(List.of(), view.events);
 	}
@@ -151,21 +151,21 @@ class LifeGameTest {
 		game.toggle(1, 1);
 		game.start(30);
 		view.events.clear();
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		FakeFormat format = new FakeFormat(null);
 
 		// When
-		game.store(out, new RleFormat(LifeTestDriver.SIZE));
+		game.store(new ByteArrayOutputStream(), format);
 
-		// Then
+		// Then: 산 셀이 형식에 그대로 넘어감
 		assertFalse(ticker.running);
-		assertTrue(out.size() > 0);
+		assertEquals(Cells.fromRowColumn("1,1"), format.written);
 		assertEquals(List.of(), view.events);
 	}
 
 	// ---- 헬퍼 메서드
 
-	private static ByteArrayInputStream rle(String text) {
-		return new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
+	private static ByteArrayInputStream emptyInput() {
+		return new ByteArrayInputStream(new byte[0]);
 	}
 
 	// 받은 알림을 순서대로 기록하는 가짜 화면
