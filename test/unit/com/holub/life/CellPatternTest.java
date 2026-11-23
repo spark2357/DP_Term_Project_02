@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
  *
  * [테스트 시나리오]
  *   1. 잘못된 패턴: 음수 크기, 크기 밖의 셀은 만들 수 없음
- *   2. 회전: 90도 회전하면 크기가 바뀌고 셀이 정해진 자리로 감. 네 번 돌리면 처음과 같음
+ *   2. 회전: 90도 회전하면 크기가 바뀌고 셀이 정해진 자리로 감(왼쪽 위 → 오른쪽 위). 네 번 돌리면 처음과 같음
  *   3. 복사: cells()로 받은 집합이나 만들 때 넘긴 집합을 바꿔도 패턴은 그대로
  *
  * [커버리지]
@@ -60,6 +60,19 @@ class CellPatternTest {
 		assertEquals(1, rotated.width());
 		assertEquals(3, rotated.height());
 		assertEquals(Cells.fromRowColumn("0,0"), rotated.cells());
+	}
+
+	@Test
+	@DisplayName("rotatedClockwise(): 2x2 패턴의 왼쪽 위 칸은 돌리면 오른쪽 위로 간다 (대각선 뒤집기와 구별)")
+	void topLeftGoesToTopRight() {
+		// Given: 2x2 패턴의 왼쪽 위(0행 0열) 하나만 있는 패턴
+		CellPattern pattern = new CellPattern(2, 2, Cells.fromRowColumn("0,0"));
+
+		// When
+		CellPattern rotated = pattern.rotatedClockwise();
+
+		// Then: 시계 방향 90도면 오른쪽 위(0행 1열). 대각선으로 뒤집으면 (0,0)에 그대로 남음
+		assertEquals(Cells.fromRowColumn("0,1"), rotated.cells());
 	}
 
 	@Test
