@@ -28,7 +28,6 @@ import org.junit.jupiter.api.io.TempDir;
  *     - 저장한 파일을 다시 Load: GridCommandTest에서 확인
  *     - 쓸 수 없는 폴더: 운영체제마다 달라서 제외
  */
-@Tag("original")
 class StoreCommandTest {
 	@TempDir
 	Path folder;
@@ -40,6 +39,8 @@ class StoreCommandTest {
 			List.of(new LifeFormatAdapter(LifeTestDriver.SIZE), new RleFormat(LifeTestDriver.SIZE)));
 
 	@Test
+	@Tag("improvement")
+	@Tag("defect-fix")
 	@DisplayName("execute(): 파일 창에서 취소하면 오류 창이 뜨지 않는다")
 	void cancelShowsNoError() {
 		// Given
@@ -70,6 +71,7 @@ class StoreCommandTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("execute(): 저장하면 실행 중이던 게임이 멈춘다")
 	void storeStopsGame() {
 		// Given

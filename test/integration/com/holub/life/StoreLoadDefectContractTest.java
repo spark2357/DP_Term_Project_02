@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Tag;
  * [커버리지]
  *   - StoreLoadDefectContractTest.java 테스트 대상: 원본 Store/Load 경로의 결함 세 가지
  *   - 테스트 제외 대상
- *     - 파일 선택 취소 때 오류 창이 뜨는 결함: 파일 대화상자가 Universe에 묶여 있어 제외
+ *     - 파일 선택 취소 때 오류 창이 뜨는 결함: 원본은 파일 대화상자가 Universe에 묶여 있어 제외. 현재 코드는 LoadCommandTest, StoreCommandTest에서 확인
  *   - 1번은 지금의 Java 직렬화 형식(Point 목록)을 가정함. 저장 형식을 바꾸면 확인 방법도 바꿔야 함
  *   - 같은 패턴을 클릭으로 놓으면 정상으로 진동한다는 대조군은 TickContractTest의 블록 경계 테스트가 맡음
  */
