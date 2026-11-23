@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
  * [커버리지]
  *   - ClearCommandTest.java 테스트 대상: execute
  *   - 테스트 제외 대상
- *     - 화면에 다시 그리라는 알림: GridCommandTest, LifeGameTest에서 확인
+ *     - 화면에 다시 그리라는 알림: GridCommandTest에서 확인
  */
 @Tag("original")
 class ClearCommandTest {

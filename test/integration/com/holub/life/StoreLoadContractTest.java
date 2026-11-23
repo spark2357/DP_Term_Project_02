@@ -38,7 +38,7 @@ import org.junit.jupiter.api.Tag;
  *   - 테스트 제외 대상
  *     - 원본의 결함(중복 저장, Load 실패 시 보드가 지워짐, 블록 가장자리 패턴 Load): StoreLoadDefectContractTest
  *     - 원본 저장 파일의 내부 모양(중복, 보드 밖 좌표): StoreLoadOriginalBehaviorTest
- *     - 파일 대화상자와 Load/Store 때 시계 정지: 원본은 Universe에 묶여 있어 제외. 현재 코드는 LifeGameTest와 Command 테스트에서 확인
+ *     - 파일 대화상자와 Load/Store 때 시계 정지: 원본은 Universe에 묶여 있어 제외. 현재 코드는 Command 테스트(LoadCommandTest, StoreCommandTest, GridCommandTest)에서 확인
  */
 @Tag("original")
 abstract class StoreLoadContractTest {
