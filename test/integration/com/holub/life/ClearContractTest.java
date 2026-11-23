@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Tag;
  *   - ClearContractTest.java 테스트 대상: Clear 뒤의 보드 상태와 이후 세대 진행
  *   - 테스트 제외 대상
  *     - 블록 내부 표시(activeEdges 등)를 직접 확인하는 것: 원본 구조에 의존하므로 NeighborhoodTest에서 확인
- *     - Clear가 시계를 멈추지 않는 원본 동작: 시계가 있어야 하므로 통합 테스트에서 확인
  */
 @Tag("original")
 abstract class ClearContractTest {
