@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Tag;
  *
  * [테스트 시나리오]
  *   1. Clear: 보드를 비우고 화면에 다시 그리라고(boardEdited) 알림
- *   2. Load/Store: Store한 파일을 Load하면 같은 자리로 돌아오고, 게임은 멈추고, 화면에 다시 그리라고 알림
+ *   2. Load/Store: Store는 알리지 않음. Store한 파일을 Load하면 같은 자리로 돌아오고, 게임은 멈추고, 화면에 다시 그리라고 알림
  *   3. Load 실패: 지원하지 않는 확장자, 깨진 파일은 오류 창을 띄우고 보드는 그대로. 깨진 파일은 알림도 없음 (트랜잭션)
  *   4. Stamp: 켜기 → 클릭으로 찍기(#R 무시)와 알림 → 오른쪽 클릭으로 회전 → 다시 눌러 끄기
  *
@@ -95,11 +95,11 @@ class GridCommandTest {
 		place(glider);
 		dialogs.nextFile = folder.resolve("glider.rle").toFile();
 		new StoreCommand(game, formats, dialogs).execute();
+		assertEquals(List.of(), view.events);  // Store는 보드를 바꾸지 않으니 알리지 않음
 
-		// When: 보드를 지우고 다시 Load. 그 전에 받은 알림은 지움
+		// When: 보드를 지우고 다시 Load
 		board.clear();
 		game.start(100);
-		view.events.clear();
 		new LoadCommand(game, formats, dialogs).execute();
 
 		// Then
