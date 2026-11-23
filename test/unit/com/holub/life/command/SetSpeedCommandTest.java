@@ -16,7 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  * 진짜 LifeGame에 가짜 시계(FakeTicker)를 넣어 메뉴와 시간 없이 실행함
  *
  * [테스트 시나리오]
- *   1. 실행하면 정해진 간격으로 게임을 시작함 (원본 속도 500, 150, 70, 30ms)
+ *   1. 실행하면 받은 간격으로 게임을 시작함 (값은 원본 메뉴 속도를 예시로 씀. 메뉴가 이 값을 넘기는지는 확인하지 않음)
  *   2. 0 이하의 간격으로는 만들 수 없음 (멈춤은 HaltCommand가 맡음)
  *
  * [커버리지]
@@ -29,7 +29,7 @@ class SetSpeedCommandTest {
 
 	@ParameterizedTest(name = "{0}ms")
 	@ValueSource(ints = { 500, 150, 70, 30 })
-	@DisplayName("execute(): 정해진 간격으로 게임을 시작한다")
+	@DisplayName("execute(): 받은 간격으로 게임을 시작한다")
 	void executeStartsGameAtThatSpeed(int milliseconds) {
 		// Given
 		FakeTicker ticker = new FakeTicker();
