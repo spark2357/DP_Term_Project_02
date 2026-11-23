@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Test;
  *     - 실제 간격(500/150/70/30ms)대로 울리는지: 타이머 구현(SwingTickTimer)의 일이라 제외
  *     - Go 메뉴에서 속도 고르기: 아직 테스트 없음 (GoMenu는 설계 개선 이슈에서 다룸)
  */
-@Tag("original")
 class ClockTest {
 	private FakeTickTimer timer;
 	private Clock clock;
@@ -45,6 +44,7 @@ class ClockTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("tick(): 한 번 부르면 등록된 리스너가 각각 정확히 한 번 호출된다 (Go → Tick)")
 	void tickDeliversOnceToEachListener() {
 		// Given
@@ -62,6 +62,7 @@ class ClockTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("startTicking(): 타이머를 그 간격으로 시작하고, 타이머가 울릴 때마다 tick이 간다")
 	void startTickingStartsTimerAndDeliversTicks() {
 		// Given
@@ -81,6 +82,7 @@ class ClockTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("stop(): Halt하면 타이머가 멈추고 더 이상 tick이 오지 않는다")
 	void haltStopsTicking() {
 		// Given: 실행 중인 시계
@@ -99,6 +101,7 @@ class ClockTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("stop(), startTicking(0): 멈춘 상태에서 Halt해도 아무 일도 일어나지 않는다")
 	void haltWhenStoppedDoesNothing() {
 		// Given: 시작하지 않은 시계
@@ -116,6 +119,7 @@ class ClockTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("startTicking(): 속도를 바꾸면 타이머가 새 간격으로 다시 시작된다")
 	void changingSpeedRestartsTimerWithNewInterval() {
 		// Given: Agonizing(500ms)로 실행 중
