@@ -40,7 +40,7 @@ import org.junit.jupiter.api.Tag;
  *   - GridCommandTest.java 테스트 대상: Clear, Load, Store, Stamp Command와 MouseController의 모드 전환
  *   - 테스트 제외 대상
  *     - ExitCommand: System.exit을 부름
- *     - 파일 창에서 취소: Command가 아무것도 하지 않음
+ *     - 파일 창에서 취소: LoadCommandTest, StoreCommandTest, StampCommandTest에서 확인
  *     - Store 실패(쓸 수 없는 폴더), Stamp 실패: Load 실패와 같은 흐름
  *     - GridMenu의 메뉴 등록, 미리보기 그리기 (GUI)
  */

@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * StoreCommand 단위 테스트: Grid → Store에서 파일을 쓰기 전에 끝나는 경로
- * 파일 창은 가짜(FakeDialogs), 시계는 가짜(FakeTicker)로 바꿔 화면 없이 실행함
+ * StoreCommand 통합 테스트: Grid → Store
+ * 진짜 LifeGame·Board에 가짜 파일 창(FakeDialogs)과 가짜 시계(FakeTicker)를 넣어 화면 없이 실행함. 파일은 임시 폴더(@TempDir)에 실제로 씀
  *
  * [테스트 시나리오]
  *   1. 파일 창에서 취소: 오류 창 없음
@@ -25,7 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
  * [커버리지]
  *   - StoreCommandTest.java 테스트 대상: execute
  *   - 테스트 제외 대상
- *     - 저장한 파일을 다시 Load: 통합 테스트 GridCommandTest에서 확인
+ *     - 저장한 파일을 다시 Load: GridCommandTest에서 확인
  *     - 쓸 수 없는 폴더: 운영체제마다 달라서 제외
  */
 @Tag("original")

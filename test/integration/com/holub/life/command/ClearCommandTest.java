@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * ClearCommand 단위 테스트: Grid → Clear
+ * ClearCommand 통합 테스트: Grid → Clear
  * 진짜 LifeGame에 가짜 시계(FakeTicker)를 넣어 메뉴와 화면 없이 실행함
  *
  * [테스트 시나리오]

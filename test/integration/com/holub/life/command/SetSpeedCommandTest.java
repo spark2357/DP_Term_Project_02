@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * SetSpeedCommand 단위 테스트: Go → Agonizing / Slow / Medium / Fast
+ * SetSpeedCommand 통합 테스트: Go → Agonizing / Slow / Medium / Fast
  * 진짜 LifeGame에 가짜 시계(FakeTicker)를 넣어 메뉴와 시간 없이 실행함
  *
  * [테스트 시나리오]

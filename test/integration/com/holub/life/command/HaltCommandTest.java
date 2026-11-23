@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * HaltCommand 단위 테스트: Go → Halt
+ * HaltCommand 통합 테스트: Go → Halt
  * 진짜 LifeGame에 가짜 시계(FakeTicker)를 넣어 메뉴와 시간 없이 실행함
  *
  * [테스트 시나리오]
