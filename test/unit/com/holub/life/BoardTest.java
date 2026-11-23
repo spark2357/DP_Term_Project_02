@@ -40,17 +40,18 @@ import org.junit.jupiter.api.Test;
  *     - 세대 규칙 전체, 블록 경계: TickContractTest(BoardTickTest)에서 확인
  *     - redraw(): 화면이라서 제외 (셀 그리기는 CellRedrawTest)
  */
-@Tag("original")
 class BoardTest {
 	private final Board board = new Board();
 
 	@Test
+	@Tag("original")
 	@DisplayName("widthInCells(): 보드는 64칸이다")
 	void boardIs64Wide() {
 		assertEquals(LifeTestDriver.SIZE, board.widthInCells());
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("step(): blinker는 한 세대 뒤 세로가 되고, 바뀐 셀이 있으니 true를 돌려준다")
 	void stepAdvancesOneGeneration() {
 		// Given
@@ -65,12 +66,14 @@ class BoardTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("step(): 빈 보드는 바뀌는 셀이 없어 false를 돌려준다")
 	void stepOnEmptyBoardReturnsFalse() {
 		assertFalse(board.step());
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("toggle(): 한 번 누르면 살고, 두 번 누르면 다시 죽는다")
 	void toggleFlipsOneCell() {
 		board.toggle(5, 6);
@@ -81,6 +84,7 @@ class BoardTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("clear(): 모든 셀이 지워진다")
 	void clearRemovesAllCells() {
 		// Given
@@ -94,6 +98,7 @@ class BoardTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("load(): 형식이 읽은 셀로 보드를 바꾼다")
 	void loadReplacesBoardWithReadCells() throws IOException {
 		// Given: 보드에 다른 셀이 있음
@@ -108,6 +113,8 @@ class BoardTest {
 	}
 
 	@Test
+	@Tag("improvement")
+	@Tag("defect-fix")
 	@DisplayName("load(): 형식이 읽다가 실패하면 IOException이 나고 보드는 그대로 남는다")
 	void failedLoadKeepsBoard() {
 		// Given
@@ -121,6 +128,7 @@ class BoardTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("store(): 산 셀을 그대로 형식에 넘기고, 보드는 바뀌지 않는다")
 	void storeHandsLiveCellsToFormat() throws IOException {
 		// Given
@@ -137,6 +145,7 @@ class BoardTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("liveCells(): 받은 집합을 바꿔도 보드는 바뀌지 않는다")
 	void liveCellsIsACopy() {
 		// Given
