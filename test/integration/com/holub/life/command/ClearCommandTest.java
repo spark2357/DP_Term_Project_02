@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
  *
  * [테스트 시나리오]
  *   1. 실행하면 보드가 비어 있음
+ *   2. 실행 중인 게임은 멈추지 않음 (원본 Universe의 Clear도 보드만 비움)
  *
  * [커버리지]
  *   - ClearCommandTest.java 테스트 대상: execute
@@ -37,5 +38,20 @@ class ClearCommandTest {
 
 		// Then
 		assertTrue(game.liveCells().isEmpty());
+	}
+
+	@Test
+	@DisplayName("execute(): 실행 중인 게임은 멈추지 않는다")
+	void executeKeepsGameRunning() {
+		// Given: 실행 중
+		FakeTicker ticker = new FakeTicker();
+		LifeGame game = new LifeGame(new Board(), ticker);
+		game.start(30);
+
+		// When
+		new ClearCommand(game).execute();
+
+		// Then
+		assertTrue(ticker.running);
 	}
 }
