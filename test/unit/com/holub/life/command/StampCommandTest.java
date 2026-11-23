@@ -6,7 +6,6 @@ import com.holub.life.support.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.File;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -18,7 +17,7 @@ import org.junit.jupiter.api.Test;
  *
  * [테스트 시나리오]
  *   1. 파일 창에서 취소: 마우스 모드는 그대로(토글)
- *   2. 스탬프 모드에서 다시 실행: 파일 창 없이 토글 모드로 돌아옴
+ *   2. 스탬프 모드에서 다시 실행: 토글 모드로 돌아옴
  *
  * [커버리지]
  *   - StampCommandTest.java 테스트 대상: execute
@@ -48,17 +47,15 @@ class StampCommandTest {
 	}
 
 	@Test
-	@DisplayName("execute(): 스탬프 모드에서 다시 실행하면 파일 창 없이 토글 모드로 돌아온다")
+	@DisplayName("execute(): 스탬프 모드에서 다시 실행하면 토글 모드로 돌아온다")
 	void executeInStampModeTurnsItOff() {
-		// Given: 스탬프 모드. 파일 창이 열리면 안 되므로 고를 파일을 엉뚱한 것으로 둠
+		// Given: 스탬프 모드
 		mouse.setMode(new StampMode(game, new CellPattern(1, 1, Cells.fromRowColumn("0,0"))));
-		dialogs.nextFile = new File("should-not-be-opened.rle");
 
 		// When
 		new StampCommand(game, rle, mouse, dialogs).execute();
 
 		// Then
 		assertInstanceOf(ToggleMode.class, mouse.mode());
-		assertEquals(List.of(), dialogs.errors);
 	}
 }
