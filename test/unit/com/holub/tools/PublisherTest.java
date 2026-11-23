@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ import org.junit.jupiter.api.Test;
  *
  * [테스트 시나리오]
  *   1. 배달: 모든 구독자에게 한 번씩 배달됨. 나중에 구독한 쪽부터 받음
- *   2. 구독 취소: 취소한 구독자는 더 이상 받지 않음
+ *   2. 구독 취소: 취소한 구독자는 더 이상 받지 않음. 이미 취소한(구독하지 않은) 대상을 취소하면 NoSuchElementException
  *   3. 구독자 없음: publish()해도 아무 일 없음
  *
  * [커버리지]
@@ -59,6 +60,18 @@ class PublisherTest {
 
 		// Then
 		assertEquals(List.of("second"), received);
+	}
+
+	@Test
+	@DisplayName("cancelSubscription(): 이미 취소한 구독자를 다시 취소하면 NoSuchElementException이 난다")
+	void cancellingAgainThrows() {
+		// Given: 다른 구독자가 남아 있고, first는 이미 취소함
+		publisher.subscribe("first");
+		publisher.subscribe("second");
+		publisher.cancelSubscription("first");
+
+		// When, Then
+		assertThrows(NoSuchElementException.class, () -> publisher.cancelSubscription("first"));
 	}
 
 	@Test
