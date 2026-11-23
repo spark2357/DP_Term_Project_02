@@ -84,18 +84,17 @@ public class BrushToolBar extends JToolBar{
     private JPanel createRulePanel(){
         JPanel rules = new JPanel(new GridLayout(1, 2, 4, 0));
         ButtonGroup group = new ButtonGroup();
-        addRule(rules, group, "Clash", new ClashRule(), true);
-        addRule(rules, group, "Blend", new BlendRule(), false);
+        addRule(rules, group, "Clash", new ClashRule());
+        addRule(rules, group, "Blend", new BlendRule());
         return rules;
     }
 
-    private void addRule(JPanel rules, ButtonGroup group, String name, BirthColorRule rule, boolean selected){
+    private void addRule(JPanel rules, ButtonGroup group, String name, BirthColorRule rule){
+        // [수정] 2026-11-24: 시작할 때는 Board의 지금 규칙을 읽어 버튼만 표시하고(Board → 툴바), 누를 때만 Board로 보냄(툴바 → Board)
+        boolean selected = rule.getClass() == game.birthColorRule().getClass();
         JToggleButton button = new JToggleButton(name, selected);
         button.setFocusable(false);
         button.addActionListener(event -> game.setBirthColorRule(rule));
-        if (selected){
-            game.setBirthColorRule(rule);
-        }
         group.add(button);
         rules.add(button);
     }

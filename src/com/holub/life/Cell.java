@@ -110,7 +110,10 @@ public interface Cell
 	{	/** On creation of the memento, indicate that a cell is
 		 *  alive.
 		 */
-		void markAsAlive	(Point location);
+		// [수정] 2026-11-24: 살았다고 적을 때는 색도 같이 적는 2인자 버전을 필수로 바꾸고, 원래 1인자 버전은 기본색으로 적는 default로 둠
+		default void markAsAlive	(Point location){
+			markAsAlive( location, CellColor.DEFAULT );
+		}
 
 		/** On restoration of a cell from a memento, indicate that
 		 *  a cell is alive.
@@ -118,9 +121,8 @@ public interface Cell
 		boolean isAlive	(Point location);
 
 		// [수정] 2026-11-23: 셀 색 저장/불러오기. 색을 저장하지 않는 Memento는 색을 버리고 기본색으로 답함
-		default void markAsAlive( Point location, CellColor color ){
-			markAsAlive( location );
-		}
+		// [수정] 2026-11-24: 이제 2인자 markAsAlive는 모든 Memento가 구현해야 함. 색을 버리는 기본 구현은 없어지고 colorAt만 기본색으로 답함
+		void markAsAlive( Point location, CellColor color );
 
 		default CellColor colorAt( Point location ){
 			return CellColor.DEFAULT;

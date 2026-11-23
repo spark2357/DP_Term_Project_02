@@ -104,7 +104,7 @@ class NeighborhoodStateTest {
 
 	// NeighborhoodState는 private 클래스라 Neighborhood.createMemento()로 생성
 	private static Cell.Memento emptyMemento() {
-		return (Cell.Memento) new Neighborhood(8, new Resident()).createMemento();
+		return (Cell.Memento) new Neighborhood(8, new Resident(ClashRule::new)).createMemento();
 	}
 
 	// .life 파일과 같은 방식(ObjectOutputStream)으로 직렬화

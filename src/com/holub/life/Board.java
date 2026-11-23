@@ -200,9 +200,7 @@ public class Board implements BoardView
 		public boolean isAlive( Point p )	{ return cells.containsKey( p );	}
 		public CellColor colorAt( Point p )	{ return cells.get( p );			}
 
-		public void markAsAlive( Point p )
-		{	throw new UnsupportedOperationException();
-		}
+		public void markAsAlive( Point p, CellColor color )	{ cells.put( new Point(p), color );	}
 		public void load( InputStream in )
 		{	throw new UnsupportedOperationException();
 		}

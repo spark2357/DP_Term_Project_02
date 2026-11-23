@@ -29,10 +29,7 @@ public final class Resident implements Cell
 	// [수정] 2026-11-22: 출생 색 규칙(Strategy)은 Board가 들고 있는 지금 규칙을 물어봄. create()가 같은 출처를 넘겨 줌
 	private final Supplier<BirthColorRule> birthColorRule;
 
-	public Resident(){
-		this( ClashRule::new );
-	}
-
+	// [수정] 2026-11-24: 기본 생성자를 없앰. 기본 출생 색 규칙은 Board(Context)만 정하고, Resident는 항상 받은 규칙을 씀
 	public Resident( Supplier<BirthColorRule> birthColorRule ){
 		this.birthColorRule = birthColorRule;
 	}

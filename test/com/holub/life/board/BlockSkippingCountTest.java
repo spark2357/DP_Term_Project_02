@@ -58,7 +58,7 @@ class BlockSkippingCountTest {
 
 	// Universe와 같은 64x64 보드를 만들되, 8x8 블록마다 CountingBlock을 씌움
 	private static Neighborhood countingBoard(Set<String> computed) {
-		CountingBlock prototype = new CountingBlock(new Neighborhood(8, new Resident()), computed);
+		CountingBlock prototype = new CountingBlock(new Neighborhood(8, new Resident(ClashRule::new)), computed);
 		return new Neighborhood(8, prototype);
 	}
 

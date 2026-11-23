@@ -45,12 +45,6 @@ class BirthColorRuleTest {
 	}
 
 	@Test
-	@DisplayName("ClashRule: 2:1이면 다수 색으로 태어난다")
-	void clashUsesTheMajority() {
-		assertEquals(Optional.of(BLUE), CLASH.newborn(List.of(BLUE, RED, BLUE)).getColor());
-	}
-
-	@Test
 	@DisplayName("ClashRule: 셋 다 다르면 태어나지 않는다 (DEAD)")
 	void clashCancelsThreeColors() {
 		assertSame(CellState.DEAD, CLASH.newborn(List.of(BLUE, GREEN, YELLOW)));

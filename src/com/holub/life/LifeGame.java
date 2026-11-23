@@ -146,6 +146,10 @@ public class LifeGame
 		publishBoardEdited();
 	}
 
+	public BirthColorRule birthColorRule(){
+		return board.birthColorRule();
+	}
+
 	/** Return the positions of all live cells (x = column, y = row).
 	 */
 	public Set<Point> liveCells()

@@ -10,8 +10,10 @@ import java.awt.Rectangle;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +44,7 @@ import org.junit.jupiter.api.Test;
  *   4. Stamp: 패턴 사각형 밖 셀의 색은 그대로. 기본색으로 산 자리에 찍어도 꺼지지 않음. 색을 주면 그 색으로 찍힘
  *   5. 다시 그리기: 안정된 블록의 셀 색만 바꿔도 바뀐 블록만 그리는 갱신(drawAll=false)에 나옴
  *   6. 저장/불러오기: .life는 색까지 저장하고 불러옴. 색이 없는 예전 .life 파일은 기본색. RLE는 색을 버림
+ *      색 부분이 중간에 끊긴 .life 파일은 IOException이고 보드는 그대로. 색 부분 바로 앞에서 끊기면 예전 파일과 같음
  *
  * [커버리지]
  *   - CellColorBoardTest.java 테스트 대상: Board.brush, Board.toggle(색), Board.step(색), Board.setBirthColorRule, Board.stamp(색), Board.load(색), Board.store(색)
@@ -401,6 +404,41 @@ class CellColorBoardTest {
 	}
 
 	@Test
+	@DisplayName("load() + .life: 색 부분을 읽다가 끊긴 파일은 IOException이고 보드는 그대로다")
+	void truncatedColorsThrowIOException() throws Exception {
+		// Given: 색을 칠해 저장한 파일과, 그 안에서 Point 목록이 끝나는 위치
+		byte[] full = coloredLifeFile();
+		int boundary = pointListLength(full);
+		assertTrue(boundary < full.length);
+
+		for (int cut : new int[] {boundary + 1, (boundary + full.length) / 2, full.length - 1}) {
+			Board board = new Board();
+			board.brush(5, 5, BLUE);
+			byte[] truncated = Arrays.copyOf(full, cut);
+
+			// When, Then
+			assertThrows(IOException.class, () -> board.load(new ByteArrayInputStream(truncated),
+					new LifeFormatAdapter(board.widthInCells())), "cut at " + cut);
+			assertEquals(Map.of(at(5, 5), BLUE), colors(board), "cut at " + cut);
+		}
+	}
+
+	@Test
+	@DisplayName("load() + .life: Point 목록 바로 뒤(색 부분 앞)에서 끊긴 파일은 예전 파일처럼 기본색으로 불러온다")
+	void cutBeforeColorsLoadsAsDefault() throws Exception {
+		// Given
+		byte[] full = coloredLifeFile();
+		byte[] pointsOnly = Arrays.copyOf(full, pointListLength(full));
+
+		// When
+		Board board = new Board();
+		board.load(new ByteArrayInputStream(pointsOnly), new LifeFormatAdapter(board.widthInCells()));
+
+		// Then
+		assertEquals(Map.of(at(1, 1), RED, at(1, 2), RED, at(30, 40), RED), colors(board));
+	}
+
+	@Test
 	@DisplayName("store() → load() + RLE: 위치만 저장되고 색은 기본색이 된다")
 	void rleFileDropsColors() throws IOException {
 		// Given
@@ -420,6 +458,29 @@ class CellColorBoardTest {
 	}
 
 	// ---------------------------------------------------------------
+
+	/** 색을 칠한 보드를 .life로 저장한 바이트 */
+	private static byte[] coloredLifeFile() throws IOException {
+		Board board = new Board();
+		board.brush(1, 1, BLUE);
+		board.brush(1, 2, GREEN);
+		board.toggle(30, 40);
+		ByteArrayOutputStream file = new ByteArrayOutputStream();
+		board.store(file, new LifeFormatAdapter(board.widthInCells()));
+		return file.toByteArray();
+	}
+
+	/** .life 파일 앞부분의 Point 목록만 같은 방식으로 다시 쓴 길이 (= 색 부분이 시작하는 위치) */
+	private static int pointListLength(byte[] lifeFile) throws Exception {
+		Object points = new ObjectInputStream(new ByteArrayInputStream(lifeFile)).readObject();
+		ByteArrayOutputStream file = new ByteArrayOutputStream();
+		ObjectOutputStream out = new ObjectOutputStream(file);
+		out.writeObject(points);
+		out.flush();
+		byte[] pointsOnly = file.toByteArray();
+		assertArrayEquals(pointsOnly, Arrays.copyOf(lifeFile, pointsOnly.length), "파일 앞부분이 Point 목록과 같아야 함");
+		return pointsOnly.length;
+	}
 
 	/** 왼쪽 위가 (row, column)인 3x3 사각형 안의 glider */
 	private static Set<Point> glider(int row, int column) {

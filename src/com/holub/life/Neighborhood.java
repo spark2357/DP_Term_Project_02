@@ -453,7 +453,8 @@ public final class Neighborhood implements Cell
 
 		public void load( InputStream in ) throws IOException
 		{	try
-			{	ObjectInputStream source = new ObjectInputStream( in );
+			{	CountingInputStream counted = new CountingInputStream( in );
+				ObjectInputStream source = new ObjectInputStream( counted );
 				Collection read = (Collection)( source.readObject() );
 
 				// [수정] 2026-11-10: Point가 아닌 원소가 든 파일은 오류 없이 읽혀 보드가 빈 채로 Load되었음.
@@ -462,7 +463,7 @@ public final class Neighborhood implements Cell
 					if( !(cell instanceof Point) )
 						throw new IOException( "Not a Life file: expected Points" );
 
-				Map<Point, CellColor> readColors = readColors( source );
+				Map<Point, CellColor> readColors = readColors( source, counted );
 				liveCells = read;
 				colors = readColors;
 			}
@@ -486,13 +487,18 @@ public final class Neighborhood implements Cell
 		}
 
 		// [수정] 2026-11-23: 예전 파일은 liveCells 뒤에 색이 없어서 EOF가 남. 그러면 색 없이(기본색) 읽음
-		private static Map<Point, CellColor> readColors( ObjectInputStream source ) throws IOException, ClassNotFoundException{
+		private static Map<Point, CellColor> readColors( ObjectInputStream source, CountingInputStream counted ) throws IOException, ClassNotFoundException{
+			long start = counted.getCount();
 			Object read;
 			try{
 				read = source.readObject();
 			}
 			catch( EOFException e ){
-				return new HashMap<>();
+				// [수정] 2026-11-24: 색 표가 아예 없으면(한 바이트도 못 읽음) 예전 파일이라 기본색으로 읽고,
+				// 색 표를 읽다가 끊기면 깨진 파일이라 IOException을 던짐. 그대로 두면 색을 모두 잃은 채 Load되었음
+				if( counted.getCount() == start )
+					return new HashMap<>();
+				throw new IOException( "Not a Life file: cell colors are cut off", e );
 			}
 
 			if( !(read instanceof Map) )
@@ -508,6 +514,38 @@ public final class Neighborhood implements Cell
 			return colors;
 		}
 
+		private static class CountingInputStream extends FilterInputStream{
+			private long count = 0;
+
+			CountingInputStream( InputStream in ){
+				super( in );
+			}
+
+			public long getCount(){
+				return count;
+			}
+
+			public int read() throws IOException{
+				int b = super.read();
+				if( b >= 0 )
+					++count;
+				return b;
+			}
+
+			public int read( byte[] b, int off, int len ) throws IOException{
+				int n = super.read( b, off, len );
+				if( n > 0 )
+					count += n;
+				return n;
+			}
+
+			public long skip( long n ) throws IOException{
+				long skipped = super.skip( n );
+				count += skipped;
+				return skipped;
+			}
+		}
+
 		private static Map<Point, Integer> toRgb( Map<Point, CellColor> colors ){
 			Map<Point, Integer> rgb = new HashMap<>();
 			for( Map.Entry<Point, CellColor> entry : colors.entrySet() ){
@@ -517,17 +555,14 @@ public final class Neighborhood implements Cell
 			return rgb;
 		}
 
+		// [수정] 2026-11-24: 원래의 1인자 markAsAlive는 이제 Cell.Memento의 default(기본색으로 적음)가 맡음
 		public void markAsAlive( Point location, CellColor color ){
-			markAsAlive( location );
+			liveCells.add( new Point( location ) );
 			colors.put( new Point( location ), color );
 		}
 
 		public CellColor colorAt( Point location ){
 			return colors.getOrDefault( location, CellColor.DEFAULT );
-		}
-
-		public void markAsAlive(Point location)
-		{	liveCells.add( new Point( location ) );
 		}
 
 		public boolean isAlive(Point location)

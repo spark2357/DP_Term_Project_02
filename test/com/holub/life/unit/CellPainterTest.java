@@ -33,7 +33,7 @@ class CellPainterTest {
 	@DisplayName("Resident: 살아 있으면 alive=true로 자기 영역을 그린다")
 	void liveResidentIsPaintedAlive() {
 		// Given: 클릭으로 살린 셀
-		Resident resident = new Resident();
+		Resident resident = new Resident(ClashRule::new);
 		resident.userClicked(new Point(0, 0), SCREEN);
 		RecordingPainter painter = new RecordingPainter();
 
@@ -48,7 +48,7 @@ class CellPainterTest {
 	@DisplayName("Resident: 죽어 있으면 alive=false로 그린다")
 	void deadResidentIsPaintedDead() {
 		// Given
-		Resident resident = new Resident();
+		Resident resident = new Resident(ClashRule::new);
 		RecordingPainter painter = new RecordingPainter();
 
 		// When
@@ -62,7 +62,7 @@ class CellPainterTest {
 	@DisplayName("Neighborhood: 살아 있는 셀만 alive=true로 그리고, 셀을 다 그린 뒤 활성 테두리를 그린다")
 	void onlyLiveCellsArePaintedAliveThenActiveBorder() {
 		// Given: 2x2 블록의 0행 1열 셀만 살아 있음 (클릭하면 블록도 활성 상태가 됨)
-		Neighborhood block = new Neighborhood(2, new Resident());
+		Neighborhood block = new Neighborhood(2, new Resident(ClashRule::new));
 		block.userClicked(new Point(25, 5), SCREEN);
 		RecordingPainter painter = new RecordingPainter();
 
@@ -82,7 +82,7 @@ class CellPainterTest {
 	@DisplayName("Neighborhood: 활성 블록은 drawAll=false여도 active=true 테두리까지 그린다")
 	void activeBlockIsPaintedWithoutDrawAll() {
 		// Given
-		Neighborhood block = new Neighborhood(2, new Resident());
+		Neighborhood block = new Neighborhood(2, new Resident(ClashRule::new));
 		block.userClicked(new Point(5, 5), SCREEN);
 		RecordingPainter painter = new RecordingPainter();
 
@@ -97,7 +97,7 @@ class CellPainterTest {
 	@DisplayName("Neighborhood: 비활성 블록을 drawAll=true로 그리면 active=false 테두리를 그린다")
 	void inactiveBlockGetsInactiveBorderOnDrawAll() {
 		// Given
-		Neighborhood block = new Neighborhood(2, new Resident());
+		Neighborhood block = new Neighborhood(2, new Resident(ClashRule::new));
 		RecordingPainter painter = new RecordingPainter();
 
 		// When
@@ -111,7 +111,7 @@ class CellPainterTest {
 	@DisplayName("Neighborhood: 비활성 블록은 drawAll=false면 아무것도 그리지 않는다")
 	void inactiveBlockPaintsNothingWithoutDrawAll() {
 		// Given
-		Neighborhood block = new Neighborhood(2, new Resident());
+		Neighborhood block = new Neighborhood(2, new Resident(ClashRule::new));
 		RecordingPainter painter = new RecordingPainter();
 
 		// When
@@ -125,7 +125,7 @@ class CellPainterTest {
 	@DisplayName("Neighborhood: 블록이 중첩돼 있으면 drawAll=false일 때 바뀐 안쪽 블록만 그린다")
 	void nestedRedrawPaintsOnlyChangedBlock() {
 		// Given: 2x2 블록 4개 중 오른쪽 위 블록의 왼쪽 위 셀만 클릭함
-		Neighborhood outer = new Neighborhood(2, new Neighborhood(2, new Resident()));
+		Neighborhood outer = new Neighborhood(2, new Neighborhood(2, new Resident(ClashRule::new)));
 		outer.userClicked(new Point(25, 5), SCREEN);
 		RecordingPainter painter = new RecordingPainter();
 
