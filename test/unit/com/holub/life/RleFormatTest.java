@@ -8,9 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.awt.Point;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,7 +41,8 @@ import org.junit.jupiter.params.provider.ValueSource;
  * [커버리지]
  *   - RleFormatTest.java 테스트 대상: read, write
  *   - 테스트 제외 대상
- *     - Board.load(in, RleFormat)와의 연결: 통합 테스트 RleBoardLoadTest에서 확인
+ *     - Board.load(in, RleFormat)와의 연결, 실제 파일(test/resources) 읽기: 통합 테스트 RleBoardLoadTest에서 확인
+ *       (이 테스트는 샘플 파일 내용을 문자열로 옮겨 써서 파일을 읽지 않음)
  *     - 메뉴에서 .rle 파일 고르기
  *     - 형식 오류(보드보다 높음, y를 넘는 줄 수, 숫자와 기호 사이 공백, 반복 횟수 0, 빈 파일):
  *       남긴 경우와 대칭이거나 드물어서 생략. 코드에서는 모두 IOException
@@ -51,8 +50,22 @@ import org.junit.jupiter.params.provider.ValueSource;
 @Tag("extension")
 class RleFormatTest {
 	private static final int SIZE = LifeTestDriver.SIZE;
-	private static final String GLIDER_FILE = "test/resources/glider.rle";
-	private static final String GUN_FILE = "test/resources/gosper-glider-gun.rle";
+
+	// test/resources/glider.rle과 같은 내용
+	private static final String GLIDER_TEXT =
+			"#N Glider\n"
+			+ "#C The smallest spaceship. Moves one cell diagonally every 4 generations.\n"
+			+ "x = 3, y = 3, rule = B3/S23\n"
+			+ "bo$2bo$3o!\n";
+
+	// test/resources/gosper-glider-gun.rle과 같은 내용
+	private static final String GUN_TEXT =
+			"#N Gosper glider gun\n"
+			+ "#O Bill Gosper\n"
+			+ "#C The first known gun. Emits a new glider every 30 generations.\n"
+			+ "x = 36, y = 9, rule = B3/S23\n"
+			+ "24bo$22bobo$12b2o6b2o12b2o$11bo3bo4b2o12b2o$2o8bo5bo3b2o$2o8bo3bob2o4b\n"
+			+ "obo$10bo5bo7bo$11bo3bo$12b2o!\n";
 
 	private final RleFormat rle = new RleFormat(SIZE);
 
@@ -75,10 +88,10 @@ class RleFormatTest {
 	}
 
 	@Test
-	@DisplayName("read(): 폭이 홀수인 glider(glider.rle)는 30행, 30열부터 놓인다 (남는 한 칸은 오른쪽, 아래쪽 여백)")
+	@DisplayName("read(): 폭이 홀수인 glider는 30행, 30열부터 놓인다 (남는 한 칸은 오른쪽, 아래쪽 여백)")
 	void oddPatternLeavesExtraSpaceOnRightAndBottom() throws IOException {
 		// Given, When
-		Set<Point> cells = readFile(GLIDER_FILE);
+		Set<Point> cells = read(GLIDER_TEXT);
 
 		// Then: 3칸 → (64 - 3) / 2 = 30부터
 		assertEquals(Cells.fromRowColumn("30,31", "31,32", "32,30", "32,31", "32,32"), cells);
@@ -106,7 +119,7 @@ class RleFormatTest {
 		String text = "#N Glider\r\n#C 주석의 한글도 괜찮음\r\nx=3,y=3\r\nbo$ 2b\r\no$3o\r\n";
 
 		// When, Then
-		assertEquals(read(GLIDER_FILE_TEXT), read(text));
+		assertEquals(read(GLIDER_TEXT), read(text));
 	}
 
 	//  3. 규칙
@@ -176,7 +189,7 @@ class RleFormatTest {
 	@DisplayName("read(), write(): Gosper glider gun(36x9, 셀 36개)을 쓰고 다시 읽어도 같고, 본문은 한 줄 70자 이하로 나뉜다")
 	void gunRoundTrip() throws IOException {
 		// Given
-		Set<Point> gun = readFile(GUN_FILE);
+		Set<Point> gun = read(GUN_TEXT);
 		assertEquals(36, gun.size());
 
 		// When: gun의 본문은 100자 정도라 70자에서 줄이 바뀜
@@ -203,16 +216,8 @@ class RleFormatTest {
 
 	//  헬퍼
 
-	private static final String GLIDER_FILE_TEXT = "x = 3, y = 3, rule = B3/S23\nbo$2bo$3o!\n";
-
 	private Set<Point> read(String text) throws IOException {
 		return rle.read(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
-	}
-
-	private Set<Point> readFile(String path) throws IOException {
-		try (InputStream in = new FileInputStream(path)) {
-			return rle.read(in);
-		}
 	}
 
 	private String write(Set<Point> cells) throws IOException {
