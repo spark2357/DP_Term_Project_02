@@ -1,6 +1,5 @@
 package com.holub.life;
 
-import com.holub.life.*;
 import com.holub.life.support.*;
 
 import static org.junit.jupiter.api.Assertions.*;

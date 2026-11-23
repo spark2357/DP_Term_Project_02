@@ -1,7 +1,5 @@
 package com.holub.life;
 
-import com.holub.life.*;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Point;
