@@ -4,7 +4,9 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
+import com.holub.life.CellColor;
 import com.holub.life.CellPainter;
+import com.holub.life.CellState;
 import com.holub.ui.Colors;	// Contains constants specifying various
 							// colors not defined in java.awt.Color.
 
@@ -29,8 +31,21 @@ public final class SwingCellPainter implements CellPainter
 	}
 
 	public void paintCell( Rectangle here, boolean alive )
+	{	paintCell( here, alive ? LIVE_COLOR : DEAD_COLOR );
+	}
+
+	// [수정] 2026-11-22: 셀 색 기능. 산 셀은 모델이 기억하는 색(CellColor)으로 칠함
+	public void paintCell( Rectangle here, CellState state ){
+		paintCell( here, state.getColor().map( SwingCellPainter::toAwt ).orElse( DEAD_COLOR ) );
+	}
+
+	private static Color toAwt( CellColor color ){
+		return new Color( color.red(), color.green(), color.blue() );
+	}
+
+	private void paintCell( Rectangle here, Color fill )
 	{	Graphics g = graphics.create();
-		g.setColor( alive ? LIVE_COLOR : DEAD_COLOR );
+		g.setColor( fill );
 		g.fillRect(here.x+1, here.y+1, here.width-1, here.height-1);
 
 		// Doesn't draw a line on the far right and bottom of the

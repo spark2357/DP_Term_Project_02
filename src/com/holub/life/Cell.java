@@ -1,6 +1,7 @@
 package com.holub.life;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.Optional;
 
 import com.holub.life.Storable;
 
@@ -61,6 +62,17 @@ public interface Cell
 
 	void userClicked(Point here, Rectangle surface);
 
+	// [수정] 2026-11-22: 셀 색 기능. 칠하기(userBrushed), 색 읽기(getColor)를 추가함.
+	// 기본 구현을 두어 기존 Cell 구현(테스트용 가짜 셀 포함)은 고치지 않아도 됨
+	default void userBrushed(Point here, Rectangle surface, CellColor color){
+		throw new UnsupportedOperationException(
+					getClass().getName() + " cannot be brushed");
+	}
+
+	default Optional<CellColor> getColor(){
+		return Optional.empty();
+	}
+
 	/** Return true if this cell or any subcells are alive.
 	 */
 	boolean isAlive();
@@ -104,6 +116,15 @@ public interface Cell
 		 *  a cell is alive.
 		 */
 		boolean isAlive	(Point location);
+
+		// [수정] 2026-11-23: 셀 색 저장/불러오기. 색을 저장하지 않는 Memento는 색을 버리고 기본색으로 답함
+		default void markAsAlive( Point location, CellColor color ){
+			markAsAlive( location );
+		}
+
+		default CellColor colorAt( Point location ){
+			return CellColor.DEFAULT;
+		}
 	}
 
 	/**  This method is used internally to save or restore the state
@@ -150,6 +171,7 @@ public interface Cell
 		public boolean	 transition()		{return false;			  }
 
 		public void	userClicked(Point h, Rectangle s				){}
+		public void	userBrushed(Point h, Rectangle s, CellColor c	){}
 		public void redraw 		(CellPainter painter, Rectangle here,
 												 boolean drawAll	){}
 

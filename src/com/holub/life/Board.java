@@ -4,6 +4,9 @@ import java.io.*;
 import java.awt.*;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * The Board is the model of the Game of Life. It creates the
@@ -32,6 +35,8 @@ public class Board implements BoardView
 
 	private final Cell outermostCell;
 
+	private BirthColorRule birthColorRule = new ClashRule();
+
 	public Board()
 	{	// Create the nested Cells that comprise the "universe." A bug
 		// in the current implementation causes the program to fail
@@ -42,9 +47,18 @@ public class Board implements BoardView
 						(	DEFAULT_GRID_SIZE,
 							new Neighborhood
 							(	DEFAULT_GRID_SIZE,
-								new Resident()
+								new Resident( () -> birthColorRule )
 							)
 						);
+	}
+
+	public void setBirthColorRule( BirthColorRule rule ){
+		birthColorRule = Objects.requireNonNull( rule );
+		replaceWith( liveCellColors() );
+	}
+
+	public BirthColorRule birthColorRule(){
+		return birthColorRule;
 	}
 
 	/** Width (and height) of the whole board, in cells.
@@ -81,6 +95,13 @@ public class Board implements BoardView
 								   new Rectangle(0, 0, width, width) );
 	}
 
+	public void brush( int row, int column, CellColor color ){
+		int width = widthInCells();
+		outermostCell.userBrushed( new Point(column, row),
+								   new Rectangle(0, 0, width, width),
+								   Objects.requireNonNull( color ) );
+	}
+
 	/** Return the positions of all live cells on the board. Each
 	 *  position is a Point whose x is the column and whose y is the
 	 *  row (in cells, not pixels), the same coordinates used by
@@ -105,6 +126,20 @@ public class Board implements BoardView
 		return live;
 	}
 
+	private Map<Point, CellColor> liveCellColors(){
+		Cell.Memento memento = (Cell.Memento) outermostCell.createMemento();
+		Map<Point, CellColor> live = new HashMap<>();
+		int width = widthInCells();
+
+		for( int row = 0; row < width; ++row )
+			for( int column = 0; column < width; ++column ){
+				Point here = new Point( column, row );
+				if( memento.isAlive( here ) )
+					live.put( here, memento.colorAt( here ) );
+			}
+		return live;
+	}
+
 	/** Kill every cell on the board.
 	 */
 	public void clear()
@@ -116,7 +151,7 @@ public class Board implements BoardView
 	 *  스트림은 닫지 않음 (연 쪽이 닫음)
 	 */
 	public void load( InputStream in, PatternFormat format ) throws IOException
-	{	replaceWith( format.read( in ) );
+	{	replaceWith( format.readColored( in ) );
 	}
 
 	// [수정] 2026-11-17: Grid → Stamp. 패턴의 왼쪽 위를 (row, column)에 맞추고, 패턴 사각형 안의 칸을 덮어씀.
@@ -124,8 +159,8 @@ public class Board implements BoardView
 
 	/** 패턴 사각형 안은 패턴대로(죽은 칸 포함) 덮어쓰고, 밖의 셀은 그대로 둠.
 	 */
-	public void stamp( CellPattern pattern, int row, int column )
-	{	Set<Point> cells  = liveCells();
+	public void stamp( CellPattern pattern, int row, int column, CellColor color ){
+		Map<Point, CellColor> cells = liveCellColors();
 		Set<Point> alive  = pattern.cells();
 		int		   width  = widthInCells();
 
@@ -135,7 +170,7 @@ public class Board implements BoardView
 				if( here.x < 0 || here.x >= width || here.y < 0 || here.y >= width )
 					continue;
 				if( alive.contains( new Point(x, y) ) )
-					cells.add( here );
+					cells.put( here, Objects.requireNonNull( color ) );
 				else
 					cells.remove( here );
 			}
@@ -143,7 +178,7 @@ public class Board implements BoardView
 	}
 
 	// 원래 Load와 같은 transfer(LOAD) 경로로 셀을 놓음. 블록 가장자리의 옆 블록도 깨움
-	private void replaceWith( Set<Point> cells )
+	private void replaceWith( Map<Point, CellColor> cells )
 	{	outermostCell.clear();
 		outermostCell.transfer( new CellSetMemento(cells), new Point(0,0), Cell.LOAD );
 	}
@@ -152,19 +187,22 @@ public class Board implements BoardView
 	 *  스트림은 닫지 않음 (연 쪽이 닫음)
 	 */
 	public void store( OutputStream out, PatternFormat format ) throws IOException
-	{	format.write( liveCells(), out );
+	{	format.writeColored( liveCellColors(), out );
 	}
 
 	/** 살아 있는 셀 집합을 transfer(LOAD)에 전달하기만 하는 Memento.
 	 *  스트림 읽기/쓰기는 PatternFormat이 맡으므로 쓰지 않음
 	 */
 	private static class CellSetMemento implements Cell.Memento
-	{	private final Set<Point> cells;
+	{	private final Map<Point, CellColor> cells;
 
-		CellSetMemento( Set<Point> cells )	{ this.cells = cells;				}
-		public boolean isAlive( Point p )	{ return cells.contains( p );		}
-		public void markAsAlive( Point p )	{ cells.add( new Point(p) );		}
+		CellSetMemento( Map<Point, CellColor> cells )	{ this.cells = cells;				}
+		public boolean isAlive( Point p )	{ return cells.containsKey( p );	}
+		public CellColor colorAt( Point p )	{ return cells.get( p );			}
 
+		public void markAsAlive( Point p )
+		{	throw new UnsupportedOperationException();
+		}
 		public void load( InputStream in )
 		{	throw new UnsupportedOperationException();
 		}

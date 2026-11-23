@@ -136,6 +136,16 @@ public class LifeGame
 		publishBoardEdited();
 	}
 
+	public void brush( int row, int column, CellColor color ){
+		board.brush( row, column, color );
+		publishBoardEdited();
+	}
+
+	public void setBirthColorRule( BirthColorRule rule ){
+		board.setBirthColorRule( rule );
+		publishBoardEdited();
+	}
+
 	/** Return the positions of all live cells (x = column, y = row).
 	 */
 	public Set<Point> liveCells()
@@ -172,8 +182,8 @@ public class LifeGame
 	/** Stamp the pattern with its upper-left corner at the given
 	 *  row and column. The game keeps running, like a click.
 	 */
-	public void stamp( CellPattern pattern, int row, int column )
-	{	board.stamp( pattern, row, column );
+	public void stamp( CellPattern pattern, int row, int column, CellColor color )
+	{	board.stamp( pattern, row, column, color );
 		publishBoardEdited();
 	}
 }
