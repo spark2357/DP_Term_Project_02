@@ -1,4 +1,4 @@
-package com.holub.life.unit;
+package com.holub.life;
 
 import com.holub.life.*;
 
@@ -9,6 +9,7 @@ import java.io.*;
 import java.util.ArrayList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * NeighborhoodState 단위 테스트: 보드 저장용 Memento (Neighborhood 안의 private static 클래스, Cell.Memento 구현)
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.Test;
 class NeighborhoodStateTest {
 
 	@Test
+	@Tag("original")
 	@DisplayName("flush(), load(): 기록한 좌표는 저장했다 읽어도 그대로 남는다")
 	void flushAndLoadKeepLiveCells() throws IOException {
 		// Given
@@ -58,6 +60,7 @@ class NeighborhoodStateTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("load(): 직렬화 파일이 아닌 입력은 IOException으로 실패한다")
 	void nonSerializedInputThrowsIOException() {
 		// Given
@@ -70,6 +73,8 @@ class NeighborhoodStateTest {
 	}
 
 	@Test
+	@Tag("improvement")
+	@Tag("defect-fix")
 	@DisplayName("load(): 다른 타입의 직렬화 객체는 IOException으로 실패한다 (원본: ClassCastException이 나서 Universe가 오류 창 없이 실패함)")
 	void otherSerializedObjectThrowsIOException() throws IOException {
 		// Given: Collection이 아닌 객체(String)를 직렬화한 파일
@@ -82,6 +87,8 @@ class NeighborhoodStateTest {
 	}
 
 	@Test
+	@Tag("improvement")
+	@Tag("defect-fix")
 	@DisplayName("load(): Point가 아닌 원소가 든 파일은 IOException으로 실패하고, 기존 내용은 바뀌지 않는다 (원본: 오류 없이 읽혀 빈 보드가 됨)")
 	void collectionOfNonPointsThrowsIOException() throws IOException {
 		// Given: 셀 하나가 기록된 memento와, Point 하나와 String 하나가 섞인 리스트를 직렬화한 파일

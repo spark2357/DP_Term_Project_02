@@ -1,4 +1,4 @@
-package com.holub.life.board;
+package com.holub.life;
 
 import com.holub.life.support.*;
 
@@ -11,6 +11,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Clear Contract 테스트: Grid → Clear가 보드를 완전히 비우고, 그 뒤에도 게임이 정상으로 진행되는지 검증 (회귀)
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
  *     - 블록 내부 표시(activeEdges 등)를 직접 확인하는 것: 원본 구조에 의존하므로 NeighborhoodTest에서 확인
  *     - Clear가 시계를 멈추지 않는 원본 동작: 시계가 있어야 하므로 통합 테스트에서 확인
  */
+@Tag("original")
 abstract class ClearContractTest {
 	protected LifeTestDriver driver;
 

@@ -1,4 +1,4 @@
-package com.holub.life.board;
+package com.holub.life;
 
 import com.holub.life.support.*;
 
@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Store/Load 원본 동작 테스트: 원본 저장 파일의 모양과 Load의 검증 없는 동작을 그대로 기록
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
  *   - 테스트 제외 대상
  *     - Point가 아닌 원소가 든 파일: NeighborhoodStateTest에서 확인
  */
+@Tag("unclassified")
 class StoreLoadOriginalBehaviorTest {
 
 	@Test

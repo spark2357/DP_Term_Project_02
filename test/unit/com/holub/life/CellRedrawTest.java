@@ -1,4 +1,4 @@
-package com.holub.life.unit;
+package com.holub.life;
 
 import com.holub.life.*;
 
@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Resident와 Neighborhood가 CellPainter에게 "무엇을" 그릴지 제대로 넘기는지 화면 없이 확인함 (이슈 #6)
@@ -18,7 +19,9 @@ import org.junit.jupiter.api.Test;
  *   - 호출을 순서대로 기록하는 가짜 Painter를 redraw()에 넘기고, 기록된 호출을 비교함
  *   - 색이나 도형은 SwingCellPainter의 일이라 여기서 확인하지 않음
  */
-class CellPainterTest {
+@Tag("improvement")
+@Tag("design")
+class CellRedrawTest {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 40, 40);
 
 	private static Call cell(int x, int y, int size, boolean alive) {

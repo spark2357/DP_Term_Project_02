@@ -14,13 +14,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Grid 메뉴 Command 테스트: 파일 창과 오류 창을 가짜 Dialogs로 바꿔 GUI 없이 검증
@@ -66,6 +65,8 @@ class GridCommandTest {
 	//  1. Clear
 
 	@Test
+	@Tag("improvement")
+	@Tag("design")
 	@DisplayName("ClearCommand: 보드를 비우고, 화면에 보드 전체를 다시 그리라고 알린다")
 	void clearEmptiesBoardAndTellsView() {
 		// Given
@@ -92,6 +93,7 @@ class GridCommandTest {
 	//  2. Load/Store
 
 	@Test
+	@Tag("extension")
 	@DisplayName("StoreCommand, LoadCommand: .rle로 Store한 패턴을 Load하면 같은 자리로 돌아오고 게임은 멈춘다")
 	void storedRleLoadsAtSamePlace() {
 		// Given: 구석의 glider를 Store
@@ -114,6 +116,7 @@ class GridCommandTest {
 	//  3. Load 실패
 
 	@Test
+	@Tag("extension")
 	@DisplayName("LoadCommand: 지원하지 않는 확장자는 지원 형식을 알려주는 오류 창을 띄우고, 보드는 그대로 남는다")
 	void unsupportedExtensionShowsError() throws IOException {
 		// Given
@@ -130,6 +133,7 @@ class GridCommandTest {
 	}
 
 	@Test
+	@Tag("extension")
 	@DisplayName("LoadCommand: 깨진 .rle 파일은 오류 창을 띄우고, 보드는 그대로 남는다")
 	void damagedFileShowsError() throws IOException {
 		// Given
@@ -147,6 +151,7 @@ class GridCommandTest {
 	//  4. Stamp
 
 	@Test
+	@Tag("extension")
 	@DisplayName("StampCommand: 켜면 클릭한 곳에 패턴을 찍고(#R 무시), 오른쪽 클릭은 회전하며, 다시 누르면 클릭이 셀 토글로 돌아온다")
 	void stampModeOnAndOff() throws IOException {
 		// Given: #R이 있는 glider 파일. 스탬프는 위치 정보를 쓰지 않음
@@ -196,38 +201,4 @@ class GridCommandTest {
 		return file.toFile();
 	}
 
-	// 고른 파일을 미리 정해 두고, 오류 메시지를 모아 두는 가짜 창
-	private static class FakeDialogs implements Dialogs {
-		File nextFile;
-		final List<String> errors = new ArrayList<>();
-
-		@Override
-		public Optional<File> chooseFile(String selectButtonText, FileNameExtensionFilter[] filters) {
-			return Optional.ofNullable(nextFile);
-		}
-
-		@Override
-		public void showError(String message) {
-			errors.add(message);
-		}
-	}
-
-	// 실제로 tick을 보내지 않고, 실행 중인지만 기억하는 가짜 시계
-	private static class FakeTicker implements TickSource {
-		boolean running;
-
-		public void startTicking(int millisecondsBetweenTicks) {
-			running = true;
-		}
-
-		public void stop() {
-			running = false;
-		}
-
-		public void tick() {
-		}
-
-		public void addTickListener(Listener listener) {
-		}
-	}
 }

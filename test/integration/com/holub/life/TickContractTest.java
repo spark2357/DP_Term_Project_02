@@ -1,4 +1,4 @@
-package com.holub.life.board;
+package com.holub.life;
 
 import com.holub.life.support.*;
 
@@ -11,6 +11,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Tick Contract 테스트: 세대 진행(Go → Tick)이 B3/S23 규칙대로 동작하는지 보드 전체에서 검증
@@ -43,6 +44,7 @@ import org.junit.jupiter.api.Test;
  *     - Load로 배치한 패턴의 진행: Store/Load 테스트에서 따로 확인
  *   - 원본 코드에서 계산 대상 셀 최적화가 이루어지지 않아서 리팩터링 시 현재 테스트로 검증
  */
+@Tag("original")
 abstract class TickContractTest {
 	protected LifeTestDriver driver;
 

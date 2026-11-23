@@ -1,4 +1,4 @@
-package com.holub.life.unit;
+package com.holub.life;
 
 import com.holub.life.*;
 import com.holub.life.support.*;
@@ -9,6 +9,7 @@ import java.awt.Point;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Board.stamp 단위 테스트: 패턴의 왼쪽 위를 (행, 열)에 맞추어 찍음
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
  *   - 테스트 제외 대상
  *     - 블록 경계에 걸친 패턴의 진행: stamp는 Load와 같은 transfer(LOAD) 경로를 써서 Store/Load 테스트에서 확인됨
  */
+@Tag("extension")
 class BoardStampTest {
 	// x = 3, y = 3 사각형 안의 glider
 	private static final CellPattern GLIDER = new CellPattern(3, 3,

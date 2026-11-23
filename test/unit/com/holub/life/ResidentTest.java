@@ -1,4 +1,4 @@
-package com.holub.life.unit;
+package com.holub.life;
 
 import com.holub.life.*;
 
@@ -12,6 +12,7 @@ import java.io.ObjectInputStream;
 import java.util.Collection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Resident 단위 테스트: 보드의 셀 하나 (Composite 패턴의 Leaf)
@@ -49,6 +50,7 @@ import org.junit.jupiter.api.Test;
 class ResidentTest {
 
 	@Test
+	@Tag("original")
 	@DisplayName("figureNextState(), transition(): 죽은 셀은 이웃이 정확히 3개일 때만 태어난다")
 	void deadCellIsBornOnlyWithThreeNeighbors() {
 		for (int liveNeighbors = 0; liveNeighbors <= 8; liveNeighbors++) {
@@ -66,6 +68,7 @@ class ResidentTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("figureNextState(), transition(): 산 셀은 이웃이 2~3개면 살고, 나머지는 죽는다")
 	void liveCellSurvivesOnlyWithTwoOrThreeNeighbors() {
 		for (int liveNeighbors = 0; liveNeighbors <= 8; liveNeighbors++) {
@@ -83,6 +86,7 @@ class ResidentTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("figureNextState(), transition(): 계산만으로는 상태가 바뀌지 않고, transition()에서 바뀐다")
 	void stateChangesOnlyOnTransition() {
 		// Given
@@ -102,6 +106,8 @@ class ResidentTest {
 	}
 
 	@Test
+	@Tag("improvement")
+	@Tag("defect-fix")
 	@DisplayName("transition() (결함): 상태가 바뀐 셀만 true를 반환해야 한다 (원본: 반대로 반환해 블록 건너뛰기 최적화가 동작하지 않음)")
 	void transitionReturnsTrueOnlyWhenChanged() {
 		// Given: 그대로 죽어 있을 셀과, 태어날 셀
@@ -124,6 +130,7 @@ class ResidentTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("figureNextState(): 보드 밖을 나타내는 Cell.DUMMY는 항상 죽은 이웃으로 계산한다")
 	void dummyCountsAsDeadNeighbor() {
 		// Given: 산 이웃 2개 + DUMMY 6개
@@ -143,6 +150,7 @@ class ResidentTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("clear(): 미리 계산해 둔 다음 상태까지 지워서 초기화한다")
 	void clearAlsoForgetsNextState() {
 		// Given: 다음 세대에 태어나야하는 셀
@@ -158,6 +166,7 @@ class ResidentTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("transfer(LOAD), isDisruptiveTo() (원본 동작): Load한 셀은 변화가 없는 셀이라 Go 전에는 이웃을 깨우지 않는다. Neighborhood.transfer()에서 문제 발생")
 	void loadedCellIsNotDisruptive() {
 		// Given: (0,0)이 살아 있다고 기록된 memento
@@ -180,6 +189,7 @@ class ResidentTest {
 	}
 
 	@Test
+	@Tag("original")
 	@DisplayName("transfer(STORE): 산 셀만 memento에 기록한다")
 	void storeRecordsOnlyLiveCells() throws Exception {
 		// Given

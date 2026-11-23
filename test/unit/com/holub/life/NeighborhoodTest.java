@@ -1,4 +1,4 @@
-package com.holub.life.unit;
+package com.holub.life;
 
 import com.holub.life.*;
 
@@ -8,6 +8,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Neighborhood 단위 테스트: NxN개의 Cell 묶음 (Composite 패턴의 Composite)
@@ -42,6 +43,7 @@ import org.junit.jupiter.api.Test;
  *     - redraw(): 화면 그리기라 유닛 테스트에서 제외
  *     - create(), widthInCells(), isAlive(): 한 줄짜리 고정 반환이라 생략
  */
+@Tag("original")
 class NeighborhoodTest {
 	private static final int CELLS = 64;
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 512, 512);

@@ -1,4 +1,4 @@
-package com.holub.life.board;
+package com.holub.life;
 
 import com.holub.life.support.*;
 
@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Store/Load Contract 테스트: Grid → Store, Grid → Load가 보드를 그대로 저장하고 되살리는지 검증
@@ -39,6 +40,7 @@ import org.junit.jupiter.api.Test;
  *     - 원본 저장 파일의 내부 모양(중복, 보드 밖 좌표): StoreLoadOriginalBehaviorTest
  *     - 파일 대화상자와 Load/Store 때 시계 정지: 원본은 Universe에 묶여 있어 보드 단위 테스트에서 제외
  */
+@Tag("original")
 abstract class StoreLoadContractTest {
 	// 원본 코드의 Store 순서로 저장한 파일. 아래 ORIGINAL_FILE_CELLS가 들어 있음 (원본 결함 때문에 셀마다 두 번씩)
 	private static final String ORIGINAL_FILE = "test/resources/original-store.life";

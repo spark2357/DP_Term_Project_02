@@ -1,4 +1,4 @@
-package com.holub.life.board;
+package com.holub.life;
 
 import com.holub.life.support.*;
 
@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Store/Load 결함 Contract 테스트: 원본이 지키지 못하는 올바른 동작을 적어 둠
@@ -39,11 +40,14 @@ import org.junit.jupiter.api.Test;
  *   - 1번은 지금의 Java 직렬화 형식(Point 목록)을 가정함. 저장 형식을 바꾸면 확인 방법도 바꿔야 함
  *   - 같은 패턴을 클릭으로 놓으면 정상으로 진동한다는 대조군은 TickContractTest의 블록 경계 테스트가 맡음
  */
+@Tag("improvement")
+@Tag("defect-fix")
 abstract class StoreLoadDefectContractTest {
 
 	abstract LifeTestDriver newDriver();
 
 	@Test
+	@Tag("design")
 	@DisplayName("store() (결함): 저장 파일에 셀마다 한 번씩만 들어 있어야 한다 (원본: 셀마다 두 번씩 저장됨)")
 	void storeWritesEachCellOnce() throws Exception {
 		// Given: 셀 3개
@@ -60,6 +64,7 @@ abstract class StoreLoadDefectContractTest {
 	}
 
 	@Test
+	@Tag("design")
 	@DisplayName("load() (결함): 깨진 파일을 Load하면 실패하고 기존 보드는 그대로 남아야 한다 (원본: 읽기 전에 보드를 지워 빈 보드가 됨)")
 	void failedLoadKeepsCurrentBoard() {
 		// Given: 셀이 있는 보드와 깨진 파일

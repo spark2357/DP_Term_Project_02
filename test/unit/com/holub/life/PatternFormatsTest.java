@@ -1,4 +1,4 @@
-package com.holub.life.unit;
+package com.holub.life;
 
 import com.holub.life.*;
 import com.holub.life.support.*;
@@ -11,6 +11,7 @@ import java.util.Optional;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -32,6 +33,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  *     - storeFilters, filterFor: loadFilters가 그대로 씀
  *     - 필터를 실제 파일 창에 붙이는 것 (GUI)
  */
+@Tag("extension")
 class PatternFormatsTest {
 	private static final int SIZE = LifeTestDriver.SIZE;
 
