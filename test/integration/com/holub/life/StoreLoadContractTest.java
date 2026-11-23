@@ -146,9 +146,9 @@ abstract class StoreLoadContractTest {
 		LifeTestDriver board = newDriver();
 
 		// When
-		InputStream file = new FileInputStream(ORIGINAL_FILE);
-		board.load(file);
-		file.close();
+		try (InputStream file = new FileInputStream(ORIGINAL_FILE)) {
+			board.load(file);
+		}
 
 		// Then: 수정본도 기존 사용자의 .life 파일을 계속 읽을 수 있어야 함
 		assertEquals(ORIGINAL_FILE_CELLS, board.liveCells());
