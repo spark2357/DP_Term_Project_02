@@ -362,11 +362,11 @@ class LifeGameUndoTest {
 			this.cells = cells;
 		}
 
-		public Set<Point> read(InputStream in) throws IOException {
-			return cells;
+		public LiveCells read(InputStream in) throws IOException {
+			return LiveCells.of(cells);
 		}
 
-		public void write(Set<Point> cells, OutputStream out) {
+		public void write(LiveCells cells, OutputStream out) {
 		}
 
 		public String extension() {
@@ -385,7 +385,7 @@ class LifeGameUndoTest {
 		}
 
 		@Override
-		public Set<Point> read(InputStream in) throws IOException {
+		public LiveCells read(InputStream in) throws IOException {
 			throw new IOException("broken");
 		}
 	}

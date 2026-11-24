@@ -45,9 +45,10 @@ import org.junit.jupiter.api.Test;
  *   5. 다시 그리기: 안정된 블록의 셀 색만 바꿔도 바뀐 블록만 그리는 갱신(drawAll=false)에 나옴
  *   6. 저장/불러오기: .life는 색까지 저장하고 불러옴. 색이 없는 예전 .life 파일은 기본색. RLE는 색을 버림
  *      색 부분이 중간에 끊긴 .life 파일은 IOException이고 보드는 그대로. 색 부분 바로 앞에서 끊기면 예전 파일과 같음
+ *   7. 스냅샷(Undo): 복원하면 셀 색도 돌아옴. 색만 다른 보드의 스냅샷은 다름 (색만 칠한 편집도 Undo 기록 대상)
  *
  * [커버리지]
- *   - CellColorBoardTest.java 테스트 대상: Board.brush, Board.toggle(색), Board.step(색), Board.setBirthColorRule, Board.stamp(색), Board.load(색), Board.store(색)
+ *   - CellColorBoardTest.java 테스트 대상: Board.brush, Board.toggle(색), Board.step(색), Board.setBirthColorRule, Board.stamp(색), Board.load(색), Board.store(색), Board.snapshot/restore(색)
  *   - 테스트 제외 대상
  *     - 실제 화면의 색(SwingCellPainter): 넘겨받은 CellColor를 java.awt.Color로 바꾸기만 함
  */
@@ -455,6 +456,41 @@ class CellColorBoardTest {
 
 		// Then
 		assertEquals(Map.of(at(10, 10), RED, at(10, 11), RED), colors(loaded));
+	}
+
+	//  7. 스냅샷(Undo)
+
+	@Test
+	@DisplayName("restore(): 색을 칠한 보드의 스냅샷으로 복원하면 셀 색도 그때로 돌아온다")
+	void restoreKeepsColors() {
+		// Given
+		Board board = new Board();
+		board.brush(10, 10, BLUE);
+		board.brush(10, 11, GREEN);
+		BoardSnapshot snapshot = board.snapshot();
+
+		// When
+		board.brush(10, 10, YELLOW);
+		board.clear();
+		board.restore(snapshot);
+
+		// Then
+		assertEquals(Map.of(at(10, 10), BLUE, at(10, 11), GREEN), colors(board));
+	}
+
+	@Test
+	@DisplayName("snapshot().equals(): 살아 있는 자리가 같아도 색이 다르면 다른 스냅샷이다")
+	void snapshotsDifferByColor() {
+		// Given
+		Board board = new Board();
+		board.brush(10, 10, BLUE);
+		BoardSnapshot blue = board.snapshot();
+
+		// When
+		board.brush(10, 10, GREEN);
+
+		// Then
+		assertNotEquals(blue, board.snapshot());
 	}
 
 	// ---------------------------------------------------------------

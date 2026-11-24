@@ -52,10 +52,11 @@ public class RleFormat implements PatternFormat {
         return "RLE Pattern Files";
     }
 
+    // RLE는 색을 저장하지 않으므로 읽은 셀은 모두 기본색
     @Override
-    public Set<Point> read(InputStream in) throws IOException {
+    public LiveCells read(InputStream in) throws IOException {
         Parsed parsed = parse(in);
-        return place(parsed.pattern(), parsed.position());
+        return LiveCells.of(place(parsed.pattern(), parsed.position()));
     }
 
     // 위치 정보(#R)는 버리고 패턴 모양만 읽음 (Stamp에서 씀)
@@ -201,8 +202,10 @@ public class RleFormat implements PatternFormat {
         return cells;
     }
 
+    // RLE는 색을 저장하지 않으므로 위치만 씀
     @Override
-    public void write(Set<Point> cells, OutputStream out) throws IOException {
+    public void write(LiveCells liveCells, OutputStream out) throws IOException {
+        Set<Point> cells = liveCells.positions();
         // 스트림은 닫지 않음 (연 쪽이 닫음). flush만 함
         Writer writer = new OutputStreamWriter(out, StandardCharsets.UTF_8);
 
