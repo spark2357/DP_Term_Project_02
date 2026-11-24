@@ -382,6 +382,31 @@ public final class Neighborhood implements Cell
 	{	return gridSize * grid[0][0].widthInCells();
 	}
 
+	// [수정] 2026-11-16: Visitor가 블록 안의 모든 Cell을 방문하도록 넘겨 줌 (Composite이 트리를 돎).
+	// 자식이 블록이든 셀이든 똑같이 accept()를 부르므로, 바깥 블록 → 안쪽 블록 → 셀 순서로 재귀 방문됨
+
+	/** Visit this block: tell the visitor we are entering it, pass
+	 *  the visitor on to every cell inside it, then tell the visitor
+	 *  we are leaving it.
+	 */
+	public void accept( CellVisitor visitor )
+	{	visitor.enterNeighborhood( this );
+		for( int row = 0; row < gridSize; ++row )
+			for( int column = 0; column < gridSize; ++column )
+				grid[row][column].accept( visitor );
+		visitor.leaveNeighborhood( this );
+	}
+
+	// [수정] 2026-11-16: 통계(활성 블록 수)용 조회 메서드. amActive는 블록 건너뛰기가 쓰는 값으로,
+	// 마지막 세대 진행에서 블록 안의 셀이 바뀌었으면 true (셀 클릭이나 Load로 셀을 놓은 블록도 true)
+
+	/** Return true if a cell in this block changed state in the last
+	 *  generation (so the block was not skipped).
+	 */
+	public boolean isActive()
+	{	return amActive;
+	}
+
 	public void clear()
 	{	activeEdges.clear();
 
