@@ -3,11 +3,14 @@ package com.holub.life;
 import java.awt.*;
 import javax.swing.*;
 import com.holub.ui.MenuSite;
+import com.holub.life.command.EditMenu;
 import com.holub.life.command.GoMenu;
 import com.holub.life.command.GridMenu;
 import com.holub.life.command.SwingDialogs;
 import com.holub.life.mouse.MouseController;
 import com.holub.life.mouse.ToggleMode;
+import com.holub.life.mouse.Pen;
+import com.holub.life.brush.BrushToolBar;
 
 /*******************************************************************
  * An implemenation of Conway's Game of Life.
@@ -45,15 +48,22 @@ public final class Life extends JFrame
 					) );
 
 					// [수정] 2026-11-17: 마우스 모드(State)와 Grid 메뉴(Command)를 이곳에서 조립함
-					MouseController mouse	 = new MouseController( new ToggleMode( game ) );
+					Pen				pen		 = new Pen( CellColor.DEFAULT );
+					MouseController mouse	 = new MouseController( new ToggleMode( game, pen ) );
 					Universe		universe = new Universe( board, game, mouse );
 
-					new GridMenu( game, formats, rle, mouse, new SwingDialogs() ).register();
+					new GridMenu( game, formats, rle, mouse, pen, new SwingDialogs() ).register();
 
 					// [수정] 2026-11-10: Go 메뉴를 Clock 생성자 대신 이곳에서 등록함 (항목마다 Command)
 					new GoMenu( game ).register();
 
+					// [수정] 2026-11-23: Edit 메뉴(Undo, Redo) 추가
+					new EditMenu( game ).register();
+
 					frame.install( universe );
+					BrushToolBar	toolBar	= new BrushToolBar( game, pen );
+
+					frame.install( universe, toolBar );
 				}
 			}
 		);
@@ -73,8 +83,9 @@ public final class Life extends JFrame
 
 	/** Put the view into the frame and show the frame.
 	 */
-	private void install( JComponent universe )
-	{	getContentPane().add( universe, BorderLayout.CENTER); //{=life.java.install}
+	private void install( JComponent universe, JComponent toolBar )
+	{	getContentPane().add( toolBar,  BorderLayout.NORTH );
+		getContentPane().add( universe, BorderLayout.CENTER); //{=life.java.install}
 		pack();
 		setVisible( true );
 	}

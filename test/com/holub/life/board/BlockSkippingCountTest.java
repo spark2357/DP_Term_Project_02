@@ -6,6 +6,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +24,7 @@ import org.junit.jupiter.api.Test;
  *
  * [테스트 시나리오]
  *   1. 블록 안 blinker 하나만 움직이면 그 블록만 계산되어야 함. 원본은 2세대부터 64블록을 모두 계산 (결함)
+ *   2. Undo 스냅샷처럼 세대마다 보드를 읽어도(transfer(STORE)) 계산되는 블록은 1과 같음
  *   원인: Resident.transition()이 바뀌지 않은 셀에 true를 반환함 (ResidentTest에서 확인).
  *         바깥 Neighborhood.transition()은 계산하지 않은 블록까지 모든 블록에 transition()을 부르므로,
  *         1세대 적용 때 64블록 모두 가장자리 표시가 켜지고 2세대부터 전부 계산됨
@@ -29,7 +33,8 @@ import org.junit.jupiter.api.Test;
  *   - BlockSkippingCountTest.java 테스트 대상: 세대마다 계산되는 블록 (성능)
  *   - 테스트 제외 대상
  *     - 계산 결과가 맞는지: TickContractTest에서 확인 (원본은 결과는 맞음)
- *   - 보드를 읽으면(createMemento) 블록 가장자리 표시가 늘어 계산되는 블록이 달라지므로, 이 테스트에서는 보드를 읽지 않음
+ *   - 보드를 읽으면(transfer(STORE)) 클릭한 뒤 아직 세대가 진행되지 않은 셀이 있는 블록에 가장자리 표시가 늘어남.
+ *     세대가 진행된 직후에는 늘지 않으므로 시나리오 2는 한 세대 진행한 뒤부터 확인하고, 1에서는 보드를 읽지 않음
  */
 class BlockSkippingCountTest {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 512, 512);
@@ -54,11 +59,33 @@ class BlockSkippingCountTest {
 		}
 	}
 
+	@Test
+	@DisplayName("transfer(STORE): 세대마다 보드를 읽어도(Undo 스냅샷) 블록 안 blinker의 블록만 계산된다")
+	void readingTheBoardEveryGenerationKeepsSkipping() {
+		// Given
+		Set<String> computed = new TreeSet<>();
+		Neighborhood board = countingBoard(computed);
+		click(board, 3, 2);
+		click(board, 3, 3);
+		click(board, 3, 4);
+		tick(board);	// 클릭한 셀은 아직 안정 상태가 아니므로, 한 세대 진행한 뒤부터 확인
+
+		for (int generation = 2; generation <= 10; generation++) {
+			// When: Board.snapshot()과 같은 방법으로 보드 전체를 읽고 진행
+			board.transfer(new CollectingMemento(), new Point(0, 0), Cell.STORE);
+			computed.clear();
+			tick(board);
+
+			// Then
+			assertEquals(Set.of("(0,0)"), computed, generation + "세대에 계산된 블록");
+		}
+	}
+
 	// ---- 헬퍼 메서드
 
 	// Universe와 같은 64x64 보드를 만들되, 8x8 블록마다 CountingBlock을 씌움
 	private static Neighborhood countingBoard(Set<String> computed) {
-		CountingBlock prototype = new CountingBlock(new Neighborhood(8, new Resident()), computed);
+		CountingBlock prototype = new CountingBlock(new Neighborhood(8, new Resident(ClashRule::new)), computed);
 		return new Neighborhood(8, prototype);
 	}
 
@@ -123,6 +150,16 @@ class BlockSkippingCountTest {
 		public void clear()											{ block.clear(); }
 		public boolean transfer(Storable memento, Point upperLeft, boolean load) { return block.transfer(memento, upperLeft, load); }
 		public Storable createMemento()								{ return block.createMemento(); }
+	}
+
+	// 살아 있는 셀을 모으기만 하는 Memento (Board.snapshot()이 쓰는 것과 같은 역할)
+	private static class CollectingMemento implements Cell.Memento {
+		private final Set<Point> cells = new HashSet<>();
+
+		public void markAsAlive(Point location)	{ cells.add(new Point(location)); }
+		public boolean isAlive(Point location)	{ return cells.contains(location); }
+		public void load(InputStream in)	{ throw new UnsupportedOperationException(); }
+		public void flush(OutputStream out)	{ throw new UnsupportedOperationException(); }
 	}
 
 	/**

@@ -4,6 +4,7 @@ import com.holub.life.LifeGame;
 import com.holub.life.PatternFormats;
 import com.holub.life.RleFormat;
 import com.holub.life.mouse.MouseController;
+import com.holub.life.mouse.Pen;
 import com.holub.ui.MenuSite;
 
 /**
@@ -15,13 +16,15 @@ public class GridMenu {
     private final PatternFormats formats;
     private final RleFormat rle;
     private final MouseController mouse;
+    private final Pen pen;
     private final Dialogs dialogs;
 
-    public GridMenu(LifeGame game, PatternFormats formats, RleFormat rle, MouseController mouse, Dialogs dialogs) {
+    public GridMenu(LifeGame game, PatternFormats formats, RleFormat rle, MouseController mouse, Pen pen, Dialogs dialogs) {
         this.game = game;
         this.formats = formats;
         this.rle = rle;
         this.mouse = mouse;
+        this.pen = pen;
         this.dialogs = dialogs;
     }
 
@@ -29,7 +32,7 @@ public class GridMenu {
         add("Clear", new ClearCommand(game));
         add("Load", new LoadCommand(game, formats, dialogs));
         add("Store", new StoreCommand(game, formats, dialogs));
-        add("Stamp", new StampCommand(game, rle, mouse, dialogs));
+        add("Stamp", new StampCommand(game, rle, mouse, pen, dialogs));
         add("Exit", new ExitCommand());
     }
 

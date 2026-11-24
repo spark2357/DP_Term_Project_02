@@ -3,6 +3,7 @@ package com.holub.life;
 import java.io.*;
 import java.awt.Point;
 import java.util.Set;
+import java.util.Optional;
 import com.holub.tools.Publisher;
 
 /**
@@ -25,6 +26,12 @@ import com.holub.tools.Publisher;
  * advances the board one generation on every tick. Whenever a step
  * changes the board, it tells its own listeners (the Universe), so
  * the view never talks to the clock.
+ * <p>
+ * LifeGame also keeps the Undo/Redo history. Every method that changes
+ * the board (toggle, stamp, step, clear, load) records a snapshot of the
+ * board from just before the change, so changes can be undone in the
+ * order they happened. A call that leaves the board as it was is not
+ * recorded.
  *
  * @include /etc/license.txt
  */
@@ -32,6 +39,15 @@ import com.holub.tools.Publisher;
 public class LifeGame
 {	private final Board 		board;
 	private final TickSource 	ticker;
+
+	// [수정] 2026-11-23: Undo/Redo 기록.
+	// 보드를 바꾸는 동작이 모두 이 LifeGame을 통해 이루어져서 여기서 스냅샷을 남김.
+	// 마우스 편집과 세대 진행을 한 History에 둬서 스냅샷 기록을 한 곳에서 관리
+
+	// Undo 최대 한도. BoardHistory에 저장 가능한 스냅샷 개수 제한
+	public static final int UNDO_LIMIT = 100;
+
+	private final BoardHistory	history = new BoardHistory( UNDO_LIMIT );
 
 	private final Publisher		publisher = new Publisher();
 
@@ -77,14 +93,18 @@ public class LifeGame
 	{	publisher.subscribe( listener );
 	}
 
+	// [수정] 2026-11-23: 바뀐 세대만 Undo 기록에 저장
+
 	/** Advance the board by one generation. If anything changed,
 	 *  tell the listeners. This is called on every tick, and can also
 	 *  be called directly (for single stepping, or from tests).
 	 *  @return true if anything on the board changed state.
 	 */
 	public boolean step()
-	{	boolean changed = board.step();
+	{	BoardSnapshot before  = board.snapshot();
+		boolean		  changed = board.step();
 		if( changed )
+		{	history.record( before );
 			publisher.publish
 			(	new Publisher.Distributor()
 				{	public void deliverTo( Object subscriber )
@@ -92,6 +112,7 @@ public class LifeGame
 					}
 				}
 			);
+		}
 		return changed;
 	}
 
@@ -132,8 +153,24 @@ public class LifeGame
 	/** Toggle the cell at the indicated row and column (in cells).
 	 */
 	public void toggle( int row, int column )
-	{	board.toggle( row, column );
+	{	// toggle은 이전 스냅샷과 같을 일이 없어서 recordIfChanged 생략
+		history.record( board.snapshot() );
+		board.toggle( row, column );
 		publishBoardEdited();
+	}
+
+	public void brush( int row, int column, CellColor color ){
+		board.brush( row, column, color );
+		publishBoardEdited();
+	}
+
+	public void setBirthColorRule( BirthColorRule rule ){
+		board.setBirthColorRule( rule );
+		publishBoardEdited();
+	}
+
+	public BirthColorRule birthColorRule(){
+		return board.birthColorRule();
 	}
 
 	/** Return the positions of all live cells (x = column, y = row).
@@ -145,11 +182,15 @@ public class LifeGame
 	/** Kill every cell on the board.
 	 */
 	public void clear()
-	{	board.clear();
+	{	BoardSnapshot before = board.snapshot();
+		board.clear();
+		recordIfChanged( before );
 		publishBoardEdited();
 	}
 
 	// [수정] 2026-11-10: 파일 형식(.life, .rle)을 인자로 받음. 어떤 형식인지는 부르는 쪽(파일 이름)이 정함
+
+	// [수정] 2026-11-23: Undo 기록 추가. 읽다 실패하면 board.load()가 예외를 던져 기록 줄까지 가지 않음 (보드도 그대로)
 
 	/** Stop the game, then replace the board with the pattern read
 	 *  from <code>in</code> in the given format. If reading fails,
@@ -157,7 +198,9 @@ public class LifeGame
 	 */
 	public void load( InputStream in, PatternFormat format ) throws IOException
 	{	ticker.stop();
+		BoardSnapshot before = board.snapshot();
 		board.load( in, format );
+		recordIfChanged( before );
 		publishBoardEdited();
 	}
 
@@ -172,8 +215,47 @@ public class LifeGame
 	/** Stamp the pattern with its upper-left corner at the given
 	 *  row and column. The game keeps running, like a click.
 	 */
-	public void stamp( CellPattern pattern, int row, int column )
-	{	board.stamp( pattern, row, column );
-		publishBoardEdited();
+   public void stamp( CellPattern pattern, int row, int column, CellColor color )
+    {	BoardSnapshot before = board.snapshot();
+     board.stamp( pattern, row, column, color );
+     recordIfChanged( before );
+      publishBoardEdited();
+    }
+ 
+	// [수정] 2026-11-23: 편집 뒤 보드가 그대로면 저장하지 않음
+	// toggle은 항상 바뀌므로 쓰지 않음
+	private void recordIfChanged( BoardSnapshot before )
+	{	if( !board.snapshot().equals( before ) )
+			history.record( before );
 	}
+
+	// [수정] 2026-11-23: Undo/Redo. 실행 중이면 먼저 멈춤. 멈추지 않으면 다음 tick이 바로 진행되고 redo가 바로 불가능해짐.
+	// 되돌릴 것이 없어도 멈춤
+
+	/** Stop the game and put the board back to how it was before the
+	 *  last change (an edit or a generation).
+	 *  @return false if there was nothing to undo (the game is
+	 *  		stopped anyway).
+	 */
+	public boolean undo()
+	{	ticker.stop();
+		return apply( history.undo( board.snapshot() ) );
+	}
+
+	/** Stop the game and redo the change that the last undo took
+	 *  back. A new change after an undo clears what can be redone.
+	 *  @return false if there was nothing to redo.
+	 */
+	public boolean redo()
+	{	ticker.stop();
+		return apply( history.redo( board.snapshot() ) );
+	}
+
+	private boolean apply( Optional<BoardSnapshot> snapshot )
+	{	if( snapshot.isEmpty() )
+			return false;
+		board.restore( snapshot.get() );
+		return true;
+	}
+
 }
