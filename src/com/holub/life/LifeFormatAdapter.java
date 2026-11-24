@@ -4,7 +4,9 @@ import java.awt.Point;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -51,6 +53,32 @@ public class LifeFormatAdapter implements PatternFormat {
         Cell.Memento memento = Neighborhood.createEmptyMemento();
         for (Point cell : cells) {
             memento.markAsAlive(cell);
+        }
+        memento.flush(out);
+    }
+
+    @Override
+    public Map<Point, CellColor> readColored( InputStream in ) throws IOException{
+        Cell.Memento memento = Neighborhood.createEmptyMemento();
+        memento.load(in);
+
+        Map<Point, CellColor> cells = new HashMap<>();
+        for (int row = 0; row < widthInCells; row++) {
+            for (int column = 0; column < widthInCells; column++) {
+                Point here = new Point(column, row);
+                if (memento.isAlive(here)) {
+                    cells.put(here, memento.colorAt(here));
+                }
+            }
+        }
+        return cells;
+    }
+
+    @Override
+    public void writeColored( Map<Point, CellColor> cells, OutputStream out ) throws IOException{
+        Cell.Memento memento = Neighborhood.createEmptyMemento();
+        for (Map.Entry<Point, CellColor> cell : cells.entrySet()) {
+            memento.markAsAlive(cell.getKey(), cell.getValue());
         }
         memento.flush(out);
     }

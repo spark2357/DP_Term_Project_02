@@ -159,6 +159,20 @@ public class LifeGame
 		publishBoardEdited();
 	}
 
+	public void brush( int row, int column, CellColor color ){
+		board.brush( row, column, color );
+		publishBoardEdited();
+	}
+
+	public void setBirthColorRule( BirthColorRule rule ){
+		board.setBirthColorRule( rule );
+		publishBoardEdited();
+	}
+
+	public BirthColorRule birthColorRule(){
+		return board.birthColorRule();
+	}
+
 	/** Return the positions of all live cells (x = column, y = row).
 	 */
 	public Set<Point> liveCells()
@@ -201,13 +215,13 @@ public class LifeGame
 	/** Stamp the pattern with its upper-left corner at the given
 	 *  row and column. The game keeps running, like a click.
 	 */
-	public void stamp( CellPattern pattern, int row, int column )
-	{	BoardSnapshot before = board.snapshot();
-		board.stamp( pattern, row, column );
-		recordIfChanged( before );
-		publishBoardEdited();
-	}
-
+   public void stamp( CellPattern pattern, int row, int column, CellColor color )
+    {	BoardSnapshot before = board.snapshot();
+     board.stamp( pattern, row, column, color );
+     recordIfChanged( before );
+      publishBoardEdited();
+    }
+ 
 	// [수정] 2026-11-23: 편집 뒤 보드가 그대로면 저장하지 않음
 	// toggle은 항상 바뀌므로 쓰지 않음
 	private void recordIfChanged( BoardSnapshot before )
@@ -241,7 +255,7 @@ public class LifeGame
 	{	if( snapshot.isEmpty() )
 			return false;
 		board.restore( snapshot.get() );
-		publishBoardEdited();
 		return true;
 	}
+
 }
