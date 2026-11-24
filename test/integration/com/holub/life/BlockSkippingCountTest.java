@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Tag;
  *   - 보드를 읽으면(createMemento) 블록 가장자리 표시가 늘어 계산되는 블록이 달라지므로, 이 테스트에서는 보드를 읽지 않음
  */
 @Tag("improvement")
-@Tag("defect-fix")
 class BlockSkippingCountTest {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 512, 512);
 

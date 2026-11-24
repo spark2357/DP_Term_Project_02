@@ -72,7 +72,6 @@ class NeighborhoodStateTest {
 
 	@Test
 	@Tag("improvement")
-	@Tag("defect-fix")
 	@DisplayName("load(): 다른 타입의 직렬화 객체는 IOException으로 실패한다 (원본: ClassCastException이 나서 Universe가 오류 창 없이 실패함)")
 	void otherSerializedObjectThrowsIOException() throws IOException {
 		// Given: Collection이 아닌 객체(String)를 직렬화한 파일
@@ -86,7 +85,6 @@ class NeighborhoodStateTest {
 
 	@Test
 	@Tag("improvement")
-	@Tag("defect-fix")
 	@DisplayName("load(): Point가 아닌 원소가 든 파일은 IOException으로 실패하고, 기존 내용은 바뀌지 않는다 (원본: 오류 없이 읽혀 빈 보드가 됨)")
 	void collectionOfNonPointsThrowsIOException() throws IOException {
 		// Given: 셀 하나가 기록된 memento와, Point 하나와 String 하나가 섞인 리스트를 직렬화한 파일

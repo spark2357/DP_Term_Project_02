@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
  *     - 취소했을 때 게임을 멈출지: 팀에서 아직 정하지 않아 확인하지 않음
  */
 @Tag("improvement")
-@Tag("defect-fix")
 class LoadCommandTest {
 	private final FakeDialogs dialogs = new FakeDialogs();
 	private final LifeGame game = new LifeGame(new Board(), new FakeTicker());

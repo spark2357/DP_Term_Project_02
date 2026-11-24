@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Tag;
  *   - 색이나 도형은 SwingCellPainter의 일이라 여기서 확인하지 않음
  */
 @Tag("improvement")
-@Tag("design")
 class CellRedrawTest {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 40, 40);
 

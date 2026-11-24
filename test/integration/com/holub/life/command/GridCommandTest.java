@@ -68,7 +68,6 @@ class GridCommandTest {
 
 	@Test
 	@Tag("improvement")
-	@Tag("design")
 	@DisplayName("ClearCommand: 보드를 비우고, 화면에 보드 전체를 다시 그리라고 알린다")
 	void clearEmptiesBoardAndTellsView() {
 		// Given
@@ -87,7 +86,6 @@ class GridCommandTest {
 	@Test
 	@Tag("extension")
 	@Tag("improvement")
-	@Tag("design")
 	@DisplayName("StoreCommand, LoadCommand: .rle로 Store한 패턴을 Load하면 같은 자리로 돌아오고, 게임은 멈추고, 화면에 boardEdited를 알린다")
 	void storedRleLoadsAtSamePlace() {
 		// Given: 구석의 glider를 Store
@@ -131,8 +129,6 @@ class GridCommandTest {
 	@Test
 	@Tag("extension")
 	@Tag("improvement")
-	@Tag("defect-fix")
-	@Tag("design")
 	@DisplayName("LoadCommand: 깨진 .rle 파일은 오류 창을 띄우고, 보드는 그대로 남고, 화면에 알리지 않는다")
 	void damagedFileShowsError() throws IOException {
 		// Given
@@ -153,7 +149,6 @@ class GridCommandTest {
 	@Test
 	@Tag("extension")
 	@Tag("improvement")
-	@Tag("design")
 	@DisplayName("StampCommand: 켜면 클릭한 곳에 패턴을 찍고(#R 무시) 화면에 알리며, 오른쪽 클릭은 회전하고, 다시 누르면 클릭이 셀 토글로 돌아온다")
 	void stampModeOnAndOff() throws IOException {
 		// Given: #R이 있는 glider 파일. 스탬프는 위치 정보를 쓰지 않음

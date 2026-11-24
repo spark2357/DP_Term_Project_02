@@ -21,7 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
  * 진짜 LifeGame·Board에 가짜 파일 창(FakeDialogs)과 가짜 시계(FakeTicker)를 넣어 화면 없이 실행함. 파일은 임시 폴더(@TempDir)에 실제로 씀
  *
  * LoadCommandTest와 따로 둔 이유
- *   - LoadCommandTest는 클래스에 improvement, defect-fix 태그가 붙어 있음 (취소 테스트가 원본 결함 수정이라서)
+ *   - LoadCommandTest는 클래스에 improvement 태그가 붙어 있음 (취소 테스트가 원본 결함 수정이라서)
  *   - JUnit은 클래스 태그를 메서드가 무조건 물려받고, 물려받지 않게 막는 방법이 없음
  *   - 이 테스트는 원본 Universe.doLoad()도 시계를 멈추던 기존 기능이라 original만 붙어야 해서 클래스를 나눔
  *   - 통합 테스트는 클래스이름Test 규칙이 아니라 시나리오 이름으로 짓기 때문에(GridCommandTest, RleBoardLoadTest 등) 따로 두어도 됨

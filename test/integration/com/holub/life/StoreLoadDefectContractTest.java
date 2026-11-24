@@ -41,13 +41,11 @@ import org.junit.jupiter.api.Tag;
  *   - 같은 패턴을 클릭으로 놓으면 정상으로 진동한다는 대조군은 TickContractTest의 블록 경계 테스트가 맡음
  */
 @Tag("improvement")
-@Tag("defect-fix")
 abstract class StoreLoadDefectContractTest {
 
 	abstract LifeTestDriver newDriver();
 
 	@Test
-	@Tag("design")
 	@DisplayName("store() (결함): 저장 파일에 셀마다 한 번씩만 들어 있어야 한다 (원본: 셀마다 두 번씩 저장됨)")
 	void storeWritesEachCellOnce() throws Exception {
 		// Given: 셀 3개
@@ -64,7 +62,6 @@ abstract class StoreLoadDefectContractTest {
 	}
 
 	@Test
-	@Tag("design")
 	@DisplayName("load() (결함): 깨진 파일을 Load하면 실패하고 기존 보드는 그대로 남아야 한다 (원본: 읽기 전에 보드를 지워 빈 보드가 됨)")
 	void failedLoadKeepsCurrentBoard() {
 		// Given: 셀이 있는 보드와 깨진 파일

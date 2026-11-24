@@ -50,7 +50,6 @@ class TickCommandTest {
 
 	@Test
 	@Tag("improvement")
-	@Tag("design")
 	@DisplayName("execute(): 보드가 바뀌면 화면에 boardChanged를 알린다")
 	void executeNotifiesChanged() {
 		// Given: blinker. 놓을 때 받은 알림은 지움
@@ -66,7 +65,6 @@ class TickCommandTest {
 
 	@Test
 	@Tag("improvement")
-	@Tag("design")
 	@DisplayName("execute(): 바뀐 셀이 없으면 알리지 않는다")
 	void executeWithoutChangeNotifiesNothing() {
 		// Given: 빈 보드

@@ -40,7 +40,6 @@ class StoreCommandTest {
 
 	@Test
 	@Tag("improvement")
-	@Tag("defect-fix")
 	@DisplayName("execute(): 파일 창에서 취소하면 오류 창이 뜨지 않는다")
 	void cancelShowsNoError() {
 		// Given

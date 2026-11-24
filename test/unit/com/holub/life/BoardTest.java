@@ -114,7 +114,6 @@ class BoardTest {
 
 	@Test
 	@Tag("improvement")
-	@Tag("defect-fix")
 	@DisplayName("load(): 형식이 읽다가 실패하면 IOException이 나고 보드는 그대로 남는다")
 	void failedLoadKeepsBoard() {
 		// Given

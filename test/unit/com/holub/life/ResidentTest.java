@@ -105,7 +105,6 @@ class ResidentTest {
 
 	@Test
 	@Tag("improvement")
-	@Tag("defect-fix")
 	@DisplayName("transition() (결함): 상태가 바뀐 셀만 true를 반환해야 한다 (원본: 반대로 반환해 블록 건너뛰기 최적화가 동작하지 않음)")
 	void transitionReturnsTrueOnlyWhenChanged() {
 		// Given: 그대로 죽어 있을 셀과, 태어날 셀
