@@ -83,7 +83,6 @@ public final class Life extends JFrame
 					// [수정] 2026-11-23: Edit 메뉴(Undo, Redo) 추가
 					new EditMenu( game ).register();
 
-					frame.install( universe );
 					BrushToolBar	toolBar	= new BrushToolBar( game, pen );
 
 					frame.install( universe, toolBar );

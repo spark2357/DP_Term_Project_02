@@ -3,7 +3,6 @@ package com.holub.life;
 import java.io.*;
 import java.awt.*;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -116,23 +115,16 @@ public class Board implements BoardView
 	 *  original Store used, so no cell changes state.
 	 */
 	public Set<Point> liveCells()
-	{	Set<Point> live = new HashSet<Point>();
-		outermostCell.transfer( new CellSetMemento(live), new Point(0,0), Cell.STORE );
-		return live;
+	{	return liveCellColors().positions();
 	}
 
-	private Map<Point, CellColor> liveCellColors(){
-		Cell.Memento memento = (Cell.Memento) outermostCell.createMemento();
-		Map<Point, CellColor> live = new HashMap<>();
-		int width = widthInCells();
-
-		for( int row = 0; row < width; ++row )
-			for( int column = 0; column < width; ++column ){
-				Point here = new Point( column, row );
-				if( memento.isAlive( here ) )
-					live.put( here, memento.colorAt( here ) );
-			}
-		return live;
+	// [수정] 2026-11-24: 셀 색 브랜치와 Undo 브랜치 병합. liveCells()도 이 메서드의 transfer(STORE) 결과를 쓰도록 하고,
+	// 칸마다 isAlive()로 확인하던 반복문은 없앰
+	// [수정] 2026-11-24: Map<Point, CellColor> 대신 LiveCells(위치와 색을 묶은 불변 값 객체)를 돌려줌
+	private LiveCells liveCellColors()
+	{	Map<Point, CellColor> live = new HashMap<>();
+		outermostCell.transfer( new CellSetMemento(live), new Point(0,0), Cell.STORE );
+		return new LiveCells( live );
 	}
 
 	// [수정] 2026-11-17: 방문자를 Cell 트리에 넘기는 창구 하나만 둠 (Visitor). 통계처럼 트리 위에서 할 일이 늘어도
@@ -158,7 +150,7 @@ public class Board implements BoardView
 	 *  스트림은 닫지 않음 (연 쪽이 닫음)
 	 */
 	public void load( InputStream in, PatternFormat format ) throws IOException
-	{	replaceWith( format.readColored( in ) );
+	{	replaceWith( format.read( in ) );	// [수정] 2026-11-24: 형식이 LiveCells를 돌려주므로 변환 없이 바로 놓음
 	}
 
 	// [수정] 2026-11-17: Grid → Stamp. 패턴의 왼쪽 위를 (row, column)에 맞추고, 패턴 사각형 안의 칸을 덮어씀.
@@ -167,7 +159,7 @@ public class Board implements BoardView
 	/** 패턴 사각형 안은 패턴대로(죽은 칸 포함) 덮어쓰고, 밖의 셀은 그대로 둠.
 	 */
 	public void stamp( CellPattern pattern, int row, int column, CellColor color ){
-		Map<Point, CellColor> cells = liveCellColors();
+		Map<Point, CellColor> cells = liveCellColors().toMap();
 		Set<Point> alive  = pattern.cells();
 		int		   width  = widthInCells();
 
@@ -181,13 +173,14 @@ public class Board implements BoardView
 				else
 					cells.remove( here );
 			}
-		replaceWith( cells );
+		replaceWith( new LiveCells( cells ) );	// [수정] 2026-11-24: replaceWith가 LiveCells를 받음
 	}
 
 	// 원래 Load와 같은 transfer(LOAD) 경로로 셀을 놓음. 블록 가장자리의 옆 블록도 깨움
-	private void replaceWith( Map<Point, CellColor> cells )
+	// [수정] 2026-11-24: Map 대신 LiveCells를 받음 (load, restore가 받은 LiveCells를 그대로 넘김)
+	private void replaceWith( LiveCells cells )
 	{	outermostCell.clear();
-		outermostCell.transfer( new CellSetMemento(cells), new Point(0,0), Cell.LOAD );
+		outermostCell.transfer( new CellSetMemento(cells.toMap()), new Point(0,0), Cell.LOAD );
 	}
 
 	// [수정] 2026-11-23: Undo/Redo용 snapshot(), restore() 추가 (Memento 패턴의 Originator)
@@ -195,7 +188,7 @@ public class Board implements BoardView
 	/** 현재 보드의 살아 있는 셀을 담은 스냅샷 생성
 	 */
 	public BoardSnapshot snapshot()
-	{	return new BoardSnapshot( liveCells() );
+	{	return new BoardSnapshot( liveCellColors() );	// [수정] 2026-11-24: Undo 후에도 셀 색이 남도록 색까지 저장 (LiveCells)
 	}
 
 	/** 스냅샷 상태의 보드로 복구. Load와 같은 transfer(LOAD) 경로이므로
@@ -209,7 +202,7 @@ public class Board implements BoardView
 	 *  스트림은 닫지 않음 (연 쪽이 닫음)
 	 */
 	public void store( OutputStream out, PatternFormat format ) throws IOException
-	{	format.writeColored( liveCellColors(), out );
+	{	format.write( liveCellColors(), out );	// [수정] 2026-11-24: 형식에 LiveCells를 그대로 넘김
 	}
 
 	/** 살아 있는 셀 집합을 transfer(LOAD)에 넘기거나 transfer(STORE)로 모으기만 하는 Memento.

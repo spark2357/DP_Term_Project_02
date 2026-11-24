@@ -241,18 +241,18 @@ class RleFormatTest {
 	private static final String GLIDER_FILE_TEXT = "x = 3, y = 3, rule = B3/S23\nbo$2bo$3o!\n";
 
 	private Set<Point> read(String text) throws IOException {
-		return rle.read(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
+		return rle.read(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8))).positions();
 	}
 
 	private Set<Point> readFile(String path) throws IOException {
 		try (InputStream in = new FileInputStream(path)) {
-			return rle.read(in);
+			return rle.read(in).positions();
 		}
 	}
 
 	private String write(Set<Point> cells) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		rle.write(cells, out);
+		rle.write(LiveCells.of(cells), out);
 		return out.toString(StandardCharsets.UTF_8);
 	}
 }
