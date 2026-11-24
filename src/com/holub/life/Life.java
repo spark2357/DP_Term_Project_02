@@ -3,6 +3,7 @@ package com.holub.life;
 import java.awt.*;
 import javax.swing.*;
 import com.holub.ui.MenuSite;
+import com.holub.life.command.EditMenu;
 import com.holub.life.command.GoMenu;
 import com.holub.life.command.GridMenu;
 import com.holub.life.command.SwingDialogs;
@@ -56,6 +57,10 @@ public final class Life extends JFrame
 					// [수정] 2026-11-10: Go 메뉴를 Clock 생성자 대신 이곳에서 등록함 (항목마다 Command)
 					new GoMenu( game ).register();
 
+					// [수정] 2026-11-23: Edit 메뉴(Undo, Redo) 추가
+					new EditMenu( game ).register();
+
+					frame.install( universe );
 					BrushToolBar	toolBar	= new BrushToolBar( game, pen );
 
 					frame.install( universe, toolBar );
