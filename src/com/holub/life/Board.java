@@ -116,22 +116,14 @@ public class Board implements BoardView
 	 *  original Store used, so no cell changes state.
 	 */
 	public Set<Point> liveCells()
-	{	Set<Point> live = new HashSet<Point>();
-		outermostCell.transfer( new CellSetMemento(live), new Point(0,0), Cell.STORE );
-		return live;
+	{	return new HashSet<Point>( liveCellColors().keySet() );
 	}
 
-	private Map<Point, CellColor> liveCellColors(){
-		Cell.Memento memento = (Cell.Memento) outermostCell.createMemento();
-		Map<Point, CellColor> live = new HashMap<>();
-		int width = widthInCells();
-
-		for( int row = 0; row < width; ++row )
-			for( int column = 0; column < width; ++column ){
-				Point here = new Point( column, row );
-				if( memento.isAlive( here ) )
-					live.put( here, memento.colorAt( here ) );
-			}
+	// [수정] 2026-11-24: 셀 색 브랜치와 Undo 브랜치 병합. CellSetMemento가 색까지 담는 Map으로 바뀌어서
+	// liveCells()도 이 메서드의 transfer(STORE) 결과를 쓰도록 하고, 칸마다 isAlive()로 확인하던 반복문은 없앰
+	private Map<Point, CellColor> liveCellColors()
+	{	Map<Point, CellColor> live = new HashMap<>();
+		outermostCell.transfer( new CellSetMemento(live), new Point(0,0), Cell.STORE );
 		return live;
 	}
 
@@ -183,7 +175,7 @@ public class Board implements BoardView
 	/** 현재 보드의 살아 있는 셀을 담은 스냅샷 생성
 	 */
 	public BoardSnapshot snapshot()
-	{	return new BoardSnapshot( liveCells() );
+	{	return new BoardSnapshot( liveCellColors() );	// [수정] 2026-11-24: Undo 후에도 셀 색이 남도록 색까지 저장
 	}
 
 	/** 스냅샷 상태의 보드로 복구. Load와 같은 transfer(LOAD) 경로이므로

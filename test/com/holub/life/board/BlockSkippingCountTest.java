@@ -156,7 +156,7 @@ class BlockSkippingCountTest {
 	private static class CollectingMemento implements Cell.Memento {
 		private final Set<Point> cells = new HashSet<>();
 
-		public void markAsAlive(Point location)	{ cells.add(new Point(location)); }
+		public void markAsAlive(Point location, CellColor color)	{ cells.add(new Point(location)); }
 		public boolean isAlive(Point location)	{ return cells.contains(location); }
 		public void load(InputStream in)	{ throw new UnsupportedOperationException(); }
 		public void flush(OutputStream out)	{ throw new UnsupportedOperationException(); }

@@ -68,7 +68,7 @@ class LifeGameUndoTest {
 		// Given: (10,10)은 패턴 사각형 안의 죽은 칸이라 찍으면 지워짐
 		place(Cells.fromRowColumn("10,10"));
 		CellPattern glider = new CellPattern(3, 3, Cells.fromRowColumn("0,1", "1,2", "2,0", "2,1", "2,2"));
-		game.stamp(glider, 10, 10);
+		game.stamp(glider, 10, 10, CellColor.DEFAULT);
 		assertFalse(board.liveCells().contains(new Point(10, 10)));
 
 		// When
@@ -178,10 +178,10 @@ class LifeGameUndoTest {
 	void sameStampTwiceIsRecordedOnce() {
 		// Given
 		CellPattern glider = new CellPattern(3, 3, Cells.fromRowColumn("0,1", "1,2", "2,0", "2,1", "2,2"));
-		game.stamp(glider, 10, 10);
+		game.stamp(glider, 10, 10, CellColor.DEFAULT);
 
 		// When
-		game.stamp(glider, 10, 10);
+		game.stamp(glider, 10, 10, CellColor.DEFAULT);
 
 		// Then
 		assertTrue(game.undo());
@@ -213,7 +213,7 @@ class LifeGameUndoTest {
 		Set<Point> start = board.liveCells();
 		game.toggle(30, 30);
 		game.tick();
-		game.stamp(new CellPattern(2, 2, Cells.fromRowColumn("0,0", "1,1")), 40, 40);
+		game.stamp(new CellPattern(2, 2, Cells.fromRowColumn("0,0", "1,1")), 40, 40, CellColor.DEFAULT);
 
 		// When
 		game.undo();
