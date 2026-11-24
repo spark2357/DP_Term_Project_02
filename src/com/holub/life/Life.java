@@ -3,6 +3,7 @@ package com.holub.life;
 import java.awt.*;
 import javax.swing.*;
 import com.holub.ui.MenuSite;
+import com.holub.life.command.EditMenu;
 import com.holub.life.command.GoMenu;
 import com.holub.life.command.GridMenu;
 import com.holub.life.command.SwingDialogs;
@@ -13,6 +14,8 @@ import com.holub.life.command.HaltCommand;
 import com.holub.life.command.MacroCommand;
 import com.holub.life.command.ShowRunReportCommand;
 import java.util.function.Consumer;
+import com.holub.life.mouse.Pen;
+import com.holub.life.brush.BrushToolBar;
 
 /*******************************************************************
  * An implemenation of Conway's Game of Life.
@@ -50,10 +53,11 @@ public final class Life extends JFrame
 					) );
 
 					// [수정] 2026-11-17: 마우스 모드(State)와 Grid 메뉴(Command)를 이곳에서 조립함
-					MouseController mouse	 = new MouseController( new ToggleMode( game ) );
+					Pen				pen		 = new Pen( CellColor.DEFAULT );
+					MouseController mouse	 = new MouseController( new ToggleMode( game, pen ) );
 					Universe		universe = new Universe( board, game, mouse );
 
-					new GridMenu( game, formats, rle, mouse, new SwingDialogs() ).register();
+					new GridMenu( game, formats, rle, mouse, pen, new SwingDialogs() ).register();
 
 					// [수정] 2026-11-16: 실행 통계. RunRecorder가 세대마다 통계(Visitor)를 모으고, Halt를 누르거나 모든 셀이
 					// 죽으면 "멈추기 + 실행 리포트"(MacroCommand)를 실행해 창 아래 상태 표시줄에 결과를 보여 줌.
@@ -76,7 +80,13 @@ public final class Life extends JFrame
 					// [수정] 2026-11-16: Halt 메뉴에 "멈추기 + 실행 리포트"를 넘김
 					new GoMenu( game, haltAndReport ).register();
 
-					frame.install( universe, statusBar );
+					// [수정] 2026-11-23: Edit 메뉴(Undo, Redo) 추가
+					new EditMenu( game ).register();
+
+					frame.install( universe );
+					BrushToolBar	toolBar	= new BrushToolBar( game, pen );
+
+					frame.install( universe, toolBar );
 				}
 			}
 		);
@@ -108,9 +118,9 @@ public final class Life extends JFrame
 	/** Put the view into the middle of the frame and the status bar
 	 *  under it, then show the frame.
 	 */
-	private void install( JComponent universe, JComponent statusBar )
-	{	getContentPane().add( universe, BorderLayout.CENTER); //{=life.java.install}
-		getContentPane().add( statusBar, BorderLayout.SOUTH );	// 창의 아래 칸
+	private void install( JComponent universe, JComponent toolBar )
+	{	getContentPane().add( toolBar,  BorderLayout.NORTH );
+		getContentPane().add( universe, BorderLayout.CENTER); //{=life.java.install}
 		pack();
 		setVisible( true );
 	}

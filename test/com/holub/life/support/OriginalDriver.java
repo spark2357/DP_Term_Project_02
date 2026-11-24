@@ -27,7 +27,7 @@ public class OriginalDriver implements LifeTestDriver {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, SIZE * CELL_PIXELS, SIZE * CELL_PIXELS);
 
 	// Universe와 같은 구조: 8x8 블록 안에 8x8 셀
-	private final Neighborhood board = new Neighborhood(8, new Neighborhood(8, new Resident()));
+	private final Neighborhood board = new Neighborhood(8, new Neighborhood(8, new Resident(ClashRule::new)));
 
 	public void tick() {
 		boolean willChange = board.figureNextState(
