@@ -24,10 +24,10 @@ import org.junit.jupiter.params.provider.ValueSource;
  *   - 테스트 제외 대상
  *     - 실제로 그 간격마다 tick하는지: 타이머(SwingTickTimer)의 일이라 제외
  */
-@Tag("original")
 class SetSpeedCommandTest {
 
 	@ParameterizedTest(name = "{0}ms")
+	@Tag("original")
 	@ValueSource(ints = { 500, 150, 70, 30 })
 	@DisplayName("execute(): 받은 간격으로 게임을 시작한다")
 	void executeStartsGameAtThatSpeed(int milliseconds) {
@@ -44,6 +44,7 @@ class SetSpeedCommandTest {
 	}
 
 	@Test
+	@Tag("improvement")
 	@DisplayName("생성자: 0 이하의 간격으로는 만들 수 없다")
 	void rejectsNonPositiveInterval() {
 		LifeGame game = new LifeGame(new Board(), new FakeTicker());
