@@ -128,10 +128,35 @@ public class Board implements BoardView
 	 *  스트림은 닫지 않음 (연 쪽이 닫음)
 	 */
 	public void load( InputStream in, PatternFormat format ) throws IOException
-	{	Set<Point> cells = format.read( in );
-		outermostCell.clear();
+	{	replaceWith( format.read( in ) );
+	}
 
-		// 원래 Load와 같은 transfer(LOAD) 경로로 셀을 놓음. 블록 가장자리의 옆 블록도 깨움
+	// [수정] 2026-11-17: Grid → Stamp. 패턴의 왼쪽 위를 (row, column)에 맞추고, 패턴 사각형 안의 칸을 덮어씀.
+	// 보드 밖으로 나가는 부분은 잘라냄
+
+	/** 패턴 사각형 안은 패턴대로(죽은 칸 포함) 덮어쓰고, 밖의 셀은 그대로 둠.
+	 */
+	public void stamp( CellPattern pattern, int row, int column )
+	{	Set<Point> cells  = liveCells();
+		Set<Point> alive  = pattern.cells();
+		int		   width  = widthInCells();
+
+		for( int y = 0; y < pattern.height(); ++y )
+			for( int x = 0; x < pattern.width(); ++x )
+			{	Point here = new Point( column + x, row + y );
+				if( here.x < 0 || here.x >= width || here.y < 0 || here.y >= width )
+					continue;
+				if( alive.contains( new Point(x, y) ) )
+					cells.add( here );
+				else
+					cells.remove( here );
+			}
+		replaceWith( cells );
+	}
+
+	// 원래 Load와 같은 transfer(LOAD) 경로로 셀을 놓음. 블록 가장자리의 옆 블록도 깨움
+	private void replaceWith( Set<Point> cells )
+	{	outermostCell.clear();
 		outermostCell.transfer( new CellSetMemento(cells), new Point(0,0), Cell.LOAD );
 	}
 
@@ -164,7 +189,7 @@ public class Board implements BoardView
 	 *  <code>drawAll</code> is false, only the blocks that changed
 	 *  in the last transition are redrawn.
 	 */
-	public void redraw( Graphics g, Rectangle here, boolean drawAll )
-	{	outermostCell.redraw( g, here, drawAll );
+	public void redraw( CellPainter painter, Rectangle here, boolean drawAll )
+	{	outermostCell.redraw( painter, here, drawAll );
 	}
 }

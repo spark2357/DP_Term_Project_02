@@ -4,6 +4,10 @@ import java.awt.*;
 import javax.swing.*;
 import com.holub.ui.MenuSite;
 import com.holub.life.command.GoMenu;
+import com.holub.life.command.GridMenu;
+import com.holub.life.command.SwingDialogs;
+import com.holub.life.mouse.MouseController;
+import com.holub.life.mouse.ToggleMode;
 import com.holub.life.command.Command;
 import com.holub.life.command.HaltCommand;
 import com.holub.life.command.MacroCommand;
@@ -32,16 +36,24 @@ public final class Life extends JFrame
 					// left of the Go menu.
 					MenuSite.addMenu( frame, "Grid" );
 
+					// [수정] 2026-11-16: Clock Singleton을 없애고 이곳에서 만듦. 어떤 타이머로 tick을 낼지(SwingTickTimer)도 이곳에서 정함
 					Board		board	 = new Board();
-					LifeGame	game	 = new LifeGame( board, Clock.instance() );
+					Clock		clock	 = new Clock( new SwingTickTimer() );
+					LifeGame	game	 = new LifeGame( board, clock );
 
 					// [수정] 2026-11-10: Load/Store가 지원할 파일 형식을 이곳에서 정함 (순서대로 파일 창에 나옴).
 					// 형식을 추가할 때는 이 목록에 한 줄만 더하면 됨
-					java.util.List<PatternFormat> formats = java.util.List.of
+					RleFormat		rle		= new RleFormat( board.widthInCells() );
+					PatternFormats	formats	= new PatternFormats( java.util.List.of
 					(	new LifeFormatAdapter( board.widthInCells() ),
-						new RleFormat( board.widthInCells() )
-					);
-					Universe	universe = new Universe( board, game, formats );
+						rle
+					) );
+
+					// [수정] 2026-11-17: 마우스 모드(State)와 Grid 메뉴(Command)를 이곳에서 조립함
+					MouseController mouse	 = new MouseController( new ToggleMode( game ) );
+					Universe		universe = new Universe( board, game, mouse );
+
+					new GridMenu( game, formats, rle, mouse, new SwingDialogs() ).register();
 
 					// [수정] 2026-11-16: 실행 통계. RunRecorder가 세대마다 통계(Visitor)를 모으고, Halt를 누르거나 모든 셀이
 					// 죽으면 "멈추기 + 실행 리포트"(MacroCommand)를 실행해 창 아래 상태 표시줄에 결과를 보여 줌.
