@@ -105,8 +105,7 @@ public class LifeGame
 	 */
 	public boolean step()
 	{	++generation;
-		boolean changed = board.step();
-	{	BoardSnapshot before  = board.snapshot();
+		BoardSnapshot before  = board.snapshot();
 		boolean		  changed = board.step();
 		if( changed )
 		{	history.record( before );
