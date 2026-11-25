@@ -182,8 +182,12 @@ public class LifeGame
 		publishBoardEdited();
 	}
 
+	// [수정] 2026-11-26: 마우스 클릭(ToggleMode)이 toggle() 대신 brush()를 부르는데 brush()는 Undo 기록을 남기지 않아
+	// 클릭을 Undo할 수 없었음 (셀 색 브랜치와 Undo 브랜치 병합 때 빠짐). 색만 바뀌는 경우도 되돌릴 수 있도록 기록
 	public void brush( int row, int column, CellColor color ){
+		BoardSnapshot before = board.snapshot();
 		board.brush( row, column, color );
+		recordIfChanged( before );
 		publishBoardEdited();
 	}
 
