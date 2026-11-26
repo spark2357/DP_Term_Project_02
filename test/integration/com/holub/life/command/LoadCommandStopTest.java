@@ -33,7 +33,7 @@ import org.junit.jupiter.api.io.TempDir;
  *   - LoadCommandStopTest.java 테스트 대상: execute (파일을 읽어 성공한 경로의 시계 정지)
  *   - 테스트 제외 대상
  *     - 파일 창에서 취소: LoadCommandTest에서 확인
- *     - 같은 자리로 돌아오는지, 화면 알림, 실패한 Load: GridCommandTest에서 확인
+ *     - 보드가 파일 내용으로 바뀌는지, 같은 자리로 돌아오는지, 화면 알림, 실패한 Load: GridCommandTest에서 확인
  */
 @Tag("original")
 class LoadCommandStopTest {

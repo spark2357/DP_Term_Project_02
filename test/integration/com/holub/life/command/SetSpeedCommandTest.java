@@ -45,7 +45,7 @@ class SetSpeedCommandTest {
 
 	@Test
 	@Tag("improvement")
-	@DisplayName("생성자: 0 이하의 간격으로는 만들 수 없다")
+	@DisplayName("SetSpeedCommand(): 0 이하의 간격으로는 만들 수 없다")
 	void rejectsNonPositiveInterval() {
 		LifeGame game = new LifeGame(new Board(), new FakeTicker());
 		assertThrows(IllegalArgumentException.class, () -> new SetSpeedCommand(game, 0));

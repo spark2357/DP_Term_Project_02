@@ -11,32 +11,49 @@ import java.awt.Component;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
- * Go 메뉴 테스트: Halt, Tick, 속도 Command와 메뉴 등록 (가짜 TickSource)
+ * Go 메뉴 통합 테스트: Go 메뉴에 등록한 항목과, 항목을 눌렀을 때의 동작
+ * 진짜 LifeGame·Board와 MenuSite에 가짜 시계(FakeTicker)를 넣어 시간 없이 실행함
  *
  * [테스트 시나리오]
- *   1. Command: Halt는 멈추고, Tick은 한 번 tick하고, 속도 Command는 정해진 간격으로 시작함
- *   2. 메뉴: 항목 이름과 순서가 원본과 같고(원래 기능 보존), 항목마다 단축키(Space, T, A, S, D, F)가 붙고,
- *      누르면 짝지은 Command가 실행됨
+ *   1. 이름과 순서: Halt, Tick (Single Step), Agonizing, Slow, Medium, Fast (원본 Clock.createMenus와 같음)
+ *   2. 누르면: Halt는 멈추고, Tick은 한 세대만 진행하고, 속도 항목은 500·150·70·30ms 간격으로 시작함 (원본과 같음)
+ *   3. 단축키: 항목마다 수식키 없는 키 하나(Space, T, A, S, D, F)가 붙음 (원본에는 단축키가 없음)
  *
  * [커버리지]
- *   - 2는 MenuSite가 필요해 JFrame을 만들므로(화면에 띄우지는 않음) 화면이 없는 환경에서는 건너뜀
- *   - 실제 키 입력이 메뉴로 전달되는 것은 Swing이 맡으므로 단축키가 붙었는지까지만 확인함
- *   - 속도별 실제 간격은 ClockTest(시계) 범위라 여기서는 넘긴 값만 확인함
+ *   - GoMenuTest.java 테스트 대상: register
+ *   - 테스트 제외 대상
+ *     - MenuSite: Swing 메뉴 바라 메뉴 등록 결과로만 확인함. JFrame을 만들므로(화면에 띄우지는 않음) 화면이 없는 환경에서는 건너뜀
+ *     - 실제 키 입력이 메뉴로 전달되는 것: Swing이 맡으므로 단축키가 붙었는지까지만 확인함
+ *     - 속도별 실제 간격: 타이머(SwingTickTimer)의 일이라 넘긴 값만 확인함
+ *     - 0 이하의 간격: SetSpeedCommandTest에서 확인
  */
-@Tag("unclassified")
 class GoMenuTest {
 	private final FakeTicker ticker = new FakeTicker();
 	private final LifeGame game = new LifeGame(new Board(), ticker);
 	private GoMenu menu;
+
+	@BeforeEach
+	void registerMenu(){
+		assumeFalse(MenuSiteSetup.isHeadless());
+		MenuSiteSetup.establishOnce();
+		menu = new GoMenu(game);
+		menu.register();
+	}
 
 	@AfterEach
 	void removeMenu() {
@@ -45,86 +62,95 @@ class GoMenuTest {
 		}
 	}
 
-	//  1. Command
+	//  1. 이름과 순서
 
 	@Test
-	@DisplayName("HaltCommand, TickCommand, SetSpeedCommand: 멈추고, 한 번 tick하고, 정해진 간격으로 시작한다")
-	void goCommands() {
-		// When, Then
-		new SetSpeedCommand(game, 150).execute();
-		assertEquals(List.of("start 150"), ticker.calls);
-
-		new HaltCommand(game).execute();
-		assertEquals(List.of("start 150", "stop"), ticker.calls);
-
-		new TickCommand(game).execute();
-		assertEquals(List.of("start 150", "stop", "tick"), ticker.calls);
-	}
-
-	@Test
-	@DisplayName("SetSpeedCommand: 간격이 0 이하이면 IllegalArgumentException")
-	void speedMustBePositive() {
-		assertThrows(IllegalArgumentException.class, () -> new SetSpeedCommand(game, 0));
-	}
-
-	//  2. 메뉴
-
-	@Test
-	@Tag("gui")
-	@DisplayName("register(): 원본과 같은 이름·순서로 등록하고, 단축키(Space, T, A, S, D, F)를 누르면 짝지은 동작을 한다")
-	void registersItemsWithShortcuts() {
-		assumeFalse(MenuSiteSetup.isHeadless());
-
-		// Given
-		MenuSiteSetup.establishOnce();
-		menu = new GoMenu(game);
-		menu.register();
-
-		// Then: 이름과 순서 (원본 Clock.createMenus와 같음)
+	@Tag("original")
+	@DisplayName("register(): 원본과 같은 이름과 순서로 항목을 등록한다")
+	void registersItemsWithOriginalNamesInOrder(){
+		// When
 		List<String> names = new ArrayList<>();
 		for (Component item : ((JMenu) MenuSite.getMyMenuItem(menu, "Go", null)).getMenuComponents()) {
 			names.add(((JMenuItem) item).getName());
 		}
-		assertEquals(List.of("Halt", "Tick (Single Step)", "Agonizing", "Slow", "Medium", "Fast"), names);
 
-		// Then: 단축키와 동작
-		assertItem("Halt", KeyEvent.VK_SPACE, "stop");
-		assertItem("Tick (Single Step)", KeyEvent.VK_T, "tick");
-		assertItem("Agonizing", KeyEvent.VK_A, "start 500");
-		assertItem("Slow", KeyEvent.VK_S, "start 150");
-		assertItem("Medium", KeyEvent.VK_D, "start 70");
-		assertItem("Fast", KeyEvent.VK_F, "start 30");
+		// Then
+		assertEquals(List.of("Halt", "Tick (Single Step)", "Agonizing", "Slow", "Medium", "Fast"), names);
+	}
+
+	//  2. 누르면
+
+	@Test
+	@Tag("original")
+	@DisplayName("register(): Halt를 누르면 실행 중인 게임이 멈춘다")
+	void clickingHaltStopsGame(){
+		// Given
+		game.start(70);
+
+		// When
+		item("Halt").doClick();
+
+		// Then
+		assertFalse(ticker.running);
+	}
+
+	@Test
+	@Tag("original")
+	@DisplayName("register(): Tick (Single Step)을 누르면 한 세대만 진행하고 시계는 시작하지 않는다")
+	void clickingTickAdvancesOneGeneration(){
+		// Given: blinker
+		game.toggle(3, 2);
+		game.toggle(3, 3);
+		game.toggle(3, 4);
+
+		// When
+		item("Tick (Single Step)").doClick();
+
+		// Then
+		assertEquals(Cells.fromRowColumn("2,3", "3,3", "4,3"), game.liveCells());
+		assertFalse(ticker.running);
+	}
+
+	@ParameterizedTest(name = "{0}: {1}ms")
+	@Tag("original")
+	@CsvSource({ "Agonizing, 500", "Slow, 150", "Medium, 70", "Fast, 30" })
+	@DisplayName("register(): 속도 항목을 누르면 그 항목의 간격으로 게임을 시작한다")
+	void clickingSpeedStartsGameAtItsInterval(String name, int milliseconds){
+		// When
+		item(name).doClick();
+
+		// Then
+		assertTrue(ticker.running);
+		assertEquals(milliseconds, ticker.millisecondsBetweenTicks);
+	}
+
+	//  3. 단축키
+
+	@ParameterizedTest(name = "{0}")
+	@Tag("extension")
+	@MethodSource("shortcuts")
+	@DisplayName("register(): 항목마다 수식키 없는 단축키를 붙인다")
+	void eachItemHasShortcutWithoutModifier(String name, int key){
+		// When
+		KeyStroke shortcut = item(name).getAccelerator();
+
+		// Then
+		assertEquals(KeyStroke.getKeyStroke(key, 0), shortcut);
+	}
+
+	static Stream<Arguments> shortcuts(){
+		return Stream.of(
+				Arguments.of("Halt", KeyEvent.VK_SPACE),
+				Arguments.of("Tick (Single Step)", KeyEvent.VK_T),
+				Arguments.of("Agonizing", KeyEvent.VK_A),
+				Arguments.of("Slow", KeyEvent.VK_S),
+				Arguments.of("Medium", KeyEvent.VK_D),
+				Arguments.of("Fast", KeyEvent.VK_F));
 	}
 
 	// ---- 헬퍼 메서드
 
-	// 항목의 단축키가 수식키 없는 key이고, 누르면 시계에 expectedCall이 한 번 전달되는지 확인
-	private void assertItem(String name, int key, String expectedCall) {
-		JMenuItem item = MenuSite.getMyMenuItem(menu, "Go", name);
-		assertEquals(KeyStroke.getKeyStroke(key, 0), item.getAccelerator(), name + " 단축키");
-
-		ticker.calls.clear();
-		item.doClick();
-		assertEquals(List.of(expectedCall), ticker.calls, name + " 동작");
-	}
-
-	// 받은 호출을 기록하는 가짜 시계
-	private static class FakeTicker implements TickSource {
-		final List<String> calls = new ArrayList<>();
-
-		public void startTicking(int millisecondsBetweenTicks) {
-			calls.add("start " + millisecondsBetweenTicks);
-		}
-
-		public void stop() {
-			calls.add("stop");
-		}
-
-		public void tick() {
-			calls.add("tick");
-		}
-
-		public void addTickListener(Listener listener) {
-		}
+	private JMenuItem item(String name){
+		return MenuSite.getMyMenuItem(menu, "Go", name);
 	}
 }

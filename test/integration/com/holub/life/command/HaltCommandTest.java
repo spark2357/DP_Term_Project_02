@@ -41,6 +41,9 @@ class HaltCommandTest {
 	@Test
 	@DisplayName("execute(): 이미 멈춘 게임에 실행해도 아무 문제 없다")
 	void executeOnStoppedGameDoesNothing() {
+		// Given: 시작하지 않은 게임
+
+		// When, Then
 		assertDoesNotThrow(() -> new HaltCommand(game).execute());
 		assertFalse(ticker.running);
 	}

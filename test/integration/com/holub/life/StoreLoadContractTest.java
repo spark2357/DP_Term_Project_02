@@ -12,9 +12,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Store/Load Contract 테스트: Grid → Store, Grid → Load가 보드를 그대로 저장하고 되살리는지 검증
@@ -38,7 +42,7 @@ import org.junit.jupiter.api.Tag;
  *   - 테스트 제외 대상
  *     - 원본의 결함(중복 저장, Load 실패 시 보드가 지워짐, 블록 가장자리 패턴 Load): StoreLoadDefectContractTest
  *     - 원본 저장 파일의 내부 모양(중복, 보드 밖 좌표): StoreLoadOriginalBehaviorTest
- *     - 파일 대화상자와 Load/Store 때 시계 정지: 원본은 Universe에 묶여 있어 제외. 현재 코드는 Command 테스트(LoadCommandTest, StoreCommandTest, GridCommandTest)에서 확인
+ *     - 파일 대화상자와 Load/Store 때 시계 정지: 원본은 Universe에 묶여 있어 제외. 현재 코드는 Command 테스트(LoadCommandStopTest, StoreCommandTest)에서 확인
  */
 @Tag("original")
 abstract class StoreLoadContractTest {
@@ -51,34 +55,34 @@ abstract class StoreLoadContractTest {
 
 	abstract LifeTestDriver newDriver();
 
-	@Test
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("boards")
 	@DisplayName("store(), load(): Store한 보드를 새 보드에 Load하면 같은 보드가 된다")
-	void storeThenLoadGivesSameBoard() throws IOException {
-		Set<Point> edgesAndCorners = Cells.fromRowColumn("0,0", "0,63", "63,0", "63,63", "7,7", "7,8", "8,7", "8,8", "31,40");
-		Set<Point> empty = Cells.fromRowColumn();
+	void storeThenLoadGivesSameBoard(String name, Set<Point> cells) throws IOException{
+		// Given
+		LifeTestDriver source = newDriver();
+		place(source, cells);
+
+		// When
+		byte[] file = store(source);
+		LifeTestDriver loaded = newDriver();
+		loaded.load(new ByteArrayInputStream(file));
+
+		// Then
+		assertEquals(cells, loaded.liveCells());
+	}
+
+	static Stream<Arguments> boards(){
 		Set<Point> full = new HashSet<>();
 		for (int row = 0; row < LifeTestDriver.SIZE; row++) {
 			for (int column = 0; column < LifeTestDriver.SIZE; column++) {
 				full.add(new Point(column, row));
 			}
 		}
-
-		Set<Point>[] boards = new Set[] { edgesAndCorners, empty, full };
-		String[] names = { "꼭짓점과 블록 경계", "빈 보드", "모든 칸이 산 보드" };
-
-		for (int i = 0; i < boards.length; i++) {
-			// Given
-			LifeTestDriver source = newDriver();
-			place(source, boards[i]);
-
-			// When
-			byte[] file = store(source);
-			LifeTestDriver loaded = newDriver();
-			loaded.load(new ByteArrayInputStream(file));
-
-			// Then
-			assertEquals(boards[i], loaded.liveCells(), names[i]);
-		}
+		return Stream.of(
+				Arguments.of("꼭짓점과 블록 경계", Cells.fromRowColumn("0,0", "0,63", "63,0", "63,63", "7,7", "7,8", "8,7", "8,8", "31,40")),
+				Arguments.of("빈 보드", Cells.fromRowColumn()),
+				Arguments.of("모든 칸이 산 보드", full));
 	}
 
 	@Test
