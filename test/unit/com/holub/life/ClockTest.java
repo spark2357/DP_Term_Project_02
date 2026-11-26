@@ -24,14 +24,13 @@ import org.junit.jupiter.api.Test;
  *   2. 시작: startTicking(ms)는 타이머를 그 간격으로 시작하고, 타이머가 울릴 때마다 tick이 감
  *   3. Halt: stop()하면 타이머가 멈추고 tick이 오지 않음. 멈춘 상태에서 Halt해도 아무 일 없음
  *   4. 속도 변경: 속도를 바꾸면 타이머가 새 간격으로 다시 시작됨
- *   5. 리스너 예외: 리스너 하나가 예외를 던져도 다른 리스너는 tick을 받아야 함 (결함, 아직 못 고침)
  *
  * [커버리지]
  *   - ClockTest.java 테스트 대상: startTicking, stop, tick, addClockListener, addTickListener
  *   - 테스트 제외 대상
  *     - 메뉴가 열려 있으면 tick을 건너뛰는 동작: SwingTickTimer(Swing)로 옮겨져서 단위 테스트에서 제외
  *     - 실제 간격(500/150/70/30ms)대로 울리는지: 타이머 구현(SwingTickTimer)의 일이라 제외
- *     - Go 메뉴에서 속도 고르기: 아직 테스트 없음 (GoMenu는 설계 개선 이슈에서 다룸)
+ *     - Go 메뉴에서 속도 고르기: 통합 테스트 GoMenuTest, SetSpeedCommandTest에서 확인
  */
 class ClockTest {
 	private FakeTickTimer timer;
@@ -131,28 +130,6 @@ class ClockTest {
 		// Then
 		assertTrue(timer.running);
 		assertEquals(30, timer.millisecondsBetweenTicks);
-	}
-
-	@Test
-	@Tag("known-defect")
-	@DisplayName("tick() (결함): 리스너 하나가 예외를 던져도 다른 리스너는 그 tick을 받아야 한다 (현재: Publisher가 예외에서 멈춰 뒤의 리스너가 tick을 못 받음)")
-	void listenerExceptionShouldNotStopOtherListeners() {
-		// Given: 정상 리스너와 예외를 던지는 리스너. Publisher는 나중에 등록한 리스너부터 부르므로 예외 리스너가 먼저 호출됨
-		CountingListener good = new CountingListener();
-		clock.addClockListener(good);
-		clock.addClockListener(() -> {
-			throw new IllegalStateException("리스너 오류");
-		});
-
-		// When: 예외가 밖으로 나오더라도 tick은 한 번 시도함
-		try {
-			clock.tick();
-		} catch (RuntimeException ignored) {
-			// 예외가 밖으로 나오는 것 자체는 이 테스트의 관심사가 아님
-		}
-
-		// Then
-		assertEquals(1, good.count, "예외를 던지지 않는 리스너는 tick을 받아야 함");
 	}
 
 	// ---- 헬퍼

@@ -1,10 +1,10 @@
 package com.holub.life;
 
-import com.holub.life.support.*;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * PatternFormats 단위 테스트: 지원하는 파일 형식 목록과 확장자 처리
+ * 진짜 형식(LifeFormatAdapter, RleFormat) 대신 확장자와 설명만 답하는 가짜 형식(StubFormat)을 넣어 확인함
  *
  *   메서드
  *   - formatFor(file)  : 파일 이름의 확장자(대소문자 무시)로 형식을 고름. 없으면 빈 Optional
@@ -34,10 +35,9 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 @Tag("extension")
 class PatternFormatsTest {
-	private static final int SIZE = LifeTestDriver.SIZE;
-
-	private final PatternFormat life = new LifeFormatAdapter(SIZE);
-	private final PatternFormat rle = new RleFormat(SIZE);
+	// [수정] 2026-11-27: 진짜 LifeFormatAdapter, RleFormat 대신 가짜 형식. 이름은 Life.main이 넣는 두 형식과 같게 함
+	private final PatternFormat life = new StubFormat("life", "Life Files");
+	private final PatternFormat rle = new StubFormat("rle", "RLE Pattern Files");
 	private final PatternFormats formats = new PatternFormats(List.of(life, rle));
 
 	//  1. 형식 고르기
@@ -75,5 +75,37 @@ class PatternFormatsTest {
 	@DisplayName("extensionList(): 넣은 순서대로 \".life, .rle\"")
 	void extensionListInOrder() {
 		assertEquals(".life, .rle", formats.extensionList());
+	}
+
+	// ---- 헬퍼
+
+	private static class StubFormat implements PatternFormat{
+		private final String extension;
+		private final String description;
+
+		StubFormat(String extension, String description){
+			this.extension = extension;
+			this.description = description;
+		}
+
+		@Override
+		public LiveCells read(InputStream in){
+			throw new UnsupportedOperationException("PatternFormats는 읽지 않음");
+		}
+
+		@Override
+		public void write(LiveCells cells, OutputStream out){
+			throw new UnsupportedOperationException("PatternFormats는 쓰지 않음");
+		}
+
+		@Override
+		public String extension(){
+			return extension;
+		}
+
+		@Override
+		public String description(){
+			return description;
+		}
 	}
 }

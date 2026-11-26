@@ -9,7 +9,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  *   메서드
  *   - read(in)          : 패턴을 읽어 #R 위치(없으면 보드 가운데)에 놓은 좌표 집합을 돌려줌. 잘못된 입력은 IOException
  *   - write(cells, out) : 셀들을 감싸는 사각형 기준으로 RLE를 쓰고, 사각형의 왼쪽 위를 #R로 씀. 한 줄 70자 이하
+ *   - readPattern(in)   : #R은 버리고 패턴 모양(크기와 패턴 안의 좌표)만 돌려줌 (Stamp에서 씀)
  *
  * [테스트 시나리오]
  *   1. 위치: #R이 없으면 패턴은 보드 가운데에 놓이고, 폭이 홀수면 남는 한 칸은 오른쪽(아래쪽) 여백으로 감
@@ -36,9 +39,11 @@ import org.junit.jupiter.params.provider.ValueSource;
  *   4. 잘못된 입력: 헤더 없음, 보드보다 큰 패턴, 다른 규칙, 모르는 글자, x를 넘는 줄, 잘못된 #R은 IOException
  *   5. 쓰기: 정해진 문자열(#R 포함), 빈 줄 합치기, 빈 보드
  *   6. 왕복: Gosper glider gun을 쓰고 다시 읽어도 같음, 본문은 한 줄 70자 이하. 구석의 패턴도 같은 자리로 돌아옴
+ *   7. 색: RLE는 색을 저장하지 않음. 쓸 때 색을 버리고, 읽은 셀은 모두 기본색(빨강)
+ *   8. 패턴 모양만 읽기: readPattern()은 크기와 모양을 그대로 돌려주고, #R은 무시함(보드 위치 검사를 하지 않음)
  *
  * [커버리지]
- *   - RleFormatTest.java 테스트 대상: read, write
+ *   - RleFormatTest.java 테스트 대상: read, write, readPattern
  *   - 테스트 제외 대상
  *     - Board.load(in, RleFormat)와의 연결, 실제 파일(test/resources) 읽기: 통합 테스트 RleBoardLoadTest에서 확인
  *       (이 테스트는 샘플 파일 내용을 문자열로 옮겨 써서 파일을 읽지 않음)
@@ -213,10 +218,74 @@ class RleFormatTest {
 		assertEquals(glider, read(write(glider)));
 	}
 
+	//  색: RLE는 색을 저장하지 않음
+
+	@Test
+	@DisplayName("write(): 색은 버리고 위치만 쓴다 (색이 달라도 기본색으로 쓴 것과 같은 내용)")
+	void writeDropsColors() throws IOException{
+		// Given: 같은 위치의 파란 glider와 기본색 glider
+		Set<Point> glider = Cells.fromRowColumn("0,1", "1,2", "2,0", "2,1", "2,2");
+		Map<Point, CellColor> blue = new HashMap<>();
+		for (Point cell : glider) {
+			blue.put(cell, new CellColor(0, 0, 255));
+		}
+
+		// When
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		rle.write(new LiveCells(blue), out);
+
+		// Then
+		assertEquals(write(glider), out.toString(StandardCharsets.UTF_8));
+	}
+
+	@Test
+	@DisplayName("read(): 읽은 셀은 모두 기본색(빨강)이다")
+	void readGivesDefaultColor() throws IOException{
+		// When
+		LiveCells cells = rle.read(new ByteArrayInputStream(GLIDER_TEXT.getBytes(StandardCharsets.UTF_8)));
+
+		// Then
+		assertEquals(5, cells.size());
+		for (Point cell : cells.positions()) {
+			assertEquals(CellColor.DEFAULT, cells.colorAt(cell), cell.toString());
+		}
+	}
+
+	//  8. 패턴 모양만 읽기
+
+	@Test
+	@DisplayName("readPattern(): glider의 크기(3x3)와 패턴 안의 좌표를 보드에 놓지 않고 그대로 돌려준다")
+	void readPatternKeepsSizeAndShape() throws IOException{
+		// When
+		CellPattern pattern = readPattern(GLIDER_TEXT);
+
+		// Then: 왼쪽 위가 (0, 0). read()처럼 보드 가운데로 옮기지 않음
+		assertEquals(new CellPattern(3, 3, Cells.fromRowColumn("0,1", "1,2", "2,0", "2,1", "2,2")), pattern);
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@ValueSource(strings = { "#R 20 10", "#R 62 0", "#R -1 0" })
+	@DisplayName("readPattern(): #R은 무시하고, read()라면 보드를 벗어나는 위치여도 IOException 없이 같은 모양을 돌려준다")
+	void readPatternIgnoresPosition(String position) throws IOException{
+		// Given: #R 62 0과 #R -1 0은 read()에서는 보드를 벗어나 IOException
+		String body = "x = 3, y = 1\n3o!";
+
+		// When
+		CellPattern withPosition = readPattern(position + "\n" + body);
+
+		// Then
+		assertEquals(readPattern(body), withPosition);
+		assertEquals(new CellPattern(3, 1, Cells.fromRowColumn("0,0", "0,1", "0,2")), withPosition);
+	}
+
 	//  헬퍼
 
 	private Set<Point> read(String text) throws IOException {
 		return rle.read(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8))).positions();
+	}
+
+	private CellPattern readPattern(String text) throws IOException{
+		return rle.readPattern(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
 	}
 
 	private String write(Set<Point> cells) throws IOException {

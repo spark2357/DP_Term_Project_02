@@ -26,19 +26,19 @@ import org.junit.jupiter.api.Test;
  * [커버리지]
  *   - CellPatternTest.java 테스트 대상: 생성자, rotatedClockwise, cells
  *   - 테스트 제외 대상
- *     - 보드에 찍기: BoardStampTest에서 확인
+ *     - 보드에 찍기: BoardTest에서 확인
  */
 @Tag("extension")
 class CellPatternTest {
 
 	@Test
-	@DisplayName("생성자: 크기가 음수이면 만들 수 없다")
+	@DisplayName("CellPattern(): 크기가 음수이면 만들 수 없다")
 	void rejectsNegativeSize() {
 		assertThrows(IllegalArgumentException.class, () -> new CellPattern(-1, 3, Set.of()));
 	}
 
 	@Test
-	@DisplayName("생성자: 크기 밖에 있는 셀이 있으면 만들 수 없다")
+	@DisplayName("CellPattern(): 크기 밖에 있는 셀이 있으면 만들 수 없다")
 	void rejectsCellOutsideTheSize() {
 		// Given: 3x3 패턴에 (3, 0) 셀
 		Set<Point> cells = Set.of(new Point(3, 0));

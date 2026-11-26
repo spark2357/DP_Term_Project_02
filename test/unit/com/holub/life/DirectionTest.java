@@ -48,7 +48,7 @@ class DirectionTest {
 	}
 
 	@Test
-	@DisplayName("ALL, NONE: ALL은 8방향을 모두 가지고, NONE은 아무 방향도 없다")
+	@DisplayName("has(): ALL은 8방향을 모두 가지고, NONE은 아무 방향도 없다")
 	void allHasEveryDirectionAndNoneHasNothing() {
 		for (Direction each : EIGHT) {
 			assertTrue(Direction.ALL.has(each));
@@ -71,14 +71,14 @@ class DirectionTest {
 	}
 
 	@Test
-	@DisplayName("상수: NORTH, ALL 같은 상수는 바꿀 수 없다")
+	@DisplayName("add(), clear(): NORTH, ALL 같은 상수는 바꿀 수 없다")
 	void constantsCannotBeChanged() {
 		assertThrows(UnsupportedOperationException.class, () -> Direction.NORTH.add(Direction.SOUTH));
 		assertThrows(UnsupportedOperationException.class, () -> Direction.ALL.clear());
 	}
 
 	@Test
-	@DisplayName("복사 생성자: 복사한 값을 바꿔도 원래 값은 그대로다")
+	@DisplayName("Direction(Direction): 복사한 값을 바꿔도 원래 값은 그대로다")
 	void copyIsIndependent() {
 		// Given
 		Direction original = new Direction();

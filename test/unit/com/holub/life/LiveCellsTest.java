@@ -13,16 +13,23 @@ import org.junit.jupiter.api.Test;
 /**
  * LiveCells 단위 테스트: 살아 있는 셀들과 그 색을 묶은 불변 값 객체
  *
- *   - LiveCells(map)   : 위치별 색으로 만듦
+ *   - LiveCells(map)   : 위치별 색으로 만듦. 색이 null이면 거부
  *   - of(positions)    : 색 정보가 없는 위치 목록은 모두 기본색
  *   - isAlive, colorAt : 죽은 자리의 색을 물으면 예외
  *   - equals           : 위치와 색이 모두 같아야 같음
  *   - 불변성            : 넘긴 Map이나 Point, positions()/toMap()으로 받은 것을 고쳐도 바뀌지 않음
  *
+ * [테스트 시나리오]
+ *   1. 만들기: 위치별 색을 그대로 담음. 위치만 주면 모두 기본색. 빈 Map이면 비어 있음
+ *   2. 색 묻기: 죽은 자리의 색을 물으면 IllegalArgumentException
+ *   3. 같음: 위치가 같아도 색이 다르면 다름
+ *   4. 불변성: 만들 때 넘긴 Map이나 Point, positions()/toMap()으로 받은 것을 고쳐도 그대로
+ *   5. null 거부: 색이 null인 셀이 있으면 NullPointerException
+ *
  * [커버리지]
  *   - LiveCellsTest.java 테스트 대상: 생성자, of, isAlive, colorAt, positions, toMap, size, isEmpty, equals
  */
-@Tag("unclassified")
+@Tag("extension")
 class LiveCellsTest {
 
 	private static final CellColor BLUE = new CellColor(0, 0, 255);
@@ -57,7 +64,7 @@ class LiveCellsTest {
 	}
 
 	@Test
-	@DisplayName("빈 Map으로 만들면 비어 있다")
+	@DisplayName("isEmpty(): 빈 Map으로 만들면 비어 있다")
 	void emptyMapIsEmpty() {
 		LiveCells cells = new LiveCells(Map.of());
 
@@ -78,7 +85,7 @@ class LiveCellsTest {
 	}
 
 	@Test
-	@DisplayName("불변성: 만들 때 넘긴 Map이나 Point를 나중에 고쳐도 LiveCells는 그대로다")
+	@DisplayName("LiveCells(map): 만들 때 넘긴 Map이나 Point를 나중에 고쳐도 LiveCells는 그대로다")
 	void constructorCopiesInput() {
 		// Given
 		Point p = new Point(1, 1);
@@ -95,7 +102,7 @@ class LiveCellsTest {
 	}
 
 	@Test
-	@DisplayName("불변성: positions()나 toMap()으로 받은 것을 고쳐도 LiveCells는 그대로다")
+	@DisplayName("positions(), toMap(): 받은 것을 고쳐도 LiveCells는 그대로다")
 	void returnedCollectionsAreCopies() {
 		// Given
 		LiveCells cells = new LiveCells(Map.of(new Point(1, 1), BLUE));
@@ -108,5 +115,17 @@ class LiveCellsTest {
 
 		// Then
 		assertEquals(Map.of(new Point(1, 1), BLUE), cells.toMap());
+	}
+
+	@Test
+	@DisplayName("LiveCells(map): 색이 null인 셀이 있으면 NullPointerException")
+	void rejectsNullColor(){
+		// Given: Map.of()는 null을 받지 않으므로 HashMap
+		Map<Point, CellColor> input = new HashMap<>();
+		input.put(new Point(1, 1), BLUE);
+		input.put(new Point(2, 2), null);
+
+		// When, Then
+		assertThrows(NullPointerException.class, () -> new LiveCells(input));
 	}
 }

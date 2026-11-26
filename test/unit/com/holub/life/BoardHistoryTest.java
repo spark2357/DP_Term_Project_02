@@ -2,6 +2,7 @@ package com.holub.life;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -24,14 +25,15 @@ import org.junit.jupiter.api.Test;
  * [커버리지]
  *   - 스냅샷의 내용은 보지 않으므로 같은 객체가 돌아오는지(assertSame)로 확인함
  *   - 기록이 비었는지는 undo()/redo()가 빈 Optional을 돌려주는지로 확인함 (비었을 때는 아무것도 바뀌지 않음)
- *   - 보드에 적용하는 것은 LifeGame 테스트에서 확인
+ *   - 보드에 적용하는 것은 통합 테스트 LifeGameUndoTest, UndoRedoUseCaseTest에서 확인
  */
-@Tag("unclassified")
+@Tag("extension")
 class BoardHistoryTest {
 	// 보드 A → B → C로 바뀐 기록. 스냅샷은 서로 다른 객체이기만 하면 됨
-	private final BoardSnapshot a = new Board().snapshot();
-	private final BoardSnapshot b = new Board().snapshot();
-	private final BoardSnapshot c = new Board().snapshot();
+	// [수정] 2026-11-27: 진짜 Board 대신 값 객체 BoardSnapshot을 직접 만듦 (BoardHistory만 확인하는 단위 테스트)
+	private final BoardSnapshot a = snapshot();
+	private final BoardSnapshot b = snapshot();
+	private final BoardSnapshot c = snapshot();
 
 	//  1. 빈 기록
 
@@ -103,7 +105,7 @@ class BoardHistoryTest {
 		history.record(c);
 
 		// Then: C, B만 남고 A는 버려짐
-		BoardSnapshot now = new Board().snapshot();
+		BoardSnapshot now = snapshot();
 		assertSame(c, history.undo(now).orElseThrow());
 		assertSame(b, history.undo(c).orElseThrow());
 		assertTrue(history.undo(b).isEmpty());
@@ -116,6 +118,10 @@ class BoardHistoryTest {
 	}
 
 	// ---- 헬퍼 메서드
+
+	private static BoardSnapshot snapshot(){
+		return new BoardSnapshot(new LiveCells(Map.of()));
+	}
 
 	// A → B → C로 바뀐 기록 (지금 보드는 C)
 	private BoardHistory historyOfABC() {
