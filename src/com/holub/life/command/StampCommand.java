@@ -4,6 +4,7 @@ import com.holub.life.LifeGame;
 import com.holub.life.PatternFormats;
 import com.holub.life.RleFormat;
 import com.holub.life.mouse.MouseController;
+import com.holub.life.mouse.Pen;
 import com.holub.life.mouse.StampMode;
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,12 +21,14 @@ public class StampCommand implements Command {
     private final LifeGame game;
     private final RleFormat rle;
     private final MouseController mouse;
+    private final Pen pen;
     private final Dialogs dialogs;
 
-    public StampCommand(LifeGame game, RleFormat rle, MouseController mouse, Dialogs dialogs) {
+    public StampCommand(LifeGame game, RleFormat rle, MouseController mouse, Pen pen, Dialogs dialogs) {
         this.game = game;
         this.rle = rle;
         this.mouse = mouse;
+        this.pen = pen;
         this.dialogs = dialogs;
     }
 
@@ -44,7 +47,7 @@ public class StampCommand implements Command {
 
         File file = chosen.get();
         try (InputStream in = new FileInputStream(file)) {
-            mouse.setMode(new StampMode(game, rle.readPattern(in)));
+            mouse.setMode(new StampMode(game, rle.readPattern(in), pen));
         } catch (IOException e) {
             dialogs.showError("Can't stamp \"" + file.getName() + "\".\n"
                     + "Choose an RLE pattern (." + rle.extension() + ") that fits on the board.");

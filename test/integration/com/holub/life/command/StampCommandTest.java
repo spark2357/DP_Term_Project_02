@@ -30,7 +30,8 @@ class StampCommandTest {
 	private final FakeDialogs dialogs = new FakeDialogs();
 	private final LifeGame game = new LifeGame(new Board(), new FakeTicker());
 	private final RleFormat rle = new RleFormat(LifeTestDriver.SIZE);
-	private final MouseController mouse = new MouseController(new ToggleMode(game));
+	private final Pen pen = new Pen(CellColor.DEFAULT);
+	private final MouseController mouse = new MouseController(new ToggleMode(game, pen));
 
 	@Test
 	@DisplayName("execute(): 파일 창에서 취소하면 마우스 모드는 그대로다")
@@ -39,7 +40,7 @@ class StampCommandTest {
 		dialogs.nextFile = null;
 
 		// When
-		new StampCommand(game, rle, mouse, dialogs).execute();
+		new StampCommand(game, rle, mouse, pen, dialogs).execute();
 
 		// Then
 		assertInstanceOf(ToggleMode.class, mouse.mode());
@@ -50,10 +51,10 @@ class StampCommandTest {
 	@DisplayName("execute(): 스탬프 모드에서 다시 실행하면 토글 모드로 돌아온다")
 	void executeInStampModeTurnsItOff() {
 		// Given: 스탬프 모드
-		mouse.setMode(new StampMode(game, new CellPattern(1, 1, Cells.fromRowColumn("0,0"))));
+		mouse.setMode(new StampMode(game, new CellPattern(1, 1, Cells.fromRowColumn("0,0")), pen));
 
 		// When
-		new StampCommand(game, rle, mouse, dialogs).execute();
+		new StampCommand(game, rle, mouse, pen, dialogs).execute();
 
 		// Then
 		assertInstanceOf(ToggleMode.class, mouse.mode());

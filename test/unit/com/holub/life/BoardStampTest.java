@@ -43,7 +43,7 @@ class BoardStampTest {
 		board.toggle(9, 9);
 
 		// When
-		board.stamp(GLIDER, 10, 10);
+		board.stamp(GLIDER, 10, 10, CellColor.DEFAULT);
 
 		// Then
 		Set<Point> expected = Cells.fromRowColumn("9,9", "10,11", "11,12", "12,10", "12,11", "12,12");
@@ -64,7 +64,7 @@ class BoardStampTest {
 		int last = board.widthInCells() - 1;
 
 		// When: 왼쪽 위가 (63, 62)이면 첫 행(0행)의 (63, 63)만 보드 안
-		board.stamp(GLIDER, last, last - 1);
+		board.stamp(GLIDER, last, last - 1, CellColor.DEFAULT);
 
 		// Then
 		assertEquals(Set.of(new Point(last, last)), board.liveCells());

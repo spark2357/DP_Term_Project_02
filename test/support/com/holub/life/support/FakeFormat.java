@@ -1,12 +1,12 @@
 package com.holub.life.support;
 
+import com.holub.life.LiveCells;
 import com.holub.life.PatternFormat;
 
 import java.awt.Point;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -25,16 +25,16 @@ public class FakeFormat implements PatternFormat {
 	}
 
 	@Override
-	public Set<Point> read(InputStream in) throws IOException {
+	public LiveCells read(InputStream in) throws IOException {
 		if (toRead == null) {
 			throw new IOException("읽기 실패");
 		}
-		return new HashSet<>(toRead);
+		return LiveCells.of(toRead);
 	}
 
 	@Override
-	public void write(Set<Point> cells, OutputStream out) {
-		written = new HashSet<>(cells);
+	public void write(LiveCells cells, OutputStream out) {
+		written = cells.positions();
 	}
 
 	@Override

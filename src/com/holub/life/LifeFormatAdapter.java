@@ -4,8 +4,8 @@ import java.awt.Point;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 기존 .life 형식(Neighborhood의 Memento가 하는 Java 직렬화)을 PatternFormat에 맞추는 Adapter.
@@ -29,28 +29,29 @@ public class LifeFormatAdapter implements PatternFormat {
         return "Life Files";
     }
 
+    // .life는 색까지 저장함. 색이 없는 예전 파일은 Memento가 기본색으로 답함
     @Override
-    public Set<Point> read(InputStream in) throws IOException {
+    public LiveCells read(InputStream in) throws IOException {
         Cell.Memento memento = Neighborhood.createEmptyMemento();
         memento.load(in);
 
-        Set<Point> cells = new HashSet<>();
+        Map<Point, CellColor> cells = new HashMap<>();
         for (int row = 0; row < widthInCells; row++) {
             for (int column = 0; column < widthInCells; column++) {
                 Point here = new Point(column, row);
                 if (memento.isAlive(here)) {
-                    cells.add(here);
+                    cells.put(here, memento.colorAt(here));
                 }
             }
         }
-        return cells;
+        return new LiveCells(cells);
     }
 
     @Override
-    public void write(Set<Point> cells, OutputStream out) throws IOException {
+    public void write(LiveCells cells, OutputStream out) throws IOException {
         Cell.Memento memento = Neighborhood.createEmptyMemento();
-        for (Point cell : cells) {
-            memento.markAsAlive(cell);
+        for (Map.Entry<Point, CellColor> cell : cells.toMap().entrySet()) {
+            memento.markAsAlive(cell.getKey(), cell.getValue());
         }
         memento.flush(out);
     }

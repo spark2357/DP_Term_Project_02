@@ -344,6 +344,20 @@ public final class Neighborhood implements Cell
 	 *  upper-left corner of the surface.
 	 */
 	public void userClicked(Point here, Rectangle surface)
+	{	deliver( here, surface, (cell, position, subcell) -> cell.userClicked(position, subcell) );
+	}
+
+	// [수정] 2026-11-22: 셀 색 기능. 칠하기도 클릭과 같은 길(deliver)로 하위 셀을 찾아 전달하고 블록을 깨움.
+	// 그래서 색만 바뀐 셀(생사는 그대로)도 화면에 다시 그려짐
+	public void userBrushed(Point here, Rectangle surface, CellColor color){
+		deliver( here, surface, (cell, position, subcell) -> cell.userBrushed(position, subcell, color) );
+	}
+
+	private interface Delivery{
+		void to( Cell cell, Point position, Rectangle subcell );
+	}
+
+	private void deliver(Point here, Rectangle surface, Delivery delivery)
 	{
 		int pixelsPerCell = surface.width / gridSize ;
 		int row				= here.y     	/ pixelsPerCell ;
@@ -355,7 +369,7 @@ public final class Neighborhood implements Cell
 		Rectangle subcell = new Rectangle(	0, 0, pixelsPerCell,
 												  pixelsPerCell );
 
-		grid[row][column].userClicked(position, subcell); //{=Neighborhood.userClicked.call}
+		delivery.to( grid[row][column], position, subcell ); //{=Neighborhood.userClicked.call}
 		amActive = true;
 		rememberThatCellAtEdgeChangedState(row, column);
 	}
@@ -366,6 +380,31 @@ public final class Neighborhood implements Cell
 
 	public int widthInCells()
 	{	return gridSize * grid[0][0].widthInCells();
+	}
+
+	// [수정] 2026-11-16: Visitor가 블록 안의 모든 Cell을 방문하도록 넘겨 줌 (Composite이 트리를 돎).
+	// 자식이 블록이든 셀이든 똑같이 accept()를 부르므로, 바깥 블록 → 안쪽 블록 → 셀 순서로 재귀 방문됨
+
+	/** Visit this block: tell the visitor we are entering it, pass
+	 *  the visitor on to every cell inside it, then tell the visitor
+	 *  we are leaving it.
+	 */
+	public void accept( CellVisitor visitor )
+	{	visitor.enterNeighborhood( this );
+		for( int row = 0; row < gridSize; ++row )
+			for( int column = 0; column < gridSize; ++column )
+				grid[row][column].accept( visitor );
+		visitor.leaveNeighborhood( this );
+	}
+
+	// [수정] 2026-11-16: 통계(활성 블록 수)용 조회 메서드. amActive는 블록 건너뛰기가 쓰는 값으로,
+	// 마지막 세대 진행에서 블록 안의 셀이 바뀌었으면 true (셀 클릭이나 Load로 셀을 놓은 블록도 true)
+
+	/** Return true if a cell in this block changed state in the last
+	 *  generation (so the block was not skipped).
+	 */
+	public boolean isActive()
+	{	return amActive;
 	}
 
 	public void clear()
@@ -430,13 +469,17 @@ public final class Neighborhood implements Cell
 	private static class NeighborhoodState implements Cell.Memento
 	{	Collection liveCells = new LinkedList();
 
+		// [수정] 2026-11-23: 산 셀의 색. 파일에는 liveCells 다음에 RGB 숫자로 씀(CellColor 클래스 이름이 파일에 들어가지 않게)
+		Map<Point, CellColor> colors = new HashMap<>();
+
 		public NeighborhoodState( InputStream in ) throws IOException
 												{ load(in); }
 		public NeighborhoodState( 			   ){			}
 
 		public void load( InputStream in ) throws IOException
 		{	try
-			{	ObjectInputStream source = new ObjectInputStream( in );
+			{	CountingInputStream counted = new CountingInputStream( in );
+				ObjectInputStream source = new ObjectInputStream( counted );
 				Collection read = (Collection)( source.readObject() );
 
 				// [수정] 2026-11-10: Point가 아닌 원소가 든 파일은 오류 없이 읽혀 보드가 빈 채로 Load되었음.
@@ -445,7 +488,9 @@ public final class Neighborhood implements Cell
 					if( !(cell instanceof Point) )
 						throw new IOException( "Not a Life file: expected Points" );
 
+				Map<Point, CellColor> readColors = readColors( source, counted );
 				liveCells = read;
+				colors = readColors;
 			}
 			// [수정] 2026-11-10: Collection이 아닌 객체가 든 파일이면 캐스팅에서 ClassCastException이 나서
 			// Universe가 IOException만 잡는 탓에 오류 창 없이 실패했음. ClassCastException도 IOException으로 바꿔 던짐
@@ -463,10 +508,86 @@ public final class Neighborhood implements Cell
 		public void flush( OutputStream out ) throws IOException
 		{	ObjectOutputStream sink = new ObjectOutputStream(out);
 			sink.writeObject( liveCells );
+			sink.writeObject( toRgb( colors ) );
 		}
-	
-		public void markAsAlive(Point location)
-		{	liveCells.add( new Point( location ) );
+
+		// [수정] 2026-11-23: 예전 파일은 liveCells 뒤에 색이 없어서 EOF가 남. 그러면 색 없이(기본색) 읽음
+		private static Map<Point, CellColor> readColors( ObjectInputStream source, CountingInputStream counted ) throws IOException, ClassNotFoundException{
+			long start = counted.getCount();
+			Object read;
+			try{
+				read = source.readObject();
+			}
+			catch( EOFException e ){
+				// [수정] 2026-11-24: 색 표가 아예 없으면(한 바이트도 못 읽음) 예전 파일이라 기본색으로 읽고,
+				// 색 표를 읽다가 끊기면 깨진 파일이라 IOException을 던짐. 그대로 두면 색을 모두 잃은 채 Load되었음
+				if( counted.getCount() == start )
+					return new HashMap<>();
+				throw new IOException( "Not a Life file: cell colors are cut off", e );
+			}
+
+			if( !(read instanceof Map) )
+				throw new IOException( "Not a Life file: expected cell colors" );
+
+			Map<Point, CellColor> colors = new HashMap<>();
+			for( Map.Entry<?, ?> entry : ((Map<?, ?>) read).entrySet() ){
+				if( !(entry.getKey() instanceof Point) || !(entry.getValue() instanceof Integer) )
+					throw new IOException( "Not a Life file: expected cell colors" );
+				int rgb = (Integer) entry.getValue();
+				colors.put( (Point) entry.getKey(), new CellColor( (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF ) );
+			}
+			return colors;
+		}
+
+		private static class CountingInputStream extends FilterInputStream{
+			private long count = 0;
+
+			CountingInputStream( InputStream in ){
+				super( in );
+			}
+
+			public long getCount(){
+				return count;
+			}
+
+			public int read() throws IOException{
+				int b = super.read();
+				if( b >= 0 )
+					++count;
+				return b;
+			}
+
+			public int read( byte[] b, int off, int len ) throws IOException{
+				int n = super.read( b, off, len );
+				if( n > 0 )
+					count += n;
+				return n;
+			}
+
+			public long skip( long n ) throws IOException{
+				long skipped = super.skip( n );
+				count += skipped;
+				return skipped;
+			}
+		}
+
+		private static Map<Point, Integer> toRgb( Map<Point, CellColor> colors ){
+			Map<Point, Integer> rgb = new HashMap<>();
+			for( Map.Entry<Point, CellColor> entry : colors.entrySet() ){
+				CellColor color = entry.getValue();
+				rgb.put( entry.getKey(), (color.red() << 16) | (color.green() << 8) | color.blue() );
+			}
+			return rgb;
+		}
+
+		// [수정] 2026-11-24: 원래의 1인자 markAsAlive는 이제 Cell.Memento의 default(기본색으로 적음)가 맡음
+		public void markAsAlive( Point location, CellColor color ){
+			liveCells.add( new Point( location ) );
+			colors.put( new Point( location ), color );
+		}
+
+		public CellColor colorAt( Point location ){
+			return colors.getOrDefault( location, CellColor.DEFAULT );
 		}
 
 		public boolean isAlive(Point location)

@@ -114,7 +114,7 @@ class NeighborhoodTest {
 
 	// Universe와 같은 구조: 8x8 블록 안에 8x8 셀
 	private static Neighborhood newBoard() {
-		return new Neighborhood(8, new Neighborhood(8, new Resident()));
+		return new Neighborhood(8, new Neighborhood(8, new Resident(ClashRule::new)));
 	}
 
 	private static void clickPixel(Neighborhood board, int x, int y) {

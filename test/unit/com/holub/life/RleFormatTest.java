@@ -216,12 +216,12 @@ class RleFormatTest {
 	//  헬퍼
 
 	private Set<Point> read(String text) throws IOException {
-		return rle.read(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
+		return rle.read(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8))).positions();
 	}
 
 	private String write(Set<Point> cells) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		rle.write(cells, out);
+		rle.write(LiveCells.of(cells), out);
 		return out.toString(StandardCharsets.UTF_8);
 	}
 }

@@ -16,11 +16,13 @@ public class StampMode implements MouseMode {
     private static final Color PREVIEW_BORDER = new Color(0, 120, 255);
 
     private final LifeGame game;
+    private final Pen pen;
     private CellPattern pattern;
     private Point hover;            // 마우스가 가리키는 셀 (x = 열, y = 행). 보드 밖이면 null
 
-    public StampMode(LifeGame game, CellPattern pattern) {
+    public StampMode(LifeGame game, CellPattern pattern, Pen pen) {
         this.game = game;
+        this.pen = pen;
         this.pattern = pattern;
     }
 
@@ -30,7 +32,7 @@ public class StampMode implements MouseMode {
 
     @Override
     public void clicked(int row, int column) {
-        game.stamp(pattern, row, column);
+        game.stamp(pattern, row, column, pen.getColor());
     }
 
     @Override

@@ -53,7 +53,7 @@ class ResidentTest {
 	void deadCellIsBornOnlyWithThreeNeighbors() {
 		for (int liveNeighbors = 0; liveNeighbors <= 8; liveNeighbors++) {
 			// Given
-			Resident cell = new Resident();
+			Resident cell = new Resident(ClashRule::new);
 
 			// When
 			figureNextState(cell, neighbors(liveNeighbors));
@@ -88,7 +88,7 @@ class ResidentTest {
 	@DisplayName("figureNextState(), transition(): 계산만으로는 상태가 바뀌지 않고, transition()에서 바뀐다")
 	void stateChangesOnlyOnTransition() {
 		// Given
-		Resident cell = new Resident();
+		Resident cell = new Resident(ClashRule::new);
 
 		// When: 다음 상태만 계산
 		figureNextState(cell, neighbors(3));
@@ -108,10 +108,10 @@ class ResidentTest {
 	@DisplayName("transition() (결함): 상태가 바뀐 셀만 true를 반환해야 한다 (원본: 반대로 반환해 블록 건너뛰기 최적화가 동작하지 않음)")
 	void transitionReturnsTrueOnlyWhenChanged() {
 		// Given: 그대로 죽어 있을 셀과, 태어날 셀
-		Resident unchanged = new Resident();
+		Resident unchanged = new Resident(ClashRule::new);
 		figureNextState(unchanged, neighbors(0));
 
-		Resident changed = new Resident();
+		Resident changed = new Resident(ClashRule::new);
 		figureNextState(changed, neighbors(3));
 
 		// When
@@ -131,7 +131,7 @@ class ResidentTest {
 	@DisplayName("figureNextState(): 보드 밖을 나타내는 Cell.DUMMY는 항상 죽은 이웃으로 계산한다")
 	void dummyCountsAsDeadNeighbor() {
 		// Given: 산 이웃 2개 + DUMMY 6개
-		Resident cell = new Resident();
+		Resident cell = new Resident(ClashRule::new);
 		Cell[] around = {
 			liveCell(), liveCell(),
 			Cell.DUMMY, Cell.DUMMY, Cell.DUMMY, Cell.DUMMY, Cell.DUMMY, Cell.DUMMY
@@ -151,7 +151,7 @@ class ResidentTest {
 	@DisplayName("clear(): 미리 계산해 둔 다음 상태까지 지워서 초기화한다")
 	void clearAlsoForgetsNextState() {
 		// Given: 다음 세대에 태어나야하는 셀
-		Resident cell = new Resident();
+		Resident cell = new Resident(ClashRule::new);
 		figureNextState(cell, neighbors(3));
 
 		// When
@@ -170,8 +170,8 @@ class ResidentTest {
 		Cell.Memento memento = emptyMemento();
 		memento.markAsAlive(new Point(0, 0));
 
-		Resident clicked = new Resident();
-		Resident loaded = new Resident();
+		Resident clicked = new Resident(ClashRule::new);
+		Resident loaded = new Resident(ClashRule::new);
 
 		// When: 하나는 클릭으로, 하나는 Load로 살림
 		clicked.userClicked(new Point(0, 0), new Rectangle(0, 0, 8, 8));
@@ -192,7 +192,7 @@ class ResidentTest {
 		// Given
 		Cell.Memento memento = emptyMemento();
 		Resident live = liveCell();
-		Resident dead = new Resident();
+		Resident dead = new Resident(ClashRule::new);
 
 		// When
 		live.transfer(memento, new Point(3, 5), Cell.STORE);
@@ -205,7 +205,7 @@ class ResidentTest {
 	}
 
 	private static Resident liveCell() {
-		Resident cell = new Resident();
+		Resident cell = new Resident(ClashRule::new);
 		cell.userClicked(new Point(0, 0), new Rectangle(0, 0, 8, 8));
 		return cell;
 	}
@@ -217,7 +217,7 @@ class ResidentTest {
 			if (i < liveCount) {
 				around[i] = liveCell();
 			} else {
-				around[i] = new Resident();
+				around[i] = new Resident(ClashRule::new);
 			}
 		}
 		return around;
@@ -230,7 +230,7 @@ class ResidentTest {
 
 	// Resident는 memento를 만들 수 없으므로 Neighborhood에서 생성
 	private static Cell.Memento emptyMemento() {
-		return (Cell.Memento) new Neighborhood(8, new Resident()).createMemento();
+		return (Cell.Memento) new Neighborhood(8, new Resident(ClashRule::new)).createMemento();
 	}
 
 	// memento에는 기록된 좌표 개수를 묻는 메서드가 없으므로, 저장한 내용을 다시 읽어 좌표 목록을 꺼냄

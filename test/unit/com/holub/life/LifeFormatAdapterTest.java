@@ -73,11 +73,11 @@ class LifeFormatAdapterTest {
 
 	private byte[] write(Set<Point> cells) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		format.write(cells, out);
+		format.write(LiveCells.of(cells), out);
 		return out.toByteArray();
 	}
 
 	private Set<Point> read(byte[] bytes) throws IOException {
-		return format.read(new ByteArrayInputStream(bytes));
+		return format.read(new ByteArrayInputStream(bytes)).positions();
 	}
 }

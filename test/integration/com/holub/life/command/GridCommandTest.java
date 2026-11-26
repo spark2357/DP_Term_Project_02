@@ -152,8 +152,8 @@ class GridCommandTest {
 	@DisplayName("StampCommand: 켜면 클릭한 곳에 패턴을 찍고(#R 무시) 화면에 알리며, 오른쪽 클릭은 회전하고, 다시 누르면 클릭이 셀 토글로 돌아온다")
 	void stampModeOnAndOff() throws IOException {
 		// Given: #R이 있는 glider 파일. 스탬프는 위치 정보를 쓰지 않음
-		MouseController mouse = new MouseController(new ToggleMode(game));
-		StampCommand stamp = new StampCommand(game, rle, mouse, dialogs);
+		MouseController mouse = new MouseController(new ToggleMode(game, new Pen(CellColor.DEFAULT)));
+		StampCommand stamp = new StampCommand(game, rle, mouse, new Pen(CellColor.DEFAULT), dialogs);
 		dialogs.nextFile = write("glider.rle", "#R 50 50\nx = 3, y = 3\nbo$2bo$3o!");
 
 		// When: 켜고 (10, 20)에 찍음

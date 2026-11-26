@@ -51,7 +51,7 @@ class RleBoardLoadTest {
 		// Then: gun은 처음 모양(36개)으로 돌아오고, 새로 나온 glider 5개가 더해짐
 		Set<Point> gun;
 		try (InputStream in = new FileInputStream(GUN_FILE)) {
-			gun = rle.read(in);
+			gun = rle.read(in).positions();
 		}
 		assertTrue(board.liveCells().containsAll(gun), "gun이 처음 모양으로 돌아와야 함");
 		assertEquals(36 + 5, board.liveCells().size());
