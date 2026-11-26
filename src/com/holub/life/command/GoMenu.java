@@ -40,7 +40,8 @@ public class GoMenu {
     }
 
     public void register() {
-        add("Halt", new HaltCommand(game), KeyEvent.VK_SPACE);
+        // [수정] 2026-11-26: 11-24 merge에서 밖에서 받은 halt 대신 HaltCommand가 들어가 있던 것을 되돌림
+        add("Halt", halt, KeyEvent.VK_SPACE);
         add("Tick (Single Step)", new TickCommand(game), KeyEvent.VK_T);
         for (Speed speed : SPEEDS) {
             add(speed.name(), new SetSpeedCommand(game, speed.millisecondsBetweenTicks()), speed.key());

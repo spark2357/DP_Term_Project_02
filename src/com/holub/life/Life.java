@@ -85,7 +85,7 @@ public final class Life extends JFrame
 
 					BrushToolBar	toolBar	= new BrushToolBar( game, pen );
 
-					frame.install( universe, toolBar );
+					frame.install( universe, toolBar, statusBar );
 				}
 			}
 		);
@@ -114,12 +114,14 @@ public final class Life extends JFrame
 		return statusBar;
 	}
 
-	/** Put the view into the middle of the frame and the status bar
-	 *  under it, then show the frame.
+	/** Put the tool bar above the view, the view into the middle of
+	 *  the frame and the status bar under it, then show the frame.
 	 */
-	private void install( JComponent universe, JComponent toolBar )
+	// [수정] 2026-11-26: 11-24 merge에서 빠진 상태 표시줄(SOUTH)을 다시 붙임
+	private void install( JComponent universe, JComponent toolBar, JComponent statusBar )
 	{	getContentPane().add( toolBar,  BorderLayout.NORTH );
 		getContentPane().add( universe, BorderLayout.CENTER); //{=life.java.install}
+		getContentPane().add( statusBar, BorderLayout.SOUTH );	// 창의 아래 칸
 		pack();
 		setVisible( true );
 	}
