@@ -1,6 +1,8 @@
 package com.holub.life.support;
 
-import com.holub.life.*;
+// [수정] 2026-11-27: 지금 코드(이미 고친 Cell, Neighborhood, Resident) 대신 원본(3aae53e) 사본인 com.holub.life.original을 씀.
+// 전에는 호출 순서만 원본과 같고 실제로는 고친 코드에서 돌아서, 블록 건너뛰기, 가장자리 Load 결함이 드러나지 않았음
+import com.holub.life.original.*;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -27,7 +29,8 @@ public class OriginalDriver implements LifeTestDriver {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, SIZE * CELL_PIXELS, SIZE * CELL_PIXELS);
 
 	// Universe와 같은 구조: 8x8 블록 안에 8x8 셀
-	private final Neighborhood board = new Neighborhood(8, new Neighborhood(8, new Resident(ClashRule::new)));
+	// [수정] 2026-11-27: 원본 Resident에는 규칙을 받는 생성자가 없으므로 Universe와 똑같이 new Resident()로 만듦
+	private final Neighborhood board = new Neighborhood(8, new Neighborhood(8, new Resident()));
 
 	public void tick() {
 		boolean willChange = board.figureNextState(

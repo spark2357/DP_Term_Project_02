@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Tag;
 class StoreLoadOriginalBehaviorTest {
 
 	@Test
-	@DisplayName("store() (원본 동작): 저장 파일에 모든 셀이 두 번씩 들어 있다. Universe.doStore()에서 중복 저장 발생")
+	@DisplayName("store(): 저장 파일에 모든 셀이 두 번씩 들어 있다. Universe.doStore()에서 중복 저장 발생 (원본 동작)")
 	void storeWritesEachCellTwice() throws Exception {
 		// Given: 셀 3개
 		LifeTestDriver board = new OriginalDriver();
@@ -64,7 +64,7 @@ class StoreLoadOriginalBehaviorTest {
 	}
 
 	@Test
-	@DisplayName("load() (원본 동작): 파일에 보드 밖 좌표가 있어도 오류 없이 무시된다. load()에서 좌표를 검증하지 않음")
+	@DisplayName("load(): 파일에 보드 밖 좌표가 있어도 오류 없이 무시된다. load()에서 좌표를 검증하지 않음 (원본 동작)")
 	void loadIgnoresCellsOutsideBoard() throws IOException {
 		// Given: 보드 안 좌표 하나와 보드 밖 좌표 두개가 포함된 파일 (원본 파일과 같은 형식: Point의 LinkedList)
 		LinkedList<Point> points = new LinkedList<>();
