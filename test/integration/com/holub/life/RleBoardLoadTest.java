@@ -35,7 +35,7 @@ class RleBoardLoadTest {
 	private final RleFormat rle = new RleFormat(LifeTestDriver.SIZE);
 
 	@Test
-	@DisplayName("Board.load(in, RleFormat): Load한 Gosper glider gun은 30세대 뒤 glider 하나를 쏜다")
+	@DisplayName("load(): Load한 Gosper glider gun은 30세대 뒤 glider 하나를 쏜다")
 	void loadedGunEmitsGlider() throws IOException {
 		// Given
 		Board board = new Board();
@@ -58,7 +58,7 @@ class RleBoardLoadTest {
 	}
 
 	@Test
-	@DisplayName("Board.load(in, RleFormat): 잘못된 RLE를 Load하면 IOException이 나고 기존 보드는 그대로 남는다")
+	@DisplayName("load(): 잘못된 RLE를 Load하면 IOException이 나고 기존 보드는 그대로 남는다")
 	void invalidRleKeepsBoard() {
 		// Given: 셀이 있는 보드와 보드보다 큰 패턴
 		Board board = new Board();

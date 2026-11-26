@@ -52,7 +52,7 @@ import org.junit.jupiter.api.Test;
  *   - 테스트 제외 대상
  *     - 실제 화면의 색(SwingCellPainter): 넘겨받은 CellColor를 java.awt.Color로 바꾸기만 함
  */
-@Tag("unclassified")
+@Tag("extension")
 class CellColorBoardTest {
 	private static final CellColor RED = CellColor.DEFAULT;
 	private static final CellColor BLUE = new CellColor(0, 0, 255);
@@ -66,7 +66,7 @@ class CellColorBoardTest {
 	//  1. 물려받기
 
 	@Test
-	@DisplayName("step() + Clash: 2:1이면 태어나는 셀은 다수 색이고, 살아남는 가운데 셀은 자기 색을 유지한다 (blinker)")
+	@DisplayName("step(): Clash에서 2:1이면 태어나는 셀은 다수 색이고, 살아남는 가운데 셀은 자기 색을 유지한다 (blinker)")
 	void newbornTakesMajorityColor() {
 		// Given: 가로 blinker. 파랑-빨강-파랑
 		Board board = new Board();
@@ -82,7 +82,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("step() + Clash(기본값): 부모 셋이 모두 다른 색이면 태어나지 않아, 원래는 계속 도는 blinker가 끊긴다")
+	@DisplayName("step(): Clash(기본값)에서 부모 셋이 모두 다른 색이면 태어나지 않아, 원래는 계속 도는 blinker가 끊긴다")
 	void clashCancelsNewbornWithoutMajority() {
 		// Given: 가로 blinker. 파랑-초록-노랑
 		Board board = new Board();
@@ -100,7 +100,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("step() + Blend: 2:1이어도 태어나는 셀은 세 색의 평균이다 (파랑-빨강-파랑 blinker)")
+	@DisplayName("step(): Blend에서 2:1이어도 태어나는 셀은 세 색의 평균이다 (파랑-빨강-파랑 blinker)")
 	void blendMixesEvenWithAMajority() {
 		Board board = new Board();
 		board.setBirthColorRule(new BlendRule());
@@ -115,7 +115,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("step() + Blend: 부모 셋이 모두 다른 색이면 세 색의 평균으로 태어난다")
+	@DisplayName("step(): Blend에서 부모 셋이 모두 다른 색이면 세 색의 평균으로 태어난다")
 	void blendMixesNewbornWithoutMajority() {
 		Board board = new Board();
 		board.setBirthColorRule(new BlendRule());
@@ -164,7 +164,7 @@ class CellColorBoardTest {
 	//  2. 생사
 
 	@Test
-	@DisplayName("step() + Blend: 여러 색으로 칠한 glider와 원래 클릭으로 놓은 glider는 60세대 동안 같은 자리에 있다")
+	@DisplayName("step(): Blend에서 여러 색으로 칠한 glider와 원래 클릭으로 놓은 glider는 60세대 동안 같은 자리에 있다")
 	void blendDoesNotChangeTheGame() {
 		List<CellColor> palette = List.of(RED, BLUE, GREEN, YELLOW, BLUE);
 		Board colored = new Board();
@@ -197,33 +197,60 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("brush(): 같은 색으로 산 셀을 다시 칠하면 죽는다 (원래 클릭의 토글과 같음). 한 번 더 칠하면 다시 산다")
+	@DisplayName("brush(): 같은 색으로 산 셀을 다시 칠하면 죽는다 (원래 클릭의 토글과 같음)")
 	void brushingWithTheSameColorKills() {
 		Board board = new Board();
 		board.brush(5, 5, BLUE);
 
 		board.brush(5, 5, BLUE);
-		assertEquals(Set.of(), board.liveCells());
 
+		assertEquals(Set.of(), board.liveCells());
+	}
+
+	// [수정] 2026-11-27: 같은 색 칠하기 테스트에서 다시 살리는 동작을 따로 나눔
+	@Test
+	@DisplayName("brush(): 같은 색 칠하기로 죽은 셀을 한 번 더 칠하면 그 색으로 다시 산다")
+	void brushingKilledCellAgainRevivesIt(){
+		// Given
+		Board board = new Board();
 		board.brush(5, 5, BLUE);
+		board.brush(5, 5, BLUE);
+
+		// When
+		board.brush(5, 5, BLUE);
+
+		// Then
 		assertEquals(Map.of(at(5, 5), BLUE), colors(board));
 	}
 
 	@Test
-	@DisplayName("toggle(), clear(): 원래 클릭으로 살린 셀은 기본색이다. 칠했던 셀을 Clear한 뒤 클릭해도 기본색이다")
+	@DisplayName("toggle(): 원래 클릭으로 살린 셀은 기본색이다")
 	void toggledCellIsDefault() {
+		Board board = new Board();
+
+		board.toggle(7, 7);
+
+		assertEquals(Map.of(at(7, 7), CellColor.DEFAULT), colors(board));
+	}
+
+	// [수정] 2026-11-27: 원래 클릭 테스트에서 Clear 뒤 클릭을 따로 나눔
+	@Test
+	@DisplayName("toggle(): 칠했던 셀을 Clear한 뒤 원래 클릭으로 살리면 기본색이다")
+	void toggleAfterClearingColoredCellIsDefault(){
+		// Given
 		Board board = new Board();
 		board.brush(5, 5, BLUE);
 		board.clear();
 
+		// When
 		board.toggle(5, 5);
-		board.toggle(7, 7);
 
-		assertEquals(Map.of(at(5, 5), CellColor.DEFAULT, at(7, 7), CellColor.DEFAULT), colors(board));
+		// Then
+		assertEquals(Map.of(at(5, 5), CellColor.DEFAULT), colors(board));
 	}
 
 	@Test
-	@DisplayName("toggle(): 다른 색으로 산 셀을 원래 클릭으로 누르면 죽지 않고 기본색(빨강)이 되고, 다시 누르면 죽는다")
+	@DisplayName("toggle(): 다른 색으로 산 셀을 원래 클릭으로 누르면 죽지 않고 기본색(빨강)이 된다")
 	void toggleOnColoredCellTurnsItDefault() {
 		// Given
 		Board board = new Board();
@@ -232,14 +259,28 @@ class CellColorBoardTest {
 		// When
 		board.toggle(5, 5);
 
-		// Then: 빨강으로 바뀜. 빨강 셀을 다시 누르면 죽음
+		// Then
 		assertEquals(Map.of(at(5, 5), RED), colors(board));
+	}
+
+	// [수정] 2026-11-27: 기본색이 된 셀을 다시 누르는 동작을 따로 나눔
+	@Test
+	@DisplayName("toggle(): 다른 색에서 기본색(빨강)으로 바뀐 셀을 다시 누르면 죽는다")
+	void toggleOnRecoloredDefaultCellKillsIt(){
+		// Given
+		Board board = new Board();
+		board.brush(5, 5, BLUE);
 		board.toggle(5, 5);
+
+		// When
+		board.toggle(5, 5);
+
+		// Then
 		assertEquals(Set.of(), board.liveCells());
 	}
 
 	@Test
-	@DisplayName("load() + RLE: 파일에는 색이 없으므로 Load한 셀은 기본색이다")
+	@DisplayName("load(): RLE 파일에는 색이 없으므로 Load한 셀은 기본색이다")
 	void loadedCellsAreDefault() throws IOException {
 		Board board = new Board();
 		board.brush(0, 0, BLUE);
@@ -302,8 +343,8 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("stamp(색): 찍힌 셀은 그 색으로 살아난다")
-	void stampWithColor() {
+	@DisplayName("stamp(): 색을 주면 찍힌 셀은 그 색으로 살아난다")
+	void stampedCellsComeAliveInGivenColor() {
 		Board board = new Board();
 		CellPattern pair = new CellPattern(2, 1, Set.of(new Point(0, 0), new Point(1, 0)));
 
@@ -337,7 +378,7 @@ class CellColorBoardTest {
 	//  6. 저장/불러오기
 
 	@Test
-	@DisplayName("store() → load() + .life: 칠한 색이 그대로 돌아온다")
+	@DisplayName("store(), load(): .life로 저장했다 읽으면 칠한 색이 그대로 돌아온다")
 	void lifeFileKeepsColors() throws IOException {
 		// Given
 		Board board = new Board();
@@ -358,7 +399,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("load() + .life: 색이 없는 예전 파일(Point 목록만)은 기본색으로 불러온다")
+	@DisplayName("load(): 색이 없는 예전 .life 파일(Point 목록만)은 기본색으로 불러온다")
 	void oldLifeFileLoadsAsDefault() throws IOException {
 		// Given: 원래 Memento처럼 Point 목록 하나만 씀
 		LinkedList<Point> cells = new LinkedList<>();
@@ -376,7 +417,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("store() + .life: 색은 RGB 숫자로 저장되어 파일에 CellColor 클래스 이름이 들어가지 않는다")
+	@DisplayName("store(): .life 파일에 색은 RGB 숫자로 저장되어 파일에 CellColor 클래스 이름이 들어가지 않는다")
 	void lifeFileDoesNotDependOnCellColorClass() throws IOException {
 		Board board = new Board();
 		board.brush(1, 1, BLUE);
@@ -388,7 +429,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("load() + .life: 색 자리에 Map이 아닌 값(null)이 있으면 IOException이고 보드는 그대로다")
+	@DisplayName("load(): .life 파일의 색 자리에 Map이 아닌 값(null)이 있으면 IOException이고 보드는 그대로다")
 	void brokenColorsThrowIOException() throws IOException {
 		LinkedList<Point> cells = new LinkedList<>();
 		cells.add(new Point(3, 4));
@@ -406,7 +447,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("load() + .life: 색 부분을 읽다가 끊긴 파일은 IOException이고 보드는 그대로다")
+	@DisplayName("load(): 색 부분을 읽다가 끊긴 .life 파일은 IOException이고 보드는 그대로다")
 	void truncatedColorsThrowIOException() throws Exception {
 		// Given: 색을 칠해 저장한 파일과, 그 안에서 Point 목록이 끝나는 위치
 		byte[] full = coloredLifeFile();
@@ -426,7 +467,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("load() + .life: Point 목록 바로 뒤(색 부분 앞)에서 끊긴 파일은 예전 파일처럼 기본색으로 불러온다")
+	@DisplayName("load(): Point 목록 바로 뒤(색 부분 앞)에서 끊긴 .life 파일은 예전 파일처럼 기본색으로 불러온다")
 	void cutBeforeColorsLoadsAsDefault() throws Exception {
 		// Given
 		byte[] full = coloredLifeFile();
@@ -441,7 +482,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("store() → load() + RLE: 위치만 저장되고 색은 기본색이 된다")
+	@DisplayName("store(), load(): RLE로 저장했다 읽으면 위치만 남고 색은 기본색이 된다")
 	void rleFileDropsColors() throws IOException {
 		// Given
 		Board board = new Board();
@@ -480,7 +521,7 @@ class CellColorBoardTest {
 	}
 
 	@Test
-	@DisplayName("snapshot().equals(): 살아 있는 자리가 같아도 색이 다르면 다른 스냅샷이다")
+	@DisplayName("snapshot(): 살아 있는 자리가 같아도 색이 다르면 같지 않은 스냅샷을 만든다")
 	void snapshotsDifferByColor() {
 		// Given
 		Board board = new Board();

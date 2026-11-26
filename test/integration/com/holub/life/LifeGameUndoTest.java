@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
@@ -26,19 +25,22 @@ import org.junit.jupiter.api.Test;
  *   - redo() : 멈추고, Undo로 되돌린 변경을 다시 실행. 다시 실행할 것이 없으면 false
  *
  * [테스트 시나리오]
- *   1. 마우스 편집: 토글, 스탬프(덮어쓴 칸까지 복원)
+ *   1. 마우스 편집: 토글을 Undo하면 토글 전 보드, Redo하면 토글한 보드. 스탬프는 덮어쓴 칸까지 복원
  *   2. Go: Tick 3번을 Undo 3번으로 되돌림. 바뀌지 않은 세대는 기록하지 않음
  *   3. Grid: Clear, Load를 되돌림. 실패한 Load는 기록하지 않음
  *   3-1. 바뀌지 않은 편집: 빈 보드 Clear, 같은 자리에 같은 패턴 Stamp, 같은 내용 Load는 기록하지 않음
  *   4. 한 기록: 토글 → Tick → 스탬프를 Undo 3번으로 처음까지 되돌림. Undo 뒤 새로 편집하면 Redo 불가.
  *      기록은 최대 UNDO_LIMIT(100)개
- *   5. 실행 중 Undo: 자동으로 멈춤. 되돌릴 것이 없어도 멈춤
- *   6. 화면 알림: Undo, Redo 뒤에 보드 전체를 다시 그리라고 알림
+ *   5. 실행 중 Undo/Redo: 자동으로 멈춤. 되돌릴 것(다시 실행할 것)이 없어도 멈추고 false
+ *   6. 화면 알림: Undo, Redo 뒤에 보드 전체를 다시 그리라고 알림. 되돌릴 것이 없으면 알리지 않음
  *
  * [커버리지]
- *   - 되돌린 뒤 진행해도 결과가 맞는지는 Board.restore()의 몫이라 BoardSnapshotTest에서 확인
+ *   - LifeGameUndoTest.java 테스트 대상: LifeGame.undo, LifeGame.redo와 기록을 남기는 LifeGame.toggle, stamp, tick, step, clear, load
+ *   - 테스트 제외 대상
+ *     - 되돌린 뒤 진행해도 결과가 맞는지: Board.restore()의 몫이라 BoardSnapshotTickTest에서 확인
+ *     - Undo/Redo Command와 Edit 메뉴: EditMenuTest, UndoRedoUseCaseTest에서 확인
  */
-@Tag("unclassified")
+@Tag("extension")
 class LifeGameUndoTest {
 	private static final Set<Point> GLIDER = Cells.fromRowColumn("6,7", "7,8", "8,6", "8,7", "8,8");	// 블록 경계(7|8)에 걸침
 	private static final Set<Point> BLOCK = Cells.fromRowColumn("20,20", "20,21", "21,20", "21,21");	// 바뀌지 않는 패턴
@@ -50,21 +52,36 @@ class LifeGameUndoTest {
 	//  1. 마우스 편집
 
 	@Test
-	@DisplayName("toggle(): Undo하면 토글 전 보드, 다시 Redo하면 토글한 보드")
-	void undoAndRedoToggle() {
+	@DisplayName("undo(): 토글한 뒤 Undo하면 true이고 토글 전 보드로 돌아온다")
+	void undoRevertsToggle(){
 		// Given
 		game.toggle(5, 5);
 
-		// When, Then
-		assertTrue(game.undo());
-		assertEquals(Set.of(), board.liveCells());
+		// When
+		boolean undone = game.undo();
 
-		assertTrue(game.redo());
+		// Then
+		assertTrue(undone);
+		assertEquals(Set.of(), board.liveCells());
+	}
+
+	@Test
+	@DisplayName("redo(): 토글을 Undo한 뒤 Redo하면 true이고 토글한 보드로 돌아온다")
+	void redoReappliesUndoneToggle(){
+		// Given
+		game.toggle(5, 5);
+		game.undo();
+
+		// When
+		boolean redone = game.redo();
+
+		// Then
+		assertTrue(redone);
 		assertEquals(Cells.fromRowColumn("5,5"), board.liveCells());
 	}
 
 	@Test
-	@DisplayName("stamp(): 기존 셀 위에 찍은 뒤 Undo하면 덮어쓴 칸까지 원래대로 돌아온다")
+	@DisplayName("undo(): 기존 셀 위에 찍은 Stamp를 Undo하면 덮어쓴 칸까지 원래대로 돌아온다")
 	void undoStampRestoresOverwrittenCells() {
 		// Given: (10,10)은 패턴 사각형 안의 죽은 칸이라 찍으면 지워짐
 		place(Cells.fromRowColumn("10,10"));
@@ -82,8 +99,8 @@ class LifeGameUndoTest {
 	//  2. Go
 
 	@Test
-	@DisplayName("tick(): Tick 3번을 Undo 3번 하면 처음 보드로 돌아온다")
-	void undoThreeTicks() {
+	@DisplayName("undo(): Tick 3번을 Undo 3번 하면 처음 보드로 돌아온다")
+	void threeUndosRevertThreeTicks() {
 		// Given
 		place(GLIDER);
 		game.tick();
@@ -117,8 +134,8 @@ class LifeGameUndoTest {
 	//  3. Grid
 
 	@Test
-	@DisplayName("clear(): Undo하면 지우기 전 보드로 돌아온다")
-	void undoClear() {
+	@DisplayName("undo(): Clear를 Undo하면 지우기 전 보드로 돌아온다")
+	void undoRestoresClearedBoard() {
 		// Given
 		place(GLIDER);
 		game.clear();
@@ -131,8 +148,8 @@ class LifeGameUndoTest {
 	}
 
 	@Test
-	@DisplayName("load(): Undo하면 Load 전 보드로 돌아온다")
-	void undoLoad() throws IOException {
+	@DisplayName("undo(): Load를 Undo하면 Load 전 보드로 돌아온다")
+	void undoRestoresBoardBeforeLoad() throws IOException {
 		// Given
 		place(GLIDER);
 		game.load(new ByteArrayInputStream(new byte[0]), new FixedFormat(BLOCK));
@@ -208,7 +225,7 @@ class LifeGameUndoTest {
 
 	@Test
 	@DisplayName("undo(): 토글 → Tick → 스탬프를 Undo 3번 하면 처음 보드로 돌아온다 (마우스 편집과 Go가 한 기록)")
-	void oneHistoryForEditsAndGenerations() {
+	void threeUndosRevertToggleTickAndStamp() {
 		// Given
 		place(GLIDER);
 		Set<Point> start = board.liveCells();
@@ -276,50 +293,83 @@ class LifeGameUndoTest {
 	}
 
 	@Test
-	@DisplayName("undo(), redo(): 되돌릴 것이 없으면 false이고 보드는 그대로지만, 실행 중이었으면 멈춘다")
+	@DisplayName("undo(): 되돌릴 것이 없으면 false이고 보드는 그대로지만, 실행 중이었으면 멈춘다")
 	void nothingToUndoStillStops() {
 		// Given: 기록이 없는 게임을 실행 중
 		place(GLIDER);
 		game.start(30);
 
-		// When, Then: Undo
-		assertFalse(game.undo());
+		// When
+		boolean undone = game.undo();
+
+		// Then
+		assertFalse(undone);
 		assertFalse(ticker.running);
 		assertEquals(GLIDER, board.liveCells());
+	}
 
-		// When, Then: Redo
+	@Test
+	@DisplayName("redo(): 다시 실행할 것이 없으면 false이고 보드는 그대로지만, 실행 중이었으면 멈춘다")
+	void nothingToRedoStillStops(){
+		// Given: 기록이 없는 게임을 실행 중
+		place(GLIDER);
 		game.start(30);
-		assertFalse(game.redo());
+
+		// When
+		boolean redone = game.redo();
+
+		// Then
+		assertFalse(redone);
 		assertFalse(ticker.running);
 		assertEquals(GLIDER, board.liveCells());
 	}
 
 	//  6. 화면 알림
 
+	// [수정] 2026-11-27: Undo, Redo, 되돌릴 것 없음을 한 테스트에서 나눔. 알림은 support의 RecordingGameListener로 기록
 	@Test
-	@DisplayName("undo(), redo(): 되돌린 뒤 화면에 보드 전체를 다시 그리라고 알린다")
+	@DisplayName("undo(): 되돌린 뒤 화면에 보드 전체를 다시 그리라고 알린다")
 	void undoTellsViewToRedrawAll() {
 		// Given
-		List<String> events = new ArrayList<>();
+		RecordingGameListener view = new RecordingGameListener();
 		game.toggle(5, 5);
-		game.addGameListener(new LifeGame.Listener() {
-			public void boardChanged() {
-				events.add("changed");
-			}
-
-			public void boardEdited() {
-				events.add("edited");
-			}
-		});
+		game.addGameListener(view);
 
 		// When
 		game.undo();
-		game.redo();
-		game.undo();
-		game.undo();	// 되돌릴 것이 없으므로 알리지 않음
 
 		// Then
-		assertEquals(List.of("edited", "edited", "edited"), events);
+		assertEquals(List.of("edited"), view.events);
+	}
+
+	@Test
+	@DisplayName("redo(): 다시 실행한 뒤 화면에 보드 전체를 다시 그리라고 알린다")
+	void redoTellsViewToRedrawAll(){
+		// Given
+		RecordingGameListener view = new RecordingGameListener();
+		game.toggle(5, 5);
+		game.undo();
+		game.addGameListener(view);
+
+		// When
+		game.redo();
+
+		// Then
+		assertEquals(List.of("edited"), view.events);
+	}
+
+	@Test
+	@DisplayName("undo(): 되돌릴 것이 없으면 화면에 알리지 않는다")
+	void nothingToUndoDoesNotTellView(){
+		// Given
+		RecordingGameListener view = new RecordingGameListener();
+		game.addGameListener(view);
+
+		// When
+		game.undo();
+
+		// Then
+		assertEquals(List.of(), view.events);
 	}
 
 	// ---- 헬퍼 메서드
@@ -331,29 +381,7 @@ class LifeGameUndoTest {
 		}
 	}
 
-	// tick()이 오면 등록된 리스너(LifeGame)에 바로 전달하고, 실행 중인지 기억하는 가짜 시계
-	private static class FakeTicker implements TickSource {
-		private final List<Listener> listeners = new ArrayList<>();
-		boolean running;
-
-		public void startTicking(int millisecondsBetweenTicks) {
-			running = millisecondsBetweenTicks > 0;
-		}
-
-		public void stop() {
-			running = false;
-		}
-
-		public void tick() {
-			for (Listener listener : listeners) {
-				listener.tick();
-			}
-		}
-
-		public void addTickListener(Listener listener) {
-			listeners.add(listener);
-		}
-	}
+	// [수정] 2026-11-27: 자체 FakeTicker를 지우고 test/support의 FakeTicker를 씀 (running, tick 전달 동작이 같음)
 
 	// 무엇을 읽든 정해 둔 셀을 돌려주는 형식
 	private static class FixedFormat implements PatternFormat {

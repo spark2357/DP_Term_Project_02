@@ -26,15 +26,16 @@ import org.junit.jupiter.api.Test;
  *   2. 색 바꾸기: 색을 바꾸면 그 뒤 클릭부터 새 색. 다른 색 셀을 누르면 꺼지지 않고 색만 바뀜
  *   3. 게임과의 관계: 칠해도 게임은 멈추지 않고, 화면 전체를 다시 그리라고 알림. 출생 규칙을 바꿔도 같은 알림
  *   4. 원래 클릭과의 관계: 기본색(빨강)으로 칠하기는 원래 클릭(토글)과 결과가 같음
- *   5. Stamp: 지금 펜 색으로 찍음
+ *   5. 모드 되돌리기: 다른 모드(Stamp)를 끄면(resetMode) 칠하기로 돌아옴
  *
  * [커버리지]
- *   - ToggleModeTest.java 테스트 대상: ToggleMode, Pen, StampMode(펜 색), MouseController(기본 모드), LifeGame.setBirthColorRule(알림)
+ *   - ToggleModeTest.java 테스트 대상: ToggleMode, Pen, MouseController(기본 모드, resetMode), LifeGame.setBirthColorRule(알림)
  *   - 테스트 제외 대상
- *     - BrushToolBar의 버튼, 팔레트 팝업, 아이콘 그리기 (GUI)
+ *     - BrushToolBar: Swing 도구 막대라 제외 (버튼, 팔레트 팝업, 아이콘 그리기)
+ *     - Stamp가 지금 펜 색으로 찍는지: StampModeTest에서 확인
  *     - 칠한 색이 보드에서 어떻게 물려지는지: CellColorBoardTest
  */
-@Tag("unclassified")
+@Tag("extension")
 class ToggleModeTest {
 	private static final CellColor BLUE = new CellColor(0, 0, 255);
 	private static final CellColor YELLOW = new CellColor(255, 255, 0);
@@ -59,7 +60,7 @@ class ToggleModeTest {
 	//  1. 칠하기
 
 	@Test
-	@DisplayName("같은 색으로 두 번 누르면 꺼진다. 오른쪽 클릭도 왼쪽 클릭과 같다")
+	@DisplayName("clicked(), rightClicked(): 같은 색으로 두 번 누르면 꺼진다. 오른쪽 클릭도 왼쪽 클릭과 같다")
 	void clickingTwiceWithTheSameColorToggles() {
 		mouse.clicked(1, 1);
 		mouse.rightClicked(2, 2);
@@ -73,8 +74,8 @@ class ToggleModeTest {
 	//  2. 색 바꾸기
 
 	@Test
-	@DisplayName("색을 바꾸면 그 뒤 클릭부터 새 색이고, 다른 색으로 산 셀을 누르면 꺼지지 않는다")
-	void selectColor() {
+	@DisplayName("setColor(), clicked(): 색을 바꾸면 그 뒤 클릭부터 새 색이고, 다른 색으로 산 셀을 누르면 꺼지지 않는다")
+	void changedColorAppliesFromTheNextClick() {
 		mouse.setMode(toggle);
 		mouse.clicked(1, 1);			// 파랑
 		pen.setColor(YELLOW);
@@ -92,7 +93,7 @@ class ToggleModeTest {
 	//  3. 게임과의 관계
 
 	@Test
-	@DisplayName("칠해도 게임은 멈추지 않고, 매번 화면 전체를 다시 그리라고(boardEdited) 알린다")
+	@DisplayName("clicked(): 칠해도 게임은 멈추지 않고, 매번 화면 전체를 다시 그리라고(boardEdited) 알린다")
 	void brushingKeepsGameRunningAndRequestsRepaint() {
 		List<String> events = new ArrayList<>();
 		game.addGameListener(new LifeGame.Listener() {
@@ -138,7 +139,7 @@ class ToggleModeTest {
 	//  4. 원래 클릭과의 관계
 
 	@Test
-	@DisplayName("기본색(빨강)으로 칠하기는 원래 클릭(토글)과 같다: 같은 칸을 같은 순서로 누르면 보드가 같고, 진행해도 같다")
+	@DisplayName("clicked(): 기본색(빨강)으로 칠하기는 원래 클릭(토글)과 같다. 같은 칸을 같은 순서로 누르면 보드가 같고, 진행해도 같다")
 	void brushingWithTheDefaultColorIsTheOriginalClick() {
 		pen.setColor(CellColor.DEFAULT);
 		Board original = new Board();
@@ -159,44 +160,15 @@ class ToggleModeTest {
 		}
 	}
 
-	@Test
-	@DisplayName("Stamp는 지금 펜 색으로 찍는다 (찍은 셀을 같은 색으로 누르면 꺼짐)")
-	void stampUsesPenColor() {
-		pen.setColor(YELLOW);
-		mouse.setMode(new StampMode(game, new CellPattern(1, 1, Set.of(new java.awt.Point(0, 0))), pen));
-		mouse.clicked(5, 5);
-		assertEquals(Cells.fromRowColumn("5,5"), board.liveCells());
-
-		mouse.resetMode();
-		mouse.clicked(5, 5);			// 노랑으로 찍혔으므로 같은 색 → 꺼짐
-		assertEquals(Set.of(), board.liveCells());
-	}
+	//  5. 모드 되돌리기
 
 	@Test
-	@DisplayName("다른 모드(예: Stamp)를 끄면 칠하기로 돌아온다")
+	@DisplayName("resetMode(): 다른 모드(예: Stamp)를 끄면 칠하기로 돌아온다")
 	void resetModeReturnsToBrushing() {
 		mouse.setMode(new StampMode(game, new CellPattern(1, 1, Set.of(new java.awt.Point(0, 0))), pen));
 
 		mouse.resetMode();
 
 		assertSame(toggle, mouse.mode());
-	}
-
-	private static class FakeTicker implements TickSource {
-		boolean running;
-
-		public void startTicking(int millisecondsBetweenTicks) {
-			running = true;
-		}
-
-		public void stop() {
-			running = false;
-		}
-
-		public void tick() {
-		}
-
-		public void addTickListener(Listener listener) {
-		}
 	}
 }
