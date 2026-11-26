@@ -40,9 +40,9 @@ class StoreCommandTest {
 
 	@Test
 	@Tag("improvement")
-	@DisplayName("execute(): 파일 창에서 취소하면 오류 창이 뜨지 않는다")
+	@DisplayName("execute(): 파일 창에서 취소하면 오류 창이 뜨지 않는다 (결함)")
 	void cancelShowsNoError() {
-		// Given
+		// Given: 원본 Universe.doStore()는 취소하면 Files.userSelected()가 던진 예외를 받아 "Write Failed!" 오류 창을 띄움
 		dialogs.nextFile = null;
 
 		// When

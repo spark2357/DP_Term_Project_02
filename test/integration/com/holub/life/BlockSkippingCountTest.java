@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Tag;
 
 /**
  * 블록 건너뛰기 테스트: 바뀐 것이 없는 8x8 블록을 계산하지 않고 건너뛰는지, 세대마다 계산된 블록을 세어 확인
- * 원본의 블록 구조(Neighborhood 안에 Neighborhood)에 의존하므로 Contract 테스트가 아니라 원본 전용
+ * 블록 구조(Neighborhood 안에 Neighborhood)를 직접 감싸야 하므로 Contract 테스트가 아니라 현재 코드용. 원본은 OriginalBlockSkippingCountTest(known-defect)
  *
  *   계산된 블록을 알아내는 방법
  *   - 블록은 계산할 때만 이웃 블록의 가장자리 셀을 edge()로 읽고, 건너뛸 때는 읽지 않음
@@ -24,9 +24,9 @@ import org.junit.jupiter.api.Tag;
  * [테스트 시나리오]
  *   1. 블록 안 blinker 하나만 움직이면 그 블록만 계산되어야 함. 원본은 2세대부터 64블록을 모두 계산 (결함)
  *   2. Undo 스냅샷처럼 세대마다 보드를 읽어도(transfer(STORE)) 계산되는 블록은 1과 같음
- *   원인: Resident.transition()이 바뀌지 않은 셀에 true를 반환함 (ResidentTest에서 확인).
+ *   원본 결함의 원인: 원본 Resident.transition()이 바뀌지 않은 셀에 true를 반환했음 (ResidentTest에서 확인).
  *         바깥 Neighborhood.transition()은 계산하지 않은 블록까지 모든 블록에 transition()을 부르므로,
- *         1세대 적용 때 64블록 모두 가장자리 표시가 켜지고 2세대부터 전부 계산됨
+ *         1세대 적용 때 64블록 모두 가장자리 표시가 켜지고 2세대부터 전부 계산되었음
  *
  * [커버리지]
  *   - BlockSkippingCountTest.java 테스트 대상: 세대마다 계산되는 블록 (성능)
@@ -40,9 +40,9 @@ class BlockSkippingCountTest {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 512, 512);
 
 	@Test
-	@DisplayName("figureNextState() (결함): 블록 안 blinker 하나만 움직이면 그 블록만 계산되어야 한다 (원본: 2세대부터 64블록을 모두 계산)")
+	@DisplayName("figureNextState(): 블록 안 blinker 하나만 움직이면 그 블록만 계산된다 (결함)")
 	void onlyTheBlockWithBlinkerIsComputed() {
-		// Given: 블록 (0,0) 안쪽(가장자리가 아닌 곳)에 blinker
+		// Given: 블록 (0,0) 안쪽(가장자리가 아닌 곳)에 blinker. 원본은 2세대부터 64블록을 모두 계산했음
 		Set<String> computed = new TreeSet<>();
 		Neighborhood board = countingBoard(computed);
 		click(board, 3, 2);

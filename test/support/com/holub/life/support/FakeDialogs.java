@@ -18,9 +18,12 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class FakeDialogs implements Dialogs {
 	public File nextFile;
 	public final List<String> errors = new ArrayList<>();
+	public Runnable onChooseFile = () -> {
+	};
 
 	@Override
 	public Optional<File> chooseFile(String selectButtonText, FileNameExtensionFilter[] filters) {
+		onChooseFile.run();
 		return Optional.ofNullable(nextFile);
 	}
 

@@ -21,7 +21,8 @@ import org.junit.jupiter.api.Test;
  *   - LoadCommandTest.java 테스트 대상: execute (파일 창에서 취소한 경로)
  *   - 테스트 제외 대상
  *     - 지원하지 않는 확장자, 실제 파일 읽기, 깨진 파일: GridCommandTest에서 확인
- *     - 취소했을 때 게임을 멈출지: 팀에서 아직 정하지 않아 확인하지 않음
+ *     - 취소했을 때 게임: 파일 창을 열기 전에 멈추므로 취소해도 멈춘 채로 남음 (FileDialogStopTest에서 확인)
+ *     - Files, SwingDialogs: Swing 파일 창·오류 창이라 가짜 Dialogs(FakeDialogs)로 대신함
  */
 @Tag("improvement")
 class LoadCommandTest {
@@ -31,9 +32,9 @@ class LoadCommandTest {
 			List.of(new LifeFormatAdapter(LifeTestDriver.SIZE), new RleFormat(LifeTestDriver.SIZE)));
 
 	@Test
-	@DisplayName("execute(): 파일 창에서 취소하면 보드는 그대로이고 오류 창도 뜨지 않는다")
+	@DisplayName("execute(): 파일 창에서 취소하면 보드는 그대로이고 오류 창도 뜨지 않는다 (결함)")
 	void cancelKeepsBoard() {
-		// Given
+		// Given: 원본 Universe.doLoad()는 취소하면 Files.userSelected()가 던진 예외를 받아 "Read Failed!" 오류 창을 띄움
 		game.toggle(1, 1);
 		dialogs.nextFile = null;
 
