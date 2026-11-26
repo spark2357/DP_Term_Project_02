@@ -1,5 +1,7 @@
 package com.holub.life;
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.Optional;
 
 import com.holub.life.Storable;
 
@@ -40,18 +42,18 @@ public interface Cell
 	boolean transition();
 
 	/** Redraw yourself in the indicated
-	 *  rectangle on the indicated Graphics object if ncessary. This
+	 *  rectangle with the indicated CellPainter if ncessary. This
 	 *  method is meant for a conditional redraw, where some of the
 	 *  cells might not be refreshed (if they haven't changed state,
 	 *  for example).
-	 *  @param g redraw using this graphics,
+	 *  @param painter redraw using this painter,
 	 *  @param here a rectangle that describes the bounds of the
 	 *  current cell.
 	 *  @param drawAll if true, draw an entire compound cell;
 	 *  otherwise, draw only the subcells that need to be redrawn.
 	 */
 
-	void redraw(Graphics g, Rectangle here, boolean drawAll);
+	void redraw(CellPainter painter, Rectangle here, boolean drawAll);
 
 	/** A user has clicked somewhere within you.
 	 *  @param here The position of the click relative to the bounding
@@ -59,6 +61,17 @@ public interface Cell
 	 */
 
 	void userClicked(Point here, Rectangle surface);
+
+	// [수정] 2026-11-22: 셀 색 기능. 칠하기(userBrushed), 색 읽기(getColor)를 추가함.
+	// 기본 구현을 두어 기존 Cell 구현(테스트용 가짜 셀 포함)은 고치지 않아도 됨
+	default void userBrushed(Point here, Rectangle surface, CellColor color){
+		throw new UnsupportedOperationException(
+					getClass().getName() + " cannot be brushed");
+	}
+
+	default Optional<CellColor> getColor(){
+		return Optional.empty();
+	}
 
 	/** Return true if this cell or any subcells are alive.
 	 */
@@ -97,12 +110,23 @@ public interface Cell
 	{	/** On creation of the memento, indicate that a cell is
 		 *  alive.
 		 */
-		void markAsAlive	(Point location);
+		// [수정] 2026-11-24: 살았다고 적을 때는 색도 같이 적는 2인자 버전을 필수로 바꾸고, 원래 1인자 버전은 기본색으로 적는 default로 둠
+		default void markAsAlive	(Point location){
+			markAsAlive( location, CellColor.DEFAULT );
+		}
 
 		/** On restoration of a cell from a memento, indicate that
 		 *  a cell is alive.
 		 */
 		boolean isAlive	(Point location);
+
+		// [수정] 2026-11-23: 셀 색 저장/불러오기. 색을 저장하지 않는 Memento는 색을 버리고 기본색으로 답함
+		// [수정] 2026-11-24: 이제 2인자 markAsAlive는 모든 Memento가 구현해야 함. 색을 버리는 기본 구현은 없어지고 colorAt만 기본색으로 답함
+		void markAsAlive( Point location, CellColor color );
+
+		default CellColor colorAt( Point location ){
+			return CellColor.DEFAULT;
+		}
 	}
 
 	/**  This method is used internally to save or restore the state
@@ -126,6 +150,19 @@ public interface Cell
 	 */
 	Storable createMemento();
 
+	// [수정] 2026-11-16: Visitor를 받아들이는 메서드 추가 (Composite + Visitor). 통계처럼 Cell 트리 위에서 할 일을
+	// 추가할 때마다 Cell에 메서드를 늘리지 않고, CellVisitor 구현 클래스만 새로 만들면 되게 함.
+	// 기본 구현은 아무것도 방문하지 않음 (DUMMY, 테스트에서 Cell을 감싸는 클래스 등). Resident와 Neighborhood가 재정의함
+
+	/** Let the visitor visit this cell. A Neighborhood also passes
+	 *  the visitor on to every cell inside it, so calling this on the
+	 *  outermost cell visits the whole board.
+	 *  @see CellVisitor
+	 */
+	default void accept( CellVisitor visitor )
+	{
+	}
+
 	/** The DUMMY Singleton represents a permanently dead (thus stable)
 	 * 	cell. It's used for the edges of the grid. It's a singleton.
 	 * 	The Dummy class is private, but it is accessed through
@@ -147,9 +184,11 @@ public interface Cell
 		public void 	 clear()		   	{						  }
 		public int 		 widthInCells()  	{return 0;				  }
 		public boolean	 transition()		{return false;			  }
+		public void		 accept(CellVisitor v)	{						  }	// 경계용 가짜 셀: 방문할 것 없음
 
 		public void	userClicked(Point h, Rectangle s				){}
-		public void redraw 		(Graphics g, Rectangle here,
+		public void	userBrushed(Point h, Rectangle s, CellColor c	){}
+		public void redraw 		(CellPainter painter, Rectangle here,
 												 boolean drawAll	){}
 
 		public boolean transfer( Storable m, Point ul, boolean load )

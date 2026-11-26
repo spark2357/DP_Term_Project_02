@@ -1,16 +1,12 @@
 package com.holub.life;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.*;
 import java.io.*;
-import javax.swing.*;
 
 import com.holub.io.Files;
 import com.holub.life.Cell;
-import com.holub.ui.MenuSite;
-import com.holub.ui.Colors;
-import com.holub.asynch.ConditionVariable;
 
 import com.holub.life.Cell;
 import com.holub.life.Clock;
@@ -35,13 +31,9 @@ import com.holub.life.Storable;
 
 public final class Neighborhood implements Cell
 {
-	/** Block if reading is not permitted because the grid is
-	 *  transitioning to the next state. Only one lock is
-	 *  used (for the outermost neighborhood) since all updates
-	 *  must be requested through the outermost neighborhood.
-	 */
-	private static final ConditionVariable readingPermitted =
-											new ConditionVariable(true);
+	// [수정] 2026-11-17: transition() 중에 그리기를 막던 잠금(readingPermitted, nestingLevel)을 제거함 (이슈 #5 2단계).
+	// Swing Timer로 바꾼 뒤 tick(계산)과 그리기, 클릭이 모두 EDT에서 하나씩 실행되므로 둘이 겹칠 수 없음.
+	// 잠금 때문에 그리기를 포기하면 다시 그리기 요청(oneLastRefreshRequired)이 사라지던 문제도 함께 없어짐
 
 	/** Returns true only if none of the cells in the Neighborhood
 	 *  changed state during the last transition.
@@ -251,21 +243,8 @@ public final class Neighborhood implements Cell
 	 *  @see #figureNextState
 	 */
 	public boolean transition()
-	{	
-		// The condition variable is set and reset only by the
-		// outermost neighborhood. It's actually incorrect
-		// for an inner block to touch it because the whole
-		// board has to be locked for edge cells in a subblock
-		// to compute their next state correctly. There's no
-		// race condition since the only place that transition()
-		// is called is from the clock tick, and recursively
-		// from here. As long as the recompute time is less
-		// than the tick interval, everything's copacetic.
-
+	{
 		boolean someSubcellChangedState = false;
-
-		if( ++nestingLevel == 0 )
-			readingPermitted.set(false);
 
 		activeEdges.clear();							/*(1)*/
 
@@ -276,21 +255,9 @@ public final class Neighborhood implements Cell
 					someSubcellChangedState = true;
 				}								 //{=transition.end}
 			}
-		
-		if( nestingLevel-- == 0 )
-			readingPermitted.set(true);
 
 		return someSubcellChangedState;
 	}
-	// The following variable is used only by the transition()
-	// method. Since Java doesn't support static local variables,
-	// I am forced to declare it in class scope, but I deliberately
-	// don't put it up at the top of the class defintion because
-	// it's not really an attribute of the class---it's just
-	// an implemenation detail of the immediately preceding
-	// method.
-	//
-	private static int nestingLevel = -1;
 
 
 	/** Modifies activeEdges to indicate whether the addition
@@ -327,13 +294,13 @@ public final class Neighborhood implements Cell
 	/** Redraw the current neighborhood only if necessary (something
 	 *  changed in the last transition).
 	 *
-	 *  @param g Draw onto this graphics.
+	 *  @param painter Draw using this painter.
 	 *  @param here Bounding rectangle for current Neighborhood.
 	 *  @param drawAll force a redraw, even if nothing has changed.
 	 *  @see #transition
 	 */
 
-	public void redraw(Graphics g, Rectangle here, boolean drawAll)
+	public void redraw(CellPainter painter, Rectangle here, boolean drawAll)
 	{	
 		// If the current neighborhood is stable (nothing changed
 		// in the last transition stage), then there's nothing
@@ -345,48 +312,22 @@ public final class Neighborhood implements Cell
 			
 		if( !amActive && !oneLastRefreshRequired && !drawAll )
 			return;
-		try
-		{
-			oneLastRefreshRequired = false;
-			int compoundWidth = here.width;
-			Rectangle subcell = new Rectangle(	here.x, here.y,
-											here.width  / gridSize,
-											here.height / gridSize );
 
-			// Check to see if we can paint. If not, just return. If
-			// so, actually wait for permission (in case there's
-			// a race condition, then paint.
+		oneLastRefreshRequired = false;
+		int compoundWidth = here.width;
+		Rectangle subcell = new Rectangle(	here.x, here.y,
+										here.width  / gridSize,
+										here.height / gridSize );
 
-			if( !readingPermitted.isTrue() )	//{=Neighborhood.reading.not.permitted}
-				return;
-
-			readingPermitted.waitForTrue();
-
-			for( int row = 0; row < gridSize; ++row )
-			{   for( int column = 0; column < gridSize; ++column )
-				{   grid[row][column].redraw( g, subcell, drawAll );	// {=Neighborhood.redraw3}
-				    subcell.translate( subcell.width, 0);
-				}
-				subcell.translate(-compoundWidth, subcell.height);
+		for( int row = 0; row < gridSize; ++row )
+		{   for( int column = 0; column < gridSize; ++column )
+			{   grid[row][column].redraw( painter, subcell, drawAll );	// {=Neighborhood.redraw3}
+			    subcell.translate( subcell.width, 0);
 			}
-
-			g = g.create();
-			g.setColor( Colors.LIGHT_ORANGE );
-			g.drawRect( here.x, here.y, here.width, here.height );
-
-			if( amActive )
-			{	g.setColor( Color.BLUE );
-				g.drawRect(	here.x+1,	  here.y+1,
-							here.width-2, here.height-2 );
-			}
-
-			g.dispose();
+			subcell.translate(-compoundWidth, subcell.height);
 		}
-		catch( InterruptedException e ) 
-		{	// thrown from waitForTrue. Just
-			// ignore it, since not printing is a
-			// reasonable reaction to an interrupt.
-		}
+
+		painter.paintBorder( here, amActive );
 	}
 
 	/** Return the edge cell in the indicated row and column.
@@ -403,6 +344,20 @@ public final class Neighborhood implements Cell
 	 *  upper-left corner of the surface.
 	 */
 	public void userClicked(Point here, Rectangle surface)
+	{	deliver( here, surface, (cell, position, subcell) -> cell.userClicked(position, subcell) );
+	}
+
+	// [수정] 2026-11-22: 셀 색 기능. 칠하기도 클릭과 같은 길(deliver)로 하위 셀을 찾아 전달하고 블록을 깨움.
+	// 그래서 색만 바뀐 셀(생사는 그대로)도 화면에 다시 그려짐
+	public void userBrushed(Point here, Rectangle surface, CellColor color){
+		deliver( here, surface, (cell, position, subcell) -> cell.userBrushed(position, subcell, color) );
+	}
+
+	private interface Delivery{
+		void to( Cell cell, Point position, Rectangle subcell );
+	}
+
+	private void deliver(Point here, Rectangle surface, Delivery delivery)
 	{
 		int pixelsPerCell = surface.width / gridSize ;
 		int row				= here.y     	/ pixelsPerCell ;
@@ -414,7 +369,7 @@ public final class Neighborhood implements Cell
 		Rectangle subcell = new Rectangle(	0, 0, pixelsPerCell,
 												  pixelsPerCell );
 
-		grid[row][column].userClicked(position, subcell); //{=Neighborhood.userClicked.call}
+		delivery.to( grid[row][column], position, subcell ); //{=Neighborhood.userClicked.call}
 		amActive = true;
 		rememberThatCellAtEdgeChangedState(row, column);
 	}
@@ -425,6 +380,31 @@ public final class Neighborhood implements Cell
 
 	public int widthInCells()
 	{	return gridSize * grid[0][0].widthInCells();
+	}
+
+	// [수정] 2026-11-16: Visitor가 블록 안의 모든 Cell을 방문하도록 넘겨 줌 (Composite이 트리를 돎).
+	// 자식이 블록이든 셀이든 똑같이 accept()를 부르므로, 바깥 블록 → 안쪽 블록 → 셀 순서로 재귀 방문됨
+
+	/** Visit this block: tell the visitor we are entering it, pass
+	 *  the visitor on to every cell inside it, then tell the visitor
+	 *  we are leaving it.
+	 */
+	public void accept( CellVisitor visitor )
+	{	visitor.enterNeighborhood( this );
+		for( int row = 0; row < gridSize; ++row )
+			for( int column = 0; column < gridSize; ++column )
+				grid[row][column].accept( visitor );
+		visitor.leaveNeighborhood( this );
+	}
+
+	// [수정] 2026-11-16: 통계(활성 블록 수)용 조회 메서드. amActive는 블록 건너뛰기가 쓰는 값으로,
+	// 마지막 세대 진행에서 블록 안의 셀이 바뀌었으면 true (셀 클릭이나 Load로 셀을 놓은 블록도 true)
+
+	/** Return true if a cell in this block changed state in the last
+	 *  generation (so the block was not skipped).
+	 */
+	public boolean isActive()
+	{	return amActive;
 	}
 
 	public void clear()
@@ -450,7 +430,9 @@ public final class Neighborhood implements Cell
 		for( int row = 0; row < gridSize; ++row )
 		{   for( int column = 0; column < gridSize; ++column )
 			{	if(grid[row][column].transfer(memento,upperLeft,load))
-					amActive = true;
+				{	amActive = true;
+					rememberThatCellAtEdgeChangedState(row, column);
+				}
 
 				Direction d =
 						grid[row][column].isDisruptiveTo();
@@ -471,6 +453,12 @@ public final class Neighborhood implements Cell
 		return m;
 	}
 
+	// [수정] 2026-11-10: 기존 .life 형식을 LifeFormatAdapter가 쓸 수 있도록 빈 Memento를 만드는 factory 추가.
+	// NeighborhoodState는 private으로 두고 Cell.Memento 인터페이스로만 내줌
+	static Cell.Memento createEmptyMemento()
+	{	return new NeighborhoodState();
+	}
+
 	/**
 	 * The NeighborhoodState stores the state of this neighborhood
 	 * and all its sub-neighborhoods. For the moment, I'm storing
@@ -481,34 +469,125 @@ public final class Neighborhood implements Cell
 	private static class NeighborhoodState implements Cell.Memento
 	{	Collection liveCells = new LinkedList();
 
+		// [수정] 2026-11-23: 산 셀의 색. 파일에는 liveCells 다음에 RGB 숫자로 씀(CellColor 클래스 이름이 파일에 들어가지 않게)
+		Map<Point, CellColor> colors = new HashMap<>();
+
 		public NeighborhoodState( InputStream in ) throws IOException
 												{ load(in); }
 		public NeighborhoodState( 			   ){			}
 
 		public void load( InputStream in ) throws IOException
 		{	try
-			{	ObjectInputStream source = new ObjectInputStream( in );
-				liveCells = (Collection)( source.readObject() );
+			{	CountingInputStream counted = new CountingInputStream( in );
+				ObjectInputStream source = new ObjectInputStream( counted );
+				Collection read = (Collection)( source.readObject() );
+
+				// [수정] 2026-11-10: Point가 아닌 원소가 든 파일은 오류 없이 읽혀 보드가 빈 채로 Load되었음.
+				// 원소를 모두 확인하고 통과해야 liveCells를 바꿈
+				for( Object cell : read )
+					if( !(cell instanceof Point) )
+						throw new IOException( "Not a Life file: expected Points" );
+
+				Map<Point, CellColor> readColors = readColors( source, counted );
+				liveCells = read;
+				colors = readColors;
 			}
-			catch(ClassNotFoundException e)
+			// [수정] 2026-11-10: Collection이 아닌 객체가 든 파일이면 캐스팅에서 ClassCastException이 나서
+			// Universe가 IOException만 잡는 탓에 오류 창 없이 실패했음. ClassCastException도 IOException으로 바꿔 던짐
+			catch( ClassNotFoundException | ClassCastException e )
 			{	// This exception shouldn't be rethrown as
 				// a ClassNotFoundException because the
 				// outside world shouldn't know (or care) that we're
-				// using serialization to load the object. Nothring
+				// using serialization to load the object. Nothing
 				// wrong with treating it as an I/O error, however.
 
-				throw new IOException(
-							"Internal Error: Class not found on load");
+				throw new IOException( "Not a Life file", e );
 			}
 		}
 
 		public void flush( OutputStream out ) throws IOException
 		{	ObjectOutputStream sink = new ObjectOutputStream(out);
 			sink.writeObject( liveCells );
+			sink.writeObject( toRgb( colors ) );
 		}
-	
-		public void markAsAlive(Point location)
-		{	liveCells.add( new Point( location ) );
+
+		// [수정] 2026-11-23: 예전 파일은 liveCells 뒤에 색이 없어서 EOF가 남. 그러면 색 없이(기본색) 읽음
+		private static Map<Point, CellColor> readColors( ObjectInputStream source, CountingInputStream counted ) throws IOException, ClassNotFoundException{
+			long start = counted.getCount();
+			Object read;
+			try{
+				read = source.readObject();
+			}
+			catch( EOFException e ){
+				// [수정] 2026-11-24: 색 표가 아예 없으면(한 바이트도 못 읽음) 예전 파일이라 기본색으로 읽고,
+				// 색 표를 읽다가 끊기면 깨진 파일이라 IOException을 던짐. 그대로 두면 색을 모두 잃은 채 Load되었음
+				if( counted.getCount() == start )
+					return new HashMap<>();
+				throw new IOException( "Not a Life file: cell colors are cut off", e );
+			}
+
+			if( !(read instanceof Map) )
+				throw new IOException( "Not a Life file: expected cell colors" );
+
+			Map<Point, CellColor> colors = new HashMap<>();
+			for( Map.Entry<?, ?> entry : ((Map<?, ?>) read).entrySet() ){
+				if( !(entry.getKey() instanceof Point) || !(entry.getValue() instanceof Integer) )
+					throw new IOException( "Not a Life file: expected cell colors" );
+				int rgb = (Integer) entry.getValue();
+				colors.put( (Point) entry.getKey(), new CellColor( (rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF ) );
+			}
+			return colors;
+		}
+
+		private static class CountingInputStream extends FilterInputStream{
+			private long count = 0;
+
+			CountingInputStream( InputStream in ){
+				super( in );
+			}
+
+			public long getCount(){
+				return count;
+			}
+
+			public int read() throws IOException{
+				int b = super.read();
+				if( b >= 0 )
+					++count;
+				return b;
+			}
+
+			public int read( byte[] b, int off, int len ) throws IOException{
+				int n = super.read( b, off, len );
+				if( n > 0 )
+					count += n;
+				return n;
+			}
+
+			public long skip( long n ) throws IOException{
+				long skipped = super.skip( n );
+				count += skipped;
+				return skipped;
+			}
+		}
+
+		private static Map<Point, Integer> toRgb( Map<Point, CellColor> colors ){
+			Map<Point, Integer> rgb = new HashMap<>();
+			for( Map.Entry<Point, CellColor> entry : colors.entrySet() ){
+				CellColor color = entry.getValue();
+				rgb.put( entry.getKey(), (color.red() << 16) | (color.green() << 8) | color.blue() );
+			}
+			return rgb;
+		}
+
+		// [수정] 2026-11-24: 원래의 1인자 markAsAlive는 이제 Cell.Memento의 default(기본색으로 적음)가 맡음
+		public void markAsAlive( Point location, CellColor color ){
+			liveCells.add( new Point( location ) );
+			colors.put( new Point( location ), color );
+		}
+
+		public CellColor colorAt( Point location ){
+			return colors.getOrDefault( location, CellColor.DEFAULT );
 		}
 
 		public boolean isAlive(Point location)

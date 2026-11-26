@@ -1,42 +1,38 @@
 package com.holub.life;
 
-import java.io.*;
-
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 
-import com.holub.io.Files;
-import com.holub.ui.MenuSite;
-
-import com.holub.life.Cell;
-import com.holub.life.Storable;
-import com.holub.life.Clock;
-import com.holub.life.Neighborhood;
-import com.holub.life.Resident;
+import com.holub.life.BoardView;
+import com.holub.life.LifeGame;
+import com.holub.life.mouse.MouseController;
+import com.holub.life.painter.SwingCellPainter;
 
 /**
- * The Universe is a mediator that sits between the Swing
- * event model and the Life classes. It is also a singleton,
- * accessed via Universe.instance(). It handles all
- * Swing events and translates them into requests to the
- * outermost Neighborhood. It also creates the Composite
- * Neighborhood.
+ * The Universe is the Swing view of the game. It does not create
+ * the game: the Board and the LifeGame are built in Life.main and
+ * passed in. It draws the
+ * Board and translates mouse events into cell positions for the
+ * MouseController. (The Grid menu and its file dialogs are
+ * Commands registered by GridMenu.) The game logic itself (building the Composite
+ * Neighborhood, advancing a generation, loading and storing)
+ * lives in the Board, and the order in which the Board and the
+ * Clock must be used lives in LifeGame. The Universe does not
+ * listen to the clock: LifeGame advances the game on every tick and
+ * tells the Universe when the board changed, so it can redraw.
  *
  * @include /etc/license.txt
  */
 
 public class Universe extends JPanel
-{	private 		final Cell  	outermostCell;
-	private static	final Universe 	theInstance = new Universe();
+{	// [수정] 2026-11-09: Board 대신 읽기 전용 BoardView로 받음. 보드를 바꾸는 요청은
+	// LifeGame을 거칠 수밖에 없도록 컴파일 단계에서 강제함
+	private 		final BoardView	board;	// read only: used just for drawing
 
-	/** The default height and width of a Neighborhood in cells.
-	 *  If it's too big, you'll run too slowly because
-	 *  you have to update the entire block as a unit, so there's more
-	 *  to do. If it's too small, you have too many blocks to check.
-	 *  I've found that 8 is a good compromise.
-	 */
-	private static final int  DEFAULT_GRID_SIZE = 8;
+	// [수정] 2026-11-17: Grid 메뉴와 Load/Store는 GridMenu의 Command로 옮기고, 클릭은 지금 마우스 모드
+	// (State 패턴)에 넘김. 화면은 픽셀을 셀 좌표로 바꾸고 다시 그리기만 함
+	private 		final MouseController mouse;
 
 	/** The size of the smallest "atomic" cell---a Resident object.
 	 *  This size is extrinsic to a Resident (It's passed into the
@@ -44,27 +40,23 @@ public class Universe extends JPanel
 	 */
 	private static final int  DEFAULT_CELL_SIZE = 8;
 
-	// The constructor is private so that the universe can be created
-	// only by an outer-class method [Neighborhood.createUniverse()].
+	// [수정] 2026-11-09: 싱글톤을 없애고 Board와 LifeGame을 생성자로 받음.
+	// 화면(View)이 모델을 직접 만들지 않고, 조립은 Life.main에서 함
 
-	private Universe()
-	{	// Create the nested Cells that comprise the "universe." A bug
-		// in the current implementation causes the program to fail
-		// miserably if the overall size of the grid is too big to fit
-		// on the screen.
-
-		outermostCell = new Neighborhood
-						(	DEFAULT_GRID_SIZE,
-							new Neighborhood
-							(	DEFAULT_GRID_SIZE,
-								new Resident()
-							)
-						);
+	/** Create the view of a game that is already assembled.
+	 *  @param board drawn directly by {@link #paint}. It is a
+	 *  			 read-only view, so the Universe cannot change it.
+	 *  @param game  tells the Universe when the board changed.
+	 *  @param mouse receives every click (in cells, not pixels).
+	 */
+	public Universe( BoardView board, LifeGame game, MouseController mouse )
+	{	this.board   = board;
+		this.mouse   = mouse;
 
 		final Dimension PREFERRED_SIZE =
 						new Dimension
-						(  outermostCell.widthInCells() * DEFAULT_CELL_SIZE,
-						   outermostCell.widthInCells() * DEFAULT_CELL_SIZE
+						(  board.widthInCells() * DEFAULT_CELL_SIZE,
+						   board.widthInCells() * DEFAULT_CELL_SIZE
 						);
 
 		addComponentListener
@@ -77,8 +69,8 @@ public class Universe extends JPanel
 					// total size must be an even multiple of 63.
 
 					Rectangle bounds = getBounds();
-					bounds.height /= outermostCell.widthInCells();
-					bounds.height *= outermostCell.widthInCells();
+					bounds.height /= board.widthInCells();
+					bounds.height *= board.widthInCells();
 					bounds.width  =  bounds.height;
 					setBounds( bounds );
 				}
@@ -94,121 +86,56 @@ public class Universe extends JPanel
 		addMouseListener					//{=Universe.mouse}
 		(	new MouseAdapter()
 			{	public void mousePressed(MouseEvent e)
-				{	Rectangle bounds = getBounds();
-					bounds.x = 0;
-					bounds.y = 0;
-					outermostCell.userClicked(e.getPoint(),bounds);
+				{	int row	   = e.getY() / pixelsPerCell();
+					int column = e.getX() / pixelsPerCell();
+					if( SwingUtilities.isRightMouseButton(e) )
+						mouse.rightClicked( row, column );
+					else
+						mouse.clicked( row, column );
 					repaint();
 				}
-			}
-		);
 
-		MenuSite.addLine( this, "Grid", "Clear",
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-				{	outermostCell.clear();
-					repaint();
+				public void mouseExited(MouseEvent e)
+				{	if( mouse.exited() )
+						repaint();
 				}
 			}
 		);
 
-		MenuSite.addLine			// {=Universe.load.setup}
-		(	this, "Grid", "Load",
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-				{	doLoad();
+		addMouseMotionListener
+		(	new MouseMotionAdapter()
+			{	public void mouseMoved(MouseEvent e)
+				{	if( mouse.moved( e.getY() / pixelsPerCell(), e.getX() / pixelsPerCell() ) )
+						repaint();
 				}
 			}
 		);
 
-		MenuSite.addLine
-		(	this, "Grid", "Store",
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-				{	doStore();
+		mouse.setModeListener( this::repaint );
+
+		// [수정] 2026-11-09: Clock을 직접 구독해 game.step()을 부르던 것을, LifeGame의 알림을 받도록 변경.
+		// 세대 진행은 LifeGame이 맡고, 화면은 "보드가 바뀌었다"는 알림에 다시 그리기만 함
+
+		game.addGameListener
+		(	new LifeGame.Listener()
+			{	public void boardChanged()
+				{	refreshNow();
 				}
-			}
-		);
-
-		MenuSite.addLine
-		(	this, "Grid", "Exit",
-			new ActionListener()
-			{	public void actionPerformed(ActionEvent e)
-		        {	System.exit(0);
-		        }
-			}
-		);
-
-		Clock.instance().addClockListener //{=Universe.clock.subscribe}
-		(	new Clock.Listener()
-			{	public void tick()
-				{	if( outermostCell.figureNextState
-						   ( Cell.DUMMY,Cell.DUMMY,Cell.DUMMY,Cell.DUMMY,
-							 Cell.DUMMY,Cell.DUMMY,Cell.DUMMY,Cell.DUMMY
-						   )
-					  )
-					{	if( outermostCell.transition() )
-							refreshNow();
-					}
+				public void boardEdited()
+				{	repaint();
 				}
 			}
 		);
 	}
 
-	/** Singleton Accessor. The Universe object itself is manufactured
-	 *  in Neighborhood.createUniverse()
-	 */
-
-	public static Universe instance()
-	{	return theInstance;
+	// Knowing the size of the panel is the view's job.
+	private int pixelsPerCell()
+	{	return Math.max( 1, getBounds().width / board.widthInCells() );
 	}
 
-	private void doLoad()
-	{	try
-		{
-			FileInputStream in = new FileInputStream(
-			   Files.userSelected(".",".life","Life File","Load"));
-
-			Clock.instance().stop();		// stop the game and
-			outermostCell.clear();			// clear the board.
-
-			Storable memento = outermostCell.createMemento();
-			memento.load( in );
-			outermostCell.transfer( memento, new Point(0,0), Cell.LOAD );
-
-			in.close();
-		}
-		catch( IOException theException )
-		{	JOptionPane.showMessageDialog( null, "Read Failed!",
-					"The Game of Life", JOptionPane.ERROR_MESSAGE);
-		}
-		repaint();
-	}
-
-	private void doStore()
-	{	try
-		{
-			FileOutputStream out = new FileOutputStream(
-				  Files.userSelected(".",".life","Life File","Write"));
-
-			Clock.instance().stop();		// stop the game
-
-			Storable memento = outermostCell.createMemento();
-			outermostCell.transfer( memento, new Point(0,0), Cell.STORE );
-			memento.flush(out);
-
-			out.close();
-		}
-		catch( IOException theException )
-		{	JOptionPane.showMessageDialog( null, "Write Failed!",
-					"The Game of Life", JOptionPane.ERROR_MESSAGE);
-		}
-	}
-
-	/** Override paint to ask the outermost Neighborhood
-	 *  (and any subcells) to draw themselves recursively.
+	/** Override paint to ask the Board to draw itself.
 	 *  All knowledge of screen size is also encapsulated.
-	 *  (The size is passed into the outermost <code>Cell</code>.)
+	 *  (The size is passed into the Board.)
 	 */
 
 	public void paint(Graphics g)
@@ -220,13 +147,16 @@ public class Universe extends JPanel
 		// corner of the screen. Pretend that it's at (0,0)
 		panelBounds.x = 0;
 		panelBounds.y = 0;
-		outermostCell.redraw(g, panelBounds, true);		//{=Universe.redraw1}
+		board.redraw(new SwingCellPainter(g), panelBounds, true);		//{=Universe.redraw1}
+		mouse.drawPreview( g, pixelsPerCell() );
 	}
 
-	/** Force a screen refresh by queing a request on
-	 *  the Swing event queue. This is an example of the
-	 *  Active Object pattern (not covered by the Gang of Four).
-	 *  This method is called on every clock tick. Note that
+	/** Force a screen refresh by queuing a request on
+	 *  the Swing event queue. This method is called on every
+	 *  clock tick, which already runs on the Swing event thread,
+	 *  so the request simply runs after the current tick has
+	 *  finished. (In the original code ticks came from another
+	 *  thread, and this queue was used as an Active Object.) Note that
 	 *  the redraw() method on a given <code>Cell</code>
 	 *  does nothing if the <code>Cell</code> doesn't
 	 *  have to be refreshed.
@@ -244,7 +174,8 @@ public class Universe extends JPanel
 						Rectangle panelBounds = getBounds();
 						panelBounds.x = 0;
 						panelBounds.y = 0;
-						outermostCell.redraw(g, panelBounds, false); //{=Universe.redraw2}
+						board.redraw(new SwingCellPainter(g), panelBounds, false); //{=Universe.redraw2}
+						mouse.drawPreview( g, pixelsPerCell() );
 					}
 					finally
 					{	g.dispose();
