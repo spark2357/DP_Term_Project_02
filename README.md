@@ -9,10 +9,10 @@
 Allen Holub의 HolubLife 1.02(Conway의 Game of Life, Java Swing)를<br />
 설계 패턴으로 리팩터링하고 기능을 확장했다.
 
-<img src="https://img.shields.io/badge/Java-17+-1A1A1A?style=flat&logo=openjdk&logoColor=F5EFE6" alt="Java 17+" />
-<img src="https://img.shields.io/badge/Swing-1A1A1A?style=flat&logoColor=F5EFE6" alt="Swing" />
-<img src="https://img.shields.io/badge/JUnit-5-1A1A1A?style=flat&logo=junit5&logoColor=F5EFE6" alt="JUnit 5" />
-<img src="https://img.shields.io/badge/tests-446_passed-1A1A1A?style=flat" alt="tests 446 passed" />
+<img src=".github/assets/badges/java.svg" alt="Java 17+" />
+<img src=".github/assets/badges/swing.svg" alt="Swing" />
+<img src=".github/assets/badges/junit.svg" alt="JUnit 5" />
+<img src=".github/assets/badges/tests.svg" alt="tests 446 passed" />
 
 **2026 중앙대학교 설계패턴** · 01분반 02조 · 김태우 · 박신빈 · 안재인
 
