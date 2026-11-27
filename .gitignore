@@ -35,3 +35,6 @@ desktop.ini
 
 # PDF files (assignment spec, lecture slides, exported documents)
 *.pdf
+
+# Lecture materials (course slides)
+/강의자료/

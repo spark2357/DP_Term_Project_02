@@ -1,7 +1,9 @@
 package com.holub.life.command;
 
 import com.holub.io.Files;
+import com.holub.life.ExtensionFilter;
 import java.io.File;
+import java.util.List;
 import java.util.Optional;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -11,8 +13,15 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  */
 public class SwingDialogs implements Dialogs {
     @Override
-    public Optional<File> chooseFile(String selectButtonText, FileNameExtensionFilter[] filters) {
-        return Files.userSelected(".", selectButtonText, filters);
+    public Optional<File> chooseFile(String selectButtonText, List<ExtensionFilter> filters) {
+        return Files.userSelected(".", selectButtonText, toSwing(filters));
+    }
+
+    // 모델의 ExtensionFilter를 JFileChooser가 쓰는 Swing 필터로 바꿈
+    private static FileNameExtensionFilter[] toSwing(List<ExtensionFilter> filters) {
+        return filters.stream()
+                .map(f -> new FileNameExtensionFilter(f.description(), f.extensions().toArray(new String[0])))
+                .toArray(FileNameExtensionFilter[]::new);
     }
 
     @Override
