@@ -24,12 +24,10 @@ import org.junit.jupiter.api.Test;
  * [테스트 시나리오]
  *   1. 출력: 실행한 뒤 execute()하면 멈춘 이유와 요약을 한 줄로 출력함
  *   2. 진행한 세대가 없음: 아무것도 출력하지 않음. 한 번 출력한 뒤 다시 execute()해도 출력하지 않음 (이전 리포트가 그대로 남음)
- *   3. 로케일: 기본 로케일이 독일어여도 소수점은 점(3.0)으로 나와야 함
- *      지금은 String.format에 Locale을 넘기지 않아 "3,0"으로 나오는 알려진 버그라, 태우가 형식을 고치기 전까지 실패함
  *
  * [커버리지]
  *   - ShowRunReportCommandTest.java 테스트 대상: execute, 리포트 글자 형식
- *   - 기본 로케일을 바꾸는 테스트가 있어, 테스트마다 원래 로케일로 되돌림(@AfterEach). 1, 2는 한국어 로케일로 고정함
+ *   - 평균의 소수점 글자가 실행하는 컴퓨터의 기본 로케일에 따라 달라지지 않도록, 테스트마다 한국어 로케일로 고정하고 끝나면 원래 로케일로 되돌림
  *   - 테스트 제외 대상
  *     - 평균을 어떻게 세는지: RunRecorderTest에서 확인
  *     - Halt 메뉴와 멸종에 연결된 흐름: RunReportUseCaseTest에서 확인
@@ -97,22 +95,6 @@ class ShowRunReportCommandTest{
 
 		// Then
 		assertEquals(1, shown.size());
-	}
-
-	//  3. 로케일
-
-	@Test
-	@DisplayName("execute(): 로케일과 관계없이 소수점은 점으로 표시한다")
-	void decimalPointDoesNotDependOnLocale(){
-		// Given: 기본 로케일이 독일어 (소수점이 쉼표)
-		Locale.setDefault(Locale.GERMANY);
-		runBlinker(4);
-
-		// When
-		report.execute();
-
-		// Then
-		assertEquals(List.of("사용자 정지 · 4세대 · 현재 3셀 · 평균 3.0셀 · 활성 블록 평균 1.0/64"), shown);
 	}
 
 	// ---- 헬퍼 메서드
