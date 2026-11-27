@@ -1,8 +1,8 @@
 package com.holub.life.support;
 
-import com.holub.life.Board;
-import com.holub.life.LifeFormatAdapter;
-import com.holub.life.PatternFormat;
+import com.holub.life.model.Board;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.model.PatternFormat;
 
 import java.awt.Point;
 import java.io.IOException;

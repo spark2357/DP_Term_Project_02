@@ -1,6 +1,6 @@
 package com.holub.life.support;
 
-import com.holub.life.TickSource;
+import com.holub.life.clock.TickSource;
 
 import java.util.ArrayList;
 import java.util.List;

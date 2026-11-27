@@ -1,6 +1,5 @@
 package com.holub.life.mouse;
 
-import com.holub.life.*;
 import com.holub.life.support.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,6 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
 
 /**
  * 원본 클릭 모드 테스트: ToggleMode를 MouseController에 넣고 마우스 입력을 보내 화면 없이 확인한다

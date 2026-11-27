@@ -1,6 +1,6 @@
 package com.holub.life.support;
 
-import com.holub.life.TickTimer;
+import com.holub.life.clock.TickTimer;
 
 /**
  * 실제 시간을 기다리지 않는 가짜 TickTimer (테스트 더블)

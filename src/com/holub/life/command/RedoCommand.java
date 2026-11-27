@@ -1,6 +1,6 @@
 package com.holub.life.command;
 
-import com.holub.life.LifeGame;
+import com.holub.life.game.LifeGame;
 
 /**
  * Edit → Redo: 실행 중이면 멈추고, Undo로 되돌린 변경을 다시 실행함

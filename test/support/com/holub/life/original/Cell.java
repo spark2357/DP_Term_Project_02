@@ -3,7 +3,6 @@ package com.holub.life.original;
 import java.awt.*;
 
 // [수정] 2026-11-27: 옮긴 패키지의 Storable을 쓰도록 import 경로만 바꿈
-import com.holub.life.original.Storable;
 
 /***
  * This interface is the basic unit that comprises a life board.

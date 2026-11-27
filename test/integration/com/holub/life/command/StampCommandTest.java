@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.mouse.*;
 import com.holub.life.support.*;
 
@@ -11,6 +10,11 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.model.CellPattern;
 
 /**
  * StampCommand 통합 테스트: E. 스탬프 모드 켜기. Grid → Stamp로 스탬프 모드를 켜고 끔

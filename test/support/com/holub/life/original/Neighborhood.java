@@ -9,16 +9,9 @@ import javax.swing.*;
 
 // [수정] 2026-11-27: 옮긴 패키지의 클래스를 쓰도록 com.holub.life 쪽 import 경로만 바꿈.
 // Files, MenuSite, Clock은 쓰지 않는 import라 지금 코드의 것을 그대로 가리키게 둠. Colors, ConditionVariable은 원본과 내용이 같은 지금 코드의 것을 씀
-import com.holub.io.Files;
-import com.holub.life.original.Cell;
-import com.holub.ui.MenuSite;
 import com.holub.ui.Colors;
 import com.holub.asynch.ConditionVariable;
 
-import com.holub.life.original.Cell;
-import com.holub.life.Clock;
-import com.holub.life.original.Direction;
-import com.holub.life.original.Storable;
 
 /***
  * A group of {@link Cell} objects. Cells are grouped into neighborhoods

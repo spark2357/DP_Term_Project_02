@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.support.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,6 +16,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
 
 /**
  * RLE 파일 Load 통합 테스트 (외부 파일 호환): Grid → Load로 다른 프로그램(LifeWiki, Golly 등)에서 받은 .rle 파일을 읽음

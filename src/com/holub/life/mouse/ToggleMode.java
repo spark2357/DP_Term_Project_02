@@ -1,6 +1,6 @@
 package com.holub.life.mouse;
 
-import com.holub.life.LifeGame;
+import com.holub.life.game.LifeGame;
 
 /**
  * 기본 모드: 클릭한 셀을 토글 (원본처럼 어느 버튼이든)

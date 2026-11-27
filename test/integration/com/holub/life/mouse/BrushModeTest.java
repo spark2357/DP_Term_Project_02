@@ -1,6 +1,5 @@
 package com.holub.life.mouse;
 
-import com.holub.life.*;
 import com.holub.life.support.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,6 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.BlendRule;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.model.CellPattern;
 
 /**
  * 기본 마우스 모드 테스트: 클릭이 펜 색으로 칠하는 것과 툴바(팔레트)가 하는 일을 화면 없이 MouseController와 BrushMode로 확인

@@ -1,8 +1,8 @@
 package com.holub.life.command;
 
-import com.holub.life.LifeGame;
-import com.holub.life.PatternFormats;
-import com.holub.life.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
 import com.holub.life.mouse.MouseController;
 import com.holub.life.mouse.Pen;
 import com.holub.ui.MenuSite;

@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.support.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
 
 /**
  * TickCommand 통합 테스트: Go → Tick (Single Step)

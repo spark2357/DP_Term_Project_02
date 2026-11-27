@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.mouse.*;
 import com.holub.life.support.*;
 
@@ -22,6 +21,10 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
 
 /**
  * StampCommand 통합 테스트: E. 스탬프 모드 켜기에서 고른 파일을 패턴으로 읽지 못하는 경로

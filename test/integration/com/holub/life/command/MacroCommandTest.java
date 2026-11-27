@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.support.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,6 +9,9 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.game.LifeGame;
+import com.holub.life.game.RunRecorder;
+import com.holub.life.model.Board;
 
 /**
  * MacroCommand 통합 테스트: 여러 Command를 묶어 순서대로 실행하는 Command (Command에 Composite 적용, E. 통계 리포트 표시)

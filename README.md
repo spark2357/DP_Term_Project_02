@@ -22,16 +22,20 @@ Allen Holub의 HolubLife 1.02(Conway의 Game of Life, Java Swing)를<br />
 
 ```
 src/com/holub/
-├── life/              게임 모델과 화면
+├── life/              Life (main, 조립)
+│   ├── model/         셀과 보드, 셀 색 규칙, 스냅샷과 Undo 기록
+│   ├── stats/         셀 통계 Visitor
+│   ├── format/        파일 형식 (.life, .rle)
+│   ├── clock/         시계와 타이머
+│   ├── game/          LifeGame Facade, 실행 기록
 │   ├── command/       메뉴 Command (Go, Grid, Edit)
 │   ├── mouse/         마우스 모드 (칠하기, 스탬프)
-│   ├── painter/       Swing 셀 그리기
-│   └── brush/         펜 색 툴바
+│   └── view/          Swing 화면 (보드 패널, 셀 그리기, 펜 색 툴바, 파일 창)
 └── ui, tools, io, asynch/   원본 라이브러리
 
 test/
-├── unit/              단위 테스트
-├── integration/       통합 테스트 (original/: 원본 결함 재현)
+├── unit/              단위 테스트 (src와 같은 패키지)
+├── integration/       통합 테스트 (contract/: 원본·Board 공통 Contract, usecase/: 유스케이스, original/: 원본 결함 재현)
 ├── support/           드라이버, 테스트 더블, 원본 코드 사본
 └── resources/         테스트용 패턴 파일
 ```

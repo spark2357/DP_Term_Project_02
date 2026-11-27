@@ -1,7 +1,7 @@
 package com.holub.life.mouse;
 
-import com.holub.life.CellPattern;
-import com.holub.life.LifeGame;
+import com.holub.life.model.CellPattern;
+import com.holub.life.game.LifeGame;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Point;

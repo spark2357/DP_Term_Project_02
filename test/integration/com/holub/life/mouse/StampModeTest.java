@@ -1,6 +1,5 @@
 package com.holub.life.mouse;
 
-import com.holub.life.*;
 import com.holub.life.command.*;
 import com.holub.life.support.*;
 
@@ -19,6 +18,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.model.CellPattern;
 
 /**
  * E. 패턴 찍기 유스케이스 통합 테스트: 스탬프 모드(StampMode)를 MouseController에 넣고 마우스 입력을 보내 화면 없이 확인

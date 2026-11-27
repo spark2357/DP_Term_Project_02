@@ -1,9 +1,9 @@
 package com.holub.life.support;
 
-import com.holub.life.Board;
-import com.holub.life.CellColor;
-import com.holub.life.CellPainter;
-import com.holub.life.CellState;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.model.CellPainter;
+import com.holub.life.model.CellState;
 
 import java.awt.Point;
 import java.awt.Rectangle;

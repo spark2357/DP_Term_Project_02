@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.mouse.*;
 import com.holub.life.support.*;
 
@@ -21,6 +20,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.Tag;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
 
 /**
  * Grid 메뉴 Command 테스트: 파일 창과 오류 창을 가짜 Dialogs로, 화면을 알림을 기록하는 가짜 리스너로 바꿔 GUI 없이 검증

@@ -1,8 +1,8 @@
 package com.holub.life.command;
 
-import com.holub.life.LifeGame;
-import com.holub.life.PatternFormat;
-import com.holub.life.PatternFormats;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.PatternFormat;
+import com.holub.life.format.PatternFormats;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

@@ -1,7 +1,7 @@
 package com.holub.life.command;
 
-import com.holub.life.RunRecorder;
-import com.holub.life.RunReport;
+import com.holub.life.game.RunRecorder;
+import com.holub.life.game.RunReport;
 import java.util.function.Consumer;
 
 /**

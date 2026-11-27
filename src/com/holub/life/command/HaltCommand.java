@@ -1,6 +1,6 @@
 package com.holub.life.command;
 
-import com.holub.life.LifeGame;
+import com.holub.life.game.LifeGame;
 
 /**
  * Go → Halt: 게임을 멈춤

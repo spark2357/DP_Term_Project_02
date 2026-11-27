@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.support.*;
 import com.holub.ui.MenuSite;
 
@@ -17,6 +16,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
 
 /**
  * Edit 메뉴 테스트: Undo, Redo Command와 메뉴 등록 (가짜 TickSource)

@@ -1,6 +1,6 @@
 package com.holub.life.command;
 
-import com.holub.life.LifeGame;
+import com.holub.life.game.LifeGame;
 
 /**
  * Go → Tick (Single Step): 게임을 시작하지 않고 한 세대만 진행

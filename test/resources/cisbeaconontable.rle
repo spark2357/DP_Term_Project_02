@@ -1,0 +1,5 @@
+#N cisbeaconontable.rle
+#C https://conwaylife.com/wiki/Cis-beacon_on_table
+#C https://www.conwaylife.com/patterns/cisbeaconontable.rle
+x = 4, y = 7, rule = B3/S23
+2b2o$3bo$o$2o2$4o$o2bo!

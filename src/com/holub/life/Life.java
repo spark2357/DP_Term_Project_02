@@ -6,7 +6,7 @@ import com.holub.ui.MenuSite;
 import com.holub.life.command.EditMenu;
 import com.holub.life.command.GoMenu;
 import com.holub.life.command.GridMenu;
-import com.holub.life.command.SwingDialogs;
+import com.holub.life.view.SwingDialogs;
 import com.holub.life.mouse.MouseController;
 import com.holub.life.mouse.BrushMode;
 import com.holub.life.command.Command;
@@ -15,7 +15,17 @@ import com.holub.life.command.MacroCommand;
 import com.holub.life.command.ShowRunReportCommand;
 import java.util.function.Consumer;
 import com.holub.life.mouse.Pen;
-import com.holub.life.brush.BrushToolBar;
+import com.holub.life.view.BrushToolBar;
+import com.holub.life.clock.Clock;
+import com.holub.life.clock.SwingTickTimer;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.game.RunRecorder;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.view.Universe;
 
 /*******************************************************************
  * An implemenation of Conway's Game of Life.

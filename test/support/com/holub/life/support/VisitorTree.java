@@ -1,11 +1,11 @@
 package com.holub.life.support;
 
-import com.holub.life.BirthColorRule;
-import com.holub.life.CellColor;
-import com.holub.life.CellState;
-import com.holub.life.CellVisitor;
-import com.holub.life.Neighborhood;
-import com.holub.life.Resident;
+import com.holub.life.model.BirthColorRule;
+import com.holub.life.model.CellColor;
+import com.holub.life.model.CellState;
+import com.holub.life.model.CellVisitor;
+import com.holub.life.model.Neighborhood;
+import com.holub.life.model.Resident;
 
 import java.awt.Point;
 import java.awt.Rectangle;

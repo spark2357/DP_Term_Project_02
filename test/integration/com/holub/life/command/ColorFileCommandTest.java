@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.mouse.*;
 import com.holub.life.support.*;
 
@@ -24,6 +23,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.model.CellPattern;
 
 /**
  * 셀 색과 파일 통합 테스트 (셀 색 기능의 펜 색 칠하기와 E. 패턴 찍기 + Grid → Store/Load): 펜 색으로 칠하고 찍은 보드를 Store/Load Command로 파일에 쓰고 읽음
