@@ -34,7 +34,7 @@ class StampCommandTest {
 	private final LifeGame game = new LifeGame(new Board(), new FakeTicker());
 	private final RleFormat rle = new RleFormat(LifeTestDriver.SIZE);
 	private final Pen pen = new Pen(CellColor.DEFAULT);
-	private final MouseController mouse = new MouseController(new ToggleMode(game, pen));
+	private final MouseController mouse = new MouseController(new BrushMode(game, pen));
 
 	@Test
 	@DisplayName("execute(): .rle 파일을 고르면 그 패턴으로 스탬프 모드를 켠다")
@@ -54,7 +54,7 @@ class StampCommandTest {
 
 	@Test
 	@DisplayName("execute(): 파일 창에서 취소하면 마우스 모드는 그대로다")
-	void cancelKeepsToggleMode() {
+	void cancelKeepsBrushMode() {
 		// Given
 		dialogs.nextFile = null;
 
@@ -62,7 +62,7 @@ class StampCommandTest {
 		new StampCommand(game, rle, mouse, pen, dialogs).execute();
 
 		// Then
-		assertInstanceOf(ToggleMode.class, mouse.mode());
+		assertInstanceOf(BrushMode.class, mouse.mode());
 		assertEquals(List.of(), dialogs.errors);
 	}
 
@@ -76,6 +76,6 @@ class StampCommandTest {
 		new StampCommand(game, rle, mouse, pen, dialogs).execute();
 
 		// Then
-		assertInstanceOf(ToggleMode.class, mouse.mode());
+		assertInstanceOf(BrushMode.class, mouse.mode());
 	}
 }

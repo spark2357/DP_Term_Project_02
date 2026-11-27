@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * MouseController 단위 테스트: 지금 마우스 모드를 들고 있다가 마우스 입력을 넘기는 곳 (State 패턴의 Context)
- * 진짜 모드(ToggleMode, StampMode) 대신 받은 입력을 기록하는 가짜 모드(FakeMode)를 넣어 확인함
+ * 진짜 모드(BrushMode, StampMode) 대신 받은 입력을 기록하는 가짜 모드(FakeMode)를 넣어 확인함
  *
  *   메서드
  *   - MouseController(기본 모드) : 처음 모드는 기본 모드
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
  * [커버리지]
  *   - MouseControllerTest.java 테스트 대상: 생성자, mode, setMode, resetMode, setModeListener, clicked, rightClicked, moved, exited, drawPreview
  *   - 테스트 제외 대상
- *     - 진짜 모드(칠하기, Stamp)와 함께 쓰는 것: 통합 테스트 ToggleModeTest에서 확인
+ *     - 진짜 모드(칠하기, Stamp)와 함께 쓰는 것: 통합 테스트 BrushModeTest에서 확인
  *     - 픽셀을 셀 좌표로 바꿔 넘기고 리스너로 다시 그리는 Universe의 마우스 처리 (GUI)
  *     - MouseMode의 default 메서드: 가짜 모드가 모두 직접 구현해서 이 테스트에서는 보지 않음
  */

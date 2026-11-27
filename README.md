@@ -12,7 +12,7 @@ Allen Holub의 HolubLife 1.02(Conway의 Game of Life, Java Swing)를<br />
 <img src="https://img.shields.io/badge/Java-17+-1A1A1A?style=flat&logo=openjdk&logoColor=F5EFE6" alt="Java 17+" />
 <img src="https://img.shields.io/badge/Swing-1A1A1A?style=flat&logoColor=F5EFE6" alt="Swing" />
 <img src="https://img.shields.io/badge/JUnit-5-1A1A1A?style=flat&logo=junit5&logoColor=F5EFE6" alt="JUnit 5" />
-<img src="https://img.shields.io/badge/tests-446_passed-1A1A1A?style=flat" alt="tests 446 passed" />
+<img src="https://img.shields.io/badge/tests-448_passed-1A1A1A?style=flat" alt="tests 448 passed" />
 
 **2026 중앙대학교 설계패턴** · 01분반 02조 · 김태우 · 박신빈 · 안재인
 
@@ -80,8 +80,8 @@ java -jar $JUNIT execute --class-path out/main:out/test --scan-class-path <옵�
 
 | 실행 | `<옵션>` | 결과 |
 |---|---|---|
-| 전체 | `--exclude-tag known-defect` | 446개 모두 통과 |
-| 기존 기능 | `--include-tag original` | 108개 모두 통과 |
+| 전체 | `--exclude-tag known-defect` | 448개 모두 통과 |
+| 기존 기능 | `--include-tag original` | 110개 모두 통과 |
 | 기능 확장 | `--include-tag extension` | 296개 모두 통과 |
 | 설계 개선 | `--include-tag improvement` | 42개 모두 통과 |
 | 원본 결함 | `--include-tag known-defect` | 13개 모두 실패 (원본 사본의 결함 재현, 정상) |
