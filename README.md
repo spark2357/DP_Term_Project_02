@@ -1,7 +1,22 @@
+<div align="center">
+
+<img src=".github/assets/glider-guns.gif" width="480" alt="파랑과 주황 Gosper glider gun 두 개가 서로를 향해 glider를 쏘고, 가운데서 만난 glider가 함께 사라지는 장면" />
+
 # DP_Term_Project_02
 
-2026 중앙대학교 설계패턴 01분반 02 그룹 Term Project.
-Allen Holub의 HolubLife 1.02(Conway의 Game of Life, Java Swing)를 설계 패턴으로 리팩터링하고 기능을 확장했다.
+*Refactoring Holub's Game of Life with design patterns.*
+
+Allen Holub의 HolubLife 1.02(Conway의 Game of Life, Java Swing)를<br />
+설계 패턴으로 리팩터링하고 기능을 확장했다.
+
+<img src="https://img.shields.io/badge/Java-17+-1A1A1A?style=flat&logo=openjdk&logoColor=F5EFE6" alt="Java 17+" />
+<img src="https://img.shields.io/badge/Swing-1A1A1A?style=flat&logoColor=F5EFE6" alt="Swing" />
+<img src="https://img.shields.io/badge/JUnit-5-1A1A1A?style=flat&logo=junit5&logoColor=F5EFE6" alt="JUnit 5" />
+<img src="https://img.shields.io/badge/tests-446_passed-1A1A1A?style=flat" alt="tests 446 passed" />
+
+**2026 중앙대학교 설계패턴** · 01분반 02조 · 김태우 · 박신빈 · 안재인
+
+</div>
 
 ## 폴더 구조
 
@@ -55,63 +70,21 @@ java -cp out/main com.holub.life.Life
 
 테스트는 JUnit 5로 작성했다. 실행하려면 JUnit 5가 설치되어 있어야 한다.
 
-`src`를 위처럼 `out/main`에 컴파일한 뒤 테스트를 컴파일한다.
+`src`를 위처럼 `out/main`에 컴파일한 뒤, 테스트를 컴파일하고 아래 표의 옵션을 붙여 실행한다.
 
 ```bash
 JUNIT=junit-platform-console-standalone-1.11.4.jar
 javac -encoding UTF-8 -cp out/main:$JUNIT -d out/test $(find test -name '*.java')
+java -jar $JUNIT execute --class-path out/main:out/test --scan-class-path <옵션>
 ```
 
-아래 명령은 모두 `java -jar $JUNIT execute --class-path out/main:out/test --scan-class-path` 뒤에 옵션을 붙여 실행한다.
-
-```bash
-RUN="java -jar $JUNIT execute --class-path out/main:out/test --scan-class-path"
-```
-
-전체 (원본 결함 테스트 제외):
-
-```bash
-$RUN --exclude-tag known-defect
-```
-
-기존 기능:
-
-```bash
-$RUN --include-tag original
-```
-
-기능 확장:
-
-```bash
-$RUN --include-tag extension
-```
-
-설계 개선:
-
-```bash
-$RUN --include-tag improvement
-```
-
-원본 결함 (원본 코드 사본에서 결함을 재현하므로 실패하는 것이 정상):
-
-```bash
-$RUN --include-tag known-defect
-```
-
-단위 테스트만 (`test/unit`과 `test/support`만 따로 컴파일해서 실행):
-
-```bash
-javac -encoding UTF-8 -cp out/main:$JUNIT -d out/unit $(find test/unit test/support -name '*.java')
-java -jar $JUNIT execute --class-path out/main:out/unit --scan-class-path
-```
-
-| 실행 | 결과 |
-|---|---|
-| 전체 (원본 결함 제외) | 446개 모두 통과 |
-| 기존 기능 (`original`) | 108개 모두 통과 |
-| 기능 확장 (`extension`) | 296개 모두 통과 |
-| 설계 개선 (`improvement`) | 42개 모두 통과 |
-| 원본 결함 (`known-defect`) | 13개 모두 실패 (원본 사본의 결함이 재현됨) |
-| 단위 테스트 | 194개 모두 통과 |
+| 실행 | `<옵션>` | 결과 |
+|---|---|---|
+| 전체 | `--exclude-tag known-defect` | 446개 모두 통과 |
+| 기존 기능 | `--include-tag original` | 108개 모두 통과 |
+| 기능 확장 | `--include-tag extension` | 296개 모두 통과 |
+| 설계 개선 | `--include-tag improvement` | 42개 모두 통과 |
+| 원본 결함 | `--include-tag known-defect` | 13개 모두 실패 (원본 사본의 결함 재현, 정상) |
+| 단위 테스트 | `test/unit`, `test/support`만 `out/unit`에 컴파일하고 `--class-path out/main:out/unit`으로 실행 | 194개 모두 통과 |
 
 테스트가 `test/resources/...`를 상대 경로로 열기 때문에 저장소 루트에서 실행해야 한다. Windows에서는 클래스패스 구분자 `:`를 `;`로 바꾼다.
