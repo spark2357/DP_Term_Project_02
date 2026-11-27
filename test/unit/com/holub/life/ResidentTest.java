@@ -59,6 +59,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *   9. 색 저장/불러오기: Load한 셀은 memento의 색, Store하면 산 셀의 색도 기록
  *  10. 그리기: redraw()는 Painter에게 색까지 든 지금 상태를 넘김
  *  11. 방문: accept()는 방문자에게 자기 자신을 셀로 알림
+ *  12. 그리기(생사): 산 셀은 산 상태로, 죽은 셀은 죽은 상태로 자기 영역을 그림 (CellRedrawTest에서 옮김)
  *
  * [커버리지]
  *   - ResidentTest.java 테스트 대상: figureNextState, transition(상태 변화와 반환값), isAlive, getColor, userClicked, userBrushed,
@@ -226,6 +227,41 @@ class ResidentTest {
 		Collection<Point> stored = storedPoints(memento);
 		assertEquals(1, stored.size());
 		assertTrue(stored.contains(new Point(3, 5)));
+	}
+
+	// [수정] 2026-11-27: CellRedrawTest에서 옮김. Resident 하나만 보는 단위 테스트라서 가짜 Painter(StateRecordingPainter)로 확인
+	@Test
+	@Tag("original")
+	@DisplayName("redraw(): 살아 있으면 산 상태로 자기 영역을 그린다")
+	void liveResidentIsPaintedAlive(){
+		// Given: 클릭으로 살린 셀
+		Resident cell = liveCell();
+		StateRecordingPainter painter = new StateRecordingPainter();
+		Rectangle here = new Rectangle(0, 0, 8, 8);
+
+		// When
+		cell.redraw(painter, here, false);
+
+		// Then: 자기 영역을 한 번, 산 상태로 그림
+		assertEquals(List.of(here), painter.areas);
+		assertTrue(painter.states.get(0).isAlive());
+	}
+
+	@Test
+	@Tag("original")
+	@DisplayName("redraw(): 죽어 있으면 죽은 상태로 자기 영역을 그린다")
+	void deadResidentIsPaintedDead(){
+		// Given
+		Resident cell = new Resident(RULE);
+		StateRecordingPainter painter = new StateRecordingPainter();
+		Rectangle here = new Rectangle(0, 0, 8, 8);
+
+		// When
+		cell.redraw(painter, here, false);
+
+		// Then: 자기 영역을 한 번, 죽은 상태로 그림
+		assertEquals(List.of(here), painter.areas);
+		assertFalse(painter.states.get(0).isAlive());
 	}
 
 	private static Resident liveCell() {

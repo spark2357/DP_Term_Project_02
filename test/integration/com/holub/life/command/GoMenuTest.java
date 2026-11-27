@@ -41,7 +41,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *     - MenuSite: Swing 메뉴 바라 메뉴 등록 결과로만 확인함. JFrame을 만들므로(화면에 띄우지는 않음) 화면이 없는 환경에서는 건너뜀
  *     - 실제 키 입력이 메뉴로 전달되는 것: Swing이 맡으므로 단축키가 붙었는지까지만 확인함
  *     - 속도별 실제 간격: 타이머(SwingTickTimer)의 일이라 넘긴 값만 확인함
- *     - 0 이하의 간격: SetSpeedCommandTest에서 확인
+ *     - 0 이하의 간격: 메뉴가 정해진 4개 속도로만 만들어 사용자가 넣을 수 없어 테스트하지 않음
  */
 class GoMenuTest {
 	private final FakeTicker ticker = new FakeTicker();

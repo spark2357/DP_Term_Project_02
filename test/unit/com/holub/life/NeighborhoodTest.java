@@ -60,7 +60,7 @@ import org.junit.jupiter.params.provider.CsvSource;
  *       통합 테스트 NeighborhoodResidentTest에서 확인
  *     - figureNextState, transition, edge의 세대 계산: 패턴과 경계별로 보드 전체가 필요해서 유닛 테스트에서 제외
  *     - transfer(LOAD)로 놓은 셀의 배치: Store/Load 순서 전체가 필요해서 유닛 테스트에서 제외
- *     - redraw(): CellRedrawTest에서 확인
+ *     - redraw(): 결과가 진짜 Resident의 그리기에 달려 있어서 통합 테스트 CellRedrawTest에서 확인
  *     - 칠한 셀의 색이 세대 진행에서 물려지는 것: 통합 테스트 CellColorBoardTest에서 확인
  *     - create(), widthInCells(), isAlive(): 한 줄짜리 고정 반환이라 생략
  */
