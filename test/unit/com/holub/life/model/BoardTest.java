@@ -335,7 +335,7 @@ class BoardTest {
 	private static class FixedRule implements BirthColorRule{
 		@Override
 		public CellState newborn(List<CellColor> parents){
-			return CellState.DEAD;
+			return Dead.INSTANCE;
 		}
 	}
 }

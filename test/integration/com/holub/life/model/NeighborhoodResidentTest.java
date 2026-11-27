@@ -37,7 +37,7 @@ class NeighborhoodResidentTest {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 512, 512);
 	private static final CellColor BLUE = new CellColor(0, 0, 255);
 	// [수정] 2026-11-27: 진짜 ClashRule 대신 가짜 출생 색 규칙. 부모 색과 상관없이 기본색(빨강)으로 태어남
-	private static final Supplier<BirthColorRule> RULE = () -> parents -> CellState.alive(CellColor.DEFAULT);
+	private static final Supplier<BirthColorRule> RULE = () -> parents -> new Alive(CellColor.DEFAULT);
 
 	//  칠하기
 

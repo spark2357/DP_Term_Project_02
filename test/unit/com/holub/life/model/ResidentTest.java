@@ -26,17 +26,17 @@ import org.junit.jupiter.params.provider.MethodSource;
  * 출생 색 규칙과 Memento, Painter, 방문자는 가짜를 씀. 이웃 셀은 같은 Resident이거나 보드 밖(Cell.DUMMY)
  *
  *   필드
- *   - state          : 지금 상태 (CellState: DEAD 또는 색이 있는 산 상태)
+ *   - state          : 지금 상태 (CellState: Dead.INSTANCE 또는 색이 있는 산 상태)
  *   - nextState      : 다음 세대 상태 (figureNextState()가 계산한 값, 보드 전체 계산 후 transition()에서 반영)
  *   - birthColorRule : 지금 출생 색 규칙을 알려 주는 출처 (Supplier<BirthColorRule>, Board가 들고 있는 규칙)
  *   메서드
- *   - figureNextState(이웃 8개) : B3/S23 규칙으로 nextState를 계산. 죽을 셀은 DEAD, 살아남는 셀은 지금 상태 그대로,
+ *   - figureNextState(이웃 8개) : B3/S23 규칙으로 nextState를 계산. 죽을 셀은 Dead.INSTANCE, 살아남는 셀은 지금 상태 그대로,
  *                                 태어나는 셀은 산 이웃(부모)의 색을 출생 색 규칙에 넘겨 받은 상태. 바뀔 셀이면 true
  *   - transition()              : state = nextState 로 적용. 상태가 바뀌었으면 true
  *   - isAlive(), getColor()     : 지금 상태의 생사와 색 (죽은 셀은 빈 Optional)
  *   - userClicked(점, 영역)     : 기본색(빨강)으로 칠하기와 같음 (좌표는 쓰지 않음)
  *   - userBrushed(점, 영역, 색) : 다음 상태는 지금 상태가 정함 (빈 칸 → 그 색으로 삶, 다른 색 → 색만 바뀜, 같은 색 → 죽음)
- *   - clear()                   : state, nextState 모두 DEAD
+ *   - clear()                   : state, nextState 모두 Dead.INSTANCE
  *   - isDisruptiveTo()          : 바뀔 셀이면 Direction.ALL, 아니면 Direction.NONE
  *   - transfer(memento, 좌표, LOAD/STORE) : memento의 색으로 살리거나(LOAD) 산 셀을 색과 함께 기록(STORE)
  *   - redraw(painter, 영역, drawAll) : Painter에게 색까지 든 지금 상태를 넘김
@@ -54,7 +54,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *   5. Clear: 계산해 둔 다음 상태까지 지워짐
  *   6. Store/Load: 산 셀만 기록되고, Load한 셀은 안정 상태로 들어감 (원본 동작)
  *   7. 칠하기와 클릭: 빈 칸, 다른 색, 같은 색에 칠한 결과. 다른 색 셀을 클릭하면 기본색(빨강)으로 바뀜
- *   8. 출생 색: 태어나는 셀은 산 이웃의 색을 규칙에 넘기고 규칙이 정한 색으로 태어남. 규칙이 DEAD면 태어나지 않음.
+ *   8. 출생 색: 태어나는 셀은 산 이웃의 색을 규칙에 넘기고 규칙이 정한 색으로 태어남. 규칙이 Dead.INSTANCE면 태어나지 않음.
  *      살아남는 셀은 규칙에 묻지 않음. 규칙은 출생마다 다시 읽고, 복제한 셀(create())도 같은 출처를 씀
  *   9. 색 저장/불러오기: Load한 셀은 memento의 색, Store하면 산 셀의 색도 기록
  *  10. 그리기: redraw()는 Painter에게 색까지 든 지금 상태를 넘김
@@ -69,7 +69,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 class ResidentTest {
 	// [수정] 2026-11-27: 진짜 ClashRule 대신 가짜 출생 색 규칙. 부모 색과 상관없이 기본색(빨강)으로 태어남
-	private static final Supplier<BirthColorRule> RULE = () -> parents -> CellState.alive(CellColor.DEFAULT);
+	private static final Supplier<BirthColorRule> RULE = () -> parents -> new Alive(CellColor.DEFAULT);
 
 	@Test
 	@Tag("original")
@@ -354,7 +354,7 @@ class ResidentTest {
 	@DisplayName("figureNextState(): 태어나는 셀은 산 이웃의 색을 규칙에 넘기고, 규칙이 정한 색으로 태어난다")
 	void newbornGetsParentsAndColorFromRule(){
 		// Given: 파랑, 파랑, 빨강 이웃과, 받은 부모를 기록하고 초록을 돌려주는 규칙
-		RecordingRule rule = new RecordingRule(CellState.alive(GREEN));
+		RecordingRule rule = new RecordingRule(new Alive(GREEN));
 		Resident cell = new Resident(() -> rule);
 		Cell[] around = coloredNeighbors(BLUE, BLUE, RED);
 
@@ -371,10 +371,10 @@ class ResidentTest {
 
 	@Test
 	@Tag("extension")
-	@DisplayName("figureNextState(): 규칙이 DEAD를 돌려주면 이웃이 3개여도 태어나지 않는다")
+	@DisplayName("figureNextState(): 규칙이 Dead.INSTANCE를 돌려주면 이웃이 3개여도 태어나지 않는다")
 	void ruleReturningDeadMeansNotBorn(){
 		// Given
-		RecordingRule rule = new RecordingRule(CellState.DEAD);
+		RecordingRule rule = new RecordingRule(Dead.INSTANCE);
 		Resident cell = new Resident(() -> rule);
 
 		// When
@@ -391,7 +391,7 @@ class ResidentTest {
 	@DisplayName("figureNextState(): 살아남는 셀은 규칙에 묻지 않고 자기 색을 그대로 가진다")
 	void survivorKeepsColorWithoutAskingRule(){
 		// Given: 파랑으로 산 셀과 빨강 이웃 3개 (살아남는 수)
-		RecordingRule rule = new RecordingRule(CellState.alive(GREEN));
+		RecordingRule rule = new RecordingRule(new Alive(GREEN));
 		Resident cell = new Resident(() -> rule);
 		brush(cell, BLUE);
 
@@ -409,7 +409,7 @@ class ResidentTest {
 	@DisplayName("figureNextState(): 규칙은 태어날 때마다 다시 읽으므로, 중간에 바꾼 규칙이 다음 출생부터 쓰인다")
 	void ruleIsReadAtEachBirth(){
 		// Given: 지금 규칙을 바꿀 수 있는 출처
-		RuleHolder holder = new RuleHolder(new RecordingRule(CellState.alive(GREEN)));
+		RuleHolder holder = new RuleHolder(new RecordingRule(new Alive(GREEN)));
 		Resident cell = new Resident(holder);
 		figureNextState(cell, coloredNeighbors(BLUE, BLUE, BLUE));
 		cell.transition();
@@ -417,7 +417,7 @@ class ResidentTest {
 		cell.clear();
 
 		// When: 규칙을 바꾼 뒤 다시 태어남
-		holder.rule = new RecordingRule(CellState.alive(YELLOW));
+		holder.rule = new RecordingRule(new Alive(YELLOW));
 		figureNextState(cell, coloredNeighbors(BLUE, BLUE, BLUE));
 		cell.transition();
 
@@ -430,12 +430,12 @@ class ResidentTest {
 	@DisplayName("create(): 복제한 셀도 같은 규칙 출처를 써서, 나중에 바꾼 규칙을 따른다")
 	void createdCellSharesRule(){
 		// Given
-		RuleHolder holder = new RuleHolder(new RecordingRule(CellState.alive(GREEN)));
+		RuleHolder holder = new RuleHolder(new RecordingRule(new Alive(GREEN)));
 		Resident original = new Resident(holder);
 		Resident copy = (Resident) original.create();
 
 		// When: 복제한 뒤 규칙을 바꾸고 복제본이 태어남
-		holder.rule = new RecordingRule(CellState.alive(YELLOW));
+		holder.rule = new RecordingRule(new Alive(YELLOW));
 		figureNextState(copy, coloredNeighbors(BLUE, BLUE, BLUE));
 		copy.transition();
 

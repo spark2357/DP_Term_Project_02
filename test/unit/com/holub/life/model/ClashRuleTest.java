@@ -16,10 +16,10 @@ import org.junit.jupiter.params.provider.MethodSource;
  * ClashRule 단위 테스트: 태어날 셀의 상태를 부모의 다수 색으로 정하는 출생 색 규칙 (BirthColorRule Strategy의 ConcreteStrategy)
  *
  *   메서드
- *   - newborn(부모 색들) : 다수 색이 있으면 그 색으로 삶, 셋 다 다르면 태어나지 않음(DEAD)
+ *   - newborn(부모 색들) : 다수 색이 있으면 그 색으로 삶, 셋 다 다르면 태어나지 않음(Dead.INSTANCE)
  *
  * [테스트 시나리오]
- *   1. Clash: 3:0, 2:1(다수 색이 어느 자리에 있든)이면 다수 색, 1:1:1이면 DEAD. 부모가 3명이 아니어도 가장 많은 색이 하나면 그 색, 동점이면 DEAD
+ *   1. Clash: 3:0, 2:1(다수 색이 어느 자리에 있든)이면 다수 색, 1:1:1이면 Dead.INSTANCE. 부모가 3명이 아니어도 가장 많은 색이 하나면 그 색, 동점이면 Dead.INSTANCE
  *
  * [커버리지]
  *   - ClashRuleTest.java 테스트 대상: ClashRule.newborn
@@ -49,16 +49,16 @@ class ClashRuleTest{
 	}
 
 	@Test
-	@DisplayName("ClashRule.newborn(): 셋 다 다르면 태어나지 않는다 (DEAD)")
+	@DisplayName("ClashRule.newborn(): 셋 다 다르면 태어나지 않는다 (Dead.INSTANCE)")
 	void clashCancelsThreeColors() {
-		assertSame(CellState.DEAD, CLASH.newborn(List.of(BLUE, GREEN, YELLOW)));
+		assertSame(Dead.INSTANCE, CLASH.newborn(List.of(BLUE, GREEN, YELLOW)));
 	}
 
 	@Test
 	@DisplayName("ClashRule.newborn(): 부모가 3명이 아니어도 가장 많은 색이 하나면 그 색, 동점이면 태어나지 않는다")
 	void clashWorksForAnyNumberOfParents() {
 		assertEquals(Optional.of(BLUE), CLASH.newborn(List.of(BLUE, BLUE, BLUE, BLUE, RED, GREEN)).getColor());
-		assertSame(CellState.DEAD, CLASH.newborn(List.of(BLUE, BLUE, BLUE, RED, RED, RED)));
+		assertSame(Dead.INSTANCE, CLASH.newborn(List.of(BLUE, BLUE, BLUE, RED, RED, RED)));
 	}
 
 	@ParameterizedTest(name = "{0}")

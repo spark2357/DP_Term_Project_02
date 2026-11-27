@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Tag;
 class CellRedrawTest {
 	private static final Rectangle SCREEN = new Rectangle(0, 0, 40, 40);
 	// [수정] 2026-11-27: 진짜 ClashRule 대신 가짜 출생 색 규칙. 이 테스트에서는 아무도 태어나지 않으므로 쓰이지 않음
-	private static final Supplier<BirthColorRule> RULE = () -> parents -> CellState.alive(CellColor.DEFAULT);
+	private static final Supplier<BirthColorRule> RULE = () -> parents -> new Alive(CellColor.DEFAULT);
 
 	private static Call cell(int x, int y, int size, boolean alive) {
 		return new Call("cell", new Rectangle(x, y, size, size), alive);
