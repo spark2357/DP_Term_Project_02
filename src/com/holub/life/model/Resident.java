@@ -18,8 +18,8 @@ public final class Resident implements Cell
 {
 	// [수정] 2026-11-22: 셀 색 기능. amAlive → state, willBeAlive → nextState (State 패턴의 Context).
 	// 살았나와 색이 한 객체에 있어 어긋날 수 없음. 생사 규칙(B3/S23)은 그대로
-	private CellState state		= CellState.DEAD;
-	private CellState nextState	= CellState.DEAD;
+	private CellState state		= Dead.INSTANCE;
+	private CellState nextState	= Dead.INSTANCE;
 
 	// [수정] 2026-11-22: 출생 색 규칙(Strategy)은 Board가 들고 있는 지금 규칙을 물어봄. create()가 같은 출처를 넘겨 줌
 	private final Supplier<BirthColorRule> birthColorRule;
@@ -63,10 +63,10 @@ public final class Resident implements Cell
 
 		boolean willBeAlive = (neighbors==3 || (state.isAlive() && neighbors==2));
 
-		// [수정] 2026-11-22: 죽을 셀은 DEAD, 살아남는 셀은 지금 상태(색) 그대로,
-		// 태어나는 셀의 상태는 산 이웃(부모) 셋의 색을 보고 규칙(BirthColorRule)이 정함. 규칙이 DEAD를 주면 태어나지 않음
+		// [수정] 2026-11-22: 죽을 셀은 Dead.INSTANCE, 살아남는 셀은 지금 상태(색) 그대로,
+		// 태어나는 셀의 상태는 산 이웃(부모) 셋의 색을 보고 규칙(BirthColorRule)이 정함. 규칙이 Dead.INSTANCE를 주면 태어나지 않음
 		if( !willBeAlive )
-			nextState = CellState.DEAD;
+			nextState = Dead.INSTANCE;
 		else if( state.isAlive() )
 			nextState = state;
 		else
@@ -122,7 +122,7 @@ public final class Resident implements Cell
 
 	public Optional<CellColor> getColor()	{return state.getColor();		}
 
-	public void	   clear()			{state = nextState = CellState.DEAD;	}
+	public void	   clear()			{state = nextState = Dead.INSTANCE;	}
 	public boolean isAlive()		{return state.isAlive();		}
 	public Cell    create()			{return new Resident( birthColorRule );	}
 	public int 	   widthInCells()	{return 1;}
@@ -142,8 +142,8 @@ public final class Resident implements Cell
 		if( doLoad )
 		{	// [수정] 2026-11-23: Load한 셀은 Memento에 저장된 색. 색이 없는 파일이면 기본색
 			state = nextState = memento.isAlive(upperLeft)
-								? CellState.alive( memento.colorAt(upperLeft) )
-								: CellState.DEAD;
+								? new Alive( memento.colorAt(upperLeft) )
+								: Dead.INSTANCE;
 			if( state.isAlive() )
 				return true;
 		}

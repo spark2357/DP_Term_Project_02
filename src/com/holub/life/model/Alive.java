@@ -19,8 +19,8 @@ final class Alive implements CellState{
 	// 다른 색이면 죽이지 않고 그 색으로 바꿈
 	public CellState brushedWith( CellColor newColor ){
 		if( newColor.equals( color ) )
-			return CellState.DEAD;
-		return CellState.alive( newColor );
+			return Dead.INSTANCE;
+		return new Alive( newColor );
 	}
 
 	public String toString()	{ return "Alive(" + color + ")"; }

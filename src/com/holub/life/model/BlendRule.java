@@ -6,7 +6,7 @@ import java.util.List;
 // [수정] 2026-11-23: 부모 수를 3으로 고정하지 않음
 public final class BlendRule implements BirthColorRule{
 	public CellState newborn( List<CellColor> parents ){
-		return CellState.alive( average( parents ) );
+		return new Alive( average( parents ) );
 	}
 
 	private static CellColor average( List<CellColor> parents ){

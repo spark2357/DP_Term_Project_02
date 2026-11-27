@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// [수정] 2026-11-22: 셀 색 기능. 부모의 다수 색으로 태어남. 셋 다 다르면 태어나지 않음(DEAD)
+// [수정] 2026-11-22: 셀 색 기능. 부모의 다수 색으로 태어남. 셋 다 다르면 태어나지 않음(Dead.INSTANCE)
 // [수정] 2026-11-23: 부모가 몇 명이든 가장 많은 색이 하나뿐이면 그 색, 동점이면 태어나지 않음
 public final class ClashRule implements BirthColorRule{
 	public CellState newborn( List<CellColor> parents ){
 		return majority( parents )
-					.map( CellState::alive )
-					.orElse( CellState.DEAD );
+					.<CellState>map( Alive::new )
+					.orElse( Dead.INSTANCE );
 	}
 
 	private static Optional<CellColor> majority( List<CellColor> parents ){
