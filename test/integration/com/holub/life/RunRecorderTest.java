@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test;
  *   - RunRecorderTest.java 테스트 대상: boardChanged, boardEdited, finishRun, whenExtinct
  *   - 테스트 제외 대상
  *     - 리포트 글자와 멈추기: ShowRunReportCommandTest, RunReportUseCaseTest에서 확인
- *     - 빈 보드에서 시작했을 때, Undo로 되돌린 세대를 셀지: 팀에서 동작을 정하는 중이라 제외
+ *     - 빈 보드에서 시작했을 때 멸종 동작을 실행하지 않는지(의도한 동작): RunReportUseCaseTest에서 확인
  */
 @Tag("extension")
 class RunRecorderTest{

@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
  *   - 테스트 제외 대상
  *     - 찍기, 회전: StampModeTest, GridCommandTest에서 확인
  *     - 깨진 패턴 파일: StampCommandFailureTest에서 확인
- *     - 켤 때 실행 중인 게임을 멈추는지: 팀에서 동작을 정하는 중이라 제외
+ *     - 스탬프 모드를 켜도 게임은 멈추지 않음(의도한 동작), 따로 테스트하지 않음
  */
 @Tag("extension")
 class StampCommandTest {
