@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
  *   - 테스트 제외 대상
  *     - BrushToolBar의 펜 버튼, 팔레트 팝업, 바깥 클릭으로 닫기 (GUI)
  *     - 바꾼 규칙으로 태어나는 셀의 색, 멈춘 패턴을 다시 계산하는지: CellColorBoardTest에서 확인
- *     - 규칙 변경이 Undo 기록에 남지 않는지: 아직 테스트 없음
+ *     - 규칙 변경이 Undo 기록에 남지 않음(의도한 동작), 따로 테스트하지 않음
  */
 @Tag("extension")
 class BirthColorRuleUseCaseTest{

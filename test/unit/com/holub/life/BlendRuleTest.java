@@ -27,6 +27,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *   - 테스트 제외 대상
  *     - 다수결 규칙: ClashRuleTest에서 확인
  *     - 보드 위에서 규칙을 바꿔 끼우는 동작: CellColorBoardTest에서 확인
+ *     - 부모가 없는 경우: 게임에서 생기지 않음(셀은 산 이웃 3개일 때만 태어남)
  */
 @Tag("extension")
 class BlendRuleTest{

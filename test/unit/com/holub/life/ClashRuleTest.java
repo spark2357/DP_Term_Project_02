@@ -26,6 +26,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *   - 테스트 제외 대상
  *     - 평균 규칙: BlendRuleTest에서 확인
  *     - 보드 위에서 규칙을 바꿔 끼우는 동작: CellColorBoardTest에서 확인
+ *     - 부모가 없는 경우: 게임에서 생기지 않음(셀은 산 이웃 3개일 때만 태어남)
  */
 @Tag("extension")
 class ClashRuleTest{
@@ -62,7 +63,7 @@ class ClashRuleTest{
 
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("clashEdgeCases")
-	@DisplayName("ClashRule.newborn(): 부모가 0~2명이어도 가장 많은 색이 하나면 그 색, 없거나 동점이면 태어나지 않는다")
+	@DisplayName("ClashRule.newborn(): 부모가 1~2명이어도 가장 많은 색이 하나면 그 색, 동점이면 태어나지 않는다")
 	void clashEdgeParentCounts(String name, List<CellColor> parents, Optional<CellColor> expected){
 		// When
 		CellState newborn = CLASH.newborn(parents);
@@ -74,7 +75,6 @@ class ClashRuleTest{
 
 	private static Stream<Arguments> clashEdgeCases(){
 		return Stream.of(
-				Arguments.of("부모 없음", List.of(), Optional.empty()),
 				Arguments.of("부모 1명", List.of(BLUE), Optional.of(BLUE)),
 				Arguments.of("같은 색 2명", List.of(BLUE, BLUE), Optional.of(BLUE)),
 				Arguments.of("다른 색 2명(동점)", List.of(BLUE, RED), Optional.empty()));

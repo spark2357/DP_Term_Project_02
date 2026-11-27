@@ -18,6 +18,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * E. 통계 리포트 표시, E. 멸종 시 자동 정지 유스케이스 통합 테스트: Life.main과 같은 방법으로 조립한 게임을 실행하고 멈춤
@@ -31,19 +34,20 @@ import org.junit.jupiter.api.Test;
  *   1. 통계 리포트 표시: 실행 중에 Go → Halt 메뉴 항목을 누르면 게임이 멈추고 상태 표시줄에 "사용자 정지" 리포트가 나옴
  *      (11-24 merge에서 GoMenu가 넘겨받은 Halt 대신 HaltCommand만 등록해 리포트가 나오지 않던 문제의 회귀 테스트)
  *      Tick(한 세대 실행)으로만 진행한 뒤 Halt해도 그 세대들의 리포트가 나옴
+ *      실행 중에 Undo, Load, Store로 게임이 멈출 때는 리포트가 나오지 않음 (리포트는 Halt와 멸종 때만)
  *   2. 멸종 시 자동 정지: 실행 중 마지막 셀이 죽는 세대에 게임이 멈추고 상태 표시줄에 "멸종으로 정지" 리포트가 나옴
  *      Tick으로 마지막 셀이 죽어도 멈춘 채로 "멸종으로 정지" 리포트가 나옴
+ *      처음부터 빈 보드로 실행하면 멸종으로 멈추지 않고 계속 실행되며 리포트도 나오지 않음
  *   3. 조합 (실행 중 편집): Clear, Stamp, Load는 세대로 세지 않고 리포트의 현재 셀 수에만 반영됨
- *      Load는 게임을 멈추므로, 자동 실행이 아니라 Tick으로 진행하던 중에 Load함 (Load로 멈출 때의 리포트는 정하는 중이라)
+ *      Load는 게임을 멈추므로, 자동 실행이 아니라 Tick으로 진행하던 중에 Load함 (Load로 멈출 때는 리포트가 나오지 않음, 1에서 확인)
  *
  * [커버리지]
  *   - RunReportUseCaseTest.java 테스트 대상: GoMenu(Halt에 넘긴 Command), MacroCommand, HaltCommand, ShowRunReportCommand, RunRecorder를 함께 쓰는 흐름,
- *     그 흐름 안에서 TickCommand, ClearCommand, LoadCommand, StampMode
+ *     그 흐름 안에서 TickCommand, ClearCommand, LoadCommand, StoreCommand, UndoCommand, StampMode
  *   - 1의 Halt 메뉴 항목 테스트는 MenuSite가 필요해 JFrame을 만들므로(화면에 띄우지는 않음) 화면이 없는 환경에서는 건너뜀
  *   - 리포트 글자는 앞부분(이유, 세대 수, 현재 셀)만 확인함. 소수점이 들어간 뒷부분은 ShowRunReportCommandTest에서 확인
  *   - 테스트 제외 대상
  *     - Life.main 자체와 상태 표시줄이 창 아래(SOUTH)에 붙는지: 창을 띄워야 해서 제외. 조립은 테스트에서 Life.main과 같게 따라 함
- *     - 빈 보드에서 시작했을 때, Undo·Load·Store로 멈췄을 때: 팀에서 동작을 정하는 중이라 제외
  */
 @Tag("extension")
 class RunReportUseCaseTest{
@@ -52,6 +56,10 @@ class RunReportUseCaseTest{
 	private final FakeTicker ticker = new FakeTicker();
 	private final LifeGame game = new LifeGame(new Board(), ticker);
 	private final JLabel statusBar = new JLabel("시작 글자");
+	private final PatternFormats formats = new PatternFormats(
+			List.of(new LifeFormatAdapter(LifeTestDriver.SIZE), new RleFormat(LifeTestDriver.SIZE)));
+	@TempDir
+	File folder;
 	private Command haltAndReport;
 	private GoMenu menu;
 
@@ -114,6 +122,25 @@ class RunReportUseCaseTest{
 		assertTrue(statusBar.getText().startsWith("사용자 정지 · 3세대 · 현재 3셀 · "), statusBar.getText());
 	}
 
+	@ParameterizedTest(name = "{0}")
+	@ValueSource(strings = {"Undo", "Load", "Store"})
+	@DisplayName("execute(): 실행 중에 Undo, Load, Store로 게임이 멈추면 리포트는 나오지 않는다")
+	void stopByUndoLoadOrStoreShowsNoReport(String commandName){
+		// Given: blinker를 실행 중 2세대 진행
+		place(BLINKER);
+		game.start(70);
+		ticker.tick();
+		ticker.tick();
+		Command stop = stopCommandNamed(commandName);
+
+		// When
+		stop.execute();
+
+		// Then: 게임은 멈췄지만 상태 표시줄은 처음 글자 그대로
+		assertFalse(ticker.running);
+		assertEquals("시작 글자", statusBar.getText());
+	}
+
 	//  2. 멸종 시 자동 정지
 
 	@Test
@@ -147,6 +174,23 @@ class RunReportUseCaseTest{
 		// Then
 		assertFalse(ticker.running);
 		assertTrue(statusBar.getText().startsWith("멸종으로 정지 · 1세대 · 현재 0셀 · "), statusBar.getText());
+	}
+
+	@Test
+	@DisplayName("whenExtinct(): 처음부터 빈 보드로 실행하면 멸종으로 멈추지 않고 계속 실행되며 리포트도 나오지 않는다")
+	void emptyBoardKeepsRunningWithoutReport(){
+		// Given: 셀이 하나도 없는 보드로 실행
+		game.start(70);
+
+		// When
+		ticker.tick();
+		ticker.tick();
+		ticker.tick();
+
+		// Then
+		// [수정] 2026-11-27: 빈 보드는 세대가 지나도 바뀌지 않아 boardChanged 알림이 없으므로 멸종 동작이 실행되지 않음 (의도한 동작)
+		assertTrue(ticker.running);
+		assertEquals("시작 글자", statusBar.getText());
 	}
 
 	//  3. 조합 (실행 중 편집)
@@ -215,6 +259,20 @@ class RunReportUseCaseTest{
 		for (int i = 0; i < times; i++){
 			new TickCommand(game).execute();
 		}
+	}
+
+	// 게임을 멈추는 Edit → Undo, Grid → Load, Grid → Store Command. Load는 glider.rle를 읽고, Store는 임시 폴더에 씀
+	private Command stopCommandNamed(String name){
+		FakeDialogs dialogs = new FakeDialogs();
+		if (name.equals("Undo")){
+			return new UndoCommand(game);
+		}
+		if (name.equals("Load")){
+			dialogs.nextFile = new File("test/resources/glider.rle");
+			return new LoadCommand(game, formats, dialogs);
+		}
+		dialogs.nextFile = new File(folder, "board.rle");
+		return new StoreCommand(game, formats, dialogs);
 	}
 
 	// 클릭처럼 LifeGame으로 토글 (산 셀이면 지움)

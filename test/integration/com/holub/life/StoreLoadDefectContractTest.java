@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
  *   - StoreLoadDefectContractTest.java 테스트 대상: 원본 Store/Load 경로의 결함 네 가지 (중복 저장, Load 실패 때 보드 지움, 가장자리 Load, 내용 검증 없음)
  *   - 테스트 제외 대상
  *     - 파일 선택 취소 때 오류 창이 뜨는 결함: 원본은 파일 대화상자가 Universe에 묶여 있어 제외. 현재 코드는 LoadCommandTest, StoreCommandTest에서 확인
- *     - 보드 밖 좌표가 든 .life 파일: 결함인지 팀 결정을 기다리는 중이라 제외 (StoreLoadOriginalBehaviorTest)
+ *     - 보드 밖 좌표가 든 .life 파일: UC3 경우가 아니고 지금 코드도 무시해서 테스트하지 않음
  *     - 잘못된 .life 내용을 Memento 하나로 읽을 때: 현재 코드는 NeighborhoodStateTest에서 확인
  *   - 1번은 지금의 Java 직렬화 형식(Point 목록)을 가정함. 저장 형식을 바꾸면 확인 방법도 바꿔야 함
  *   - 같은 패턴을 클릭으로 놓으면 정상으로 진동한다는 대조군은 TickContractTest의 블록 경계 테스트가 맡음
