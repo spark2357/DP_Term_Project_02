@@ -12,21 +12,23 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
 /**
- * Resident와 Neighborhood가 CellPainter에게 "무엇을" 그릴지 제대로 넘기는지 화면 없이 확인함 (이슈 #6)
+ * Neighborhood.redraw() 통합 테스트: 진짜 Resident를 담은 블록이 CellPainter에게 "무엇을" 그릴지 제대로 넘기는지 화면 없이 확인함 (이슈 #6)
  * 호출을 순서대로 기록하는 가짜 Painter를 redraw()에 넘기고, 기록된 호출을 비교함. 출생 색 규칙도 가짜(RULE)
+ * 통합 테스트에 둔 이유: 그린 결과(어느 셀을 alive로 그리는지)가 Neighborhood만이 아니라 안에 넣은 진짜 Resident의 상태와 redraw()에 달려 있음
+ * 설계 개선 ③ 구조 변경 후 동작 확인으로 분류: Graphics 대신 CellPainter로 그리게 바뀐 구조에서 그리기 동작이 맞는지 확인함
+ * [수정] 2026-11-27: Resident.redraw() 테스트 2개는 단위 테스트 ResidentTest로 옮기고, Neighborhood.redraw() 테스트만 남겨 test/unit에서 test/integration으로 옮김
  *
  * [테스트 시나리오]
- *   1. 셀: 산 셀은 alive=true, 죽은 셀은 alive=false로 자기 영역을 그림
- *   2. 블록: 산 셀만 alive=true로 그리고, 셀을 다 그린 뒤 활성 테두리를 그림
- *   3. 활성 블록: drawAll=false여도 active=true 테두리까지 그림
- *   4. 비활성 블록: drawAll=true면 active=false 테두리를 그리고, drawAll=false면 아무것도 그리지 않음
- *   5. 중첩 블록: drawAll=false일 때 바뀐 안쪽 블록만 그림
+ *   1. 블록: 산 셀만 alive=true로 그리고, 셀을 다 그린 뒤 활성 테두리를 그림
+ *   2. 활성 블록: drawAll=false여도 active=true 테두리까지 그림
+ *   3. 비활성 블록: drawAll=true면 active=false 테두리를 그리고, drawAll=false면 아무것도 그리지 않음
+ *   4. 중첩 블록: drawAll=false일 때 바뀐 안쪽 블록만 그림
  *
  * [커버리지]
- *   - CellRedrawTest.java 테스트 대상: Resident.redraw, Neighborhood.redraw
+ *   - CellRedrawTest.java 테스트 대상: Neighborhood.redraw (진짜 Resident와 함께)
  *   - 테스트 제외 대상
  *     - SwingCellPainter: Swing 화면이라 제외 (색이나 도형을 실제로 그리는 일)
- *     - 색까지 든 상태를 넘기는 paintCell(영역, 상태): ResidentTest에서 확인
+ *     - 셀 하나의 그리기 Resident.redraw(생사와 색): 단위 테스트 ResidentTest에서 확인
  */
 @Tag("improvement")
 class CellRedrawTest {
@@ -40,35 +42,6 @@ class CellRedrawTest {
 
 	private static Call border(int x, int y, int size, boolean active) {
 		return new Call("border", new Rectangle(x, y, size, size), active);
-	}
-
-	@Test
-	@DisplayName("Resident.redraw(): 살아 있으면 alive=true로 자기 영역을 그린다")
-	void liveResidentIsPaintedAlive() {
-		// Given: 클릭으로 살린 셀
-		Resident resident = new Resident(RULE);
-		resident.userClicked(new Point(0, 0), SCREEN);
-		RecordingPainter painter = new RecordingPainter();
-
-		// When
-		resident.redraw(painter, SCREEN, false);
-
-		// Then
-		assertEquals(List.of(cell(0, 0, 40, true)), painter.calls);
-	}
-
-	@Test
-	@DisplayName("Resident.redraw(): 죽어 있으면 alive=false로 그린다")
-	void deadResidentIsPaintedDead() {
-		// Given
-		Resident resident = new Resident(RULE);
-		RecordingPainter painter = new RecordingPainter();
-
-		// When
-		resident.redraw(painter, SCREEN, false);
-
-		// Then
-		assertEquals(List.of(cell(0, 0, 40, false)), painter.calls);
 	}
 
 	@Test

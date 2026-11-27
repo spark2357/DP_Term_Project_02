@@ -60,7 +60,7 @@ import org.junit.jupiter.api.Test;
  *     - 세대 규칙 전체, 블록 경계: TickContractTest(BoardTickTest)에서 확인
  *     - 블록 경계에 걸친 찍은 패턴의 진행: stamp는 Load와 같은 transfer(LOAD) 경로를 써서 Store/Load 테스트에서 확인됨
  *     - 칠한 색이 세대 진행에서 물려지는 것: 통합 테스트 CellColorBoardTest에서 확인
- *     - redraw(): 화면이라서 제외 (셀 그리기는 CellRedrawTest)
+ *     - redraw(): 화면이라서 제외 (블록 그리기는 통합 테스트 CellRedrawTest, 셀 하나 그리기는 ResidentTest)
  */
 class BoardTest {
 	private final Board board = new Board();
