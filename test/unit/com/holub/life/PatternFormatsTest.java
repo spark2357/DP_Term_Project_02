@@ -7,7 +7,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
@@ -31,7 +30,7 @@ import org.junit.jupiter.params.provider.ValueSource;
  *   - PatternFormatsTest.java 테스트 대상: formatFor, loadFilters, extensionList
  *   - 테스트 제외 대상
  *     - storeFilters, filterFor: loadFilters가 그대로 씀
- *     - 필터를 실제 파일 창에 붙이는 것 (GUI)
+ *     - ExtensionFilter를 Swing 필터로 바꿔 실제 파일 창에 붙이는 것 (SwingDialogs, GUI)
  */
 @Tag("extension")
 class PatternFormatsTest {
@@ -62,13 +61,12 @@ class PatternFormatsTest {
 	@Test
 	@DisplayName("loadFilters(): 모든 형식을 함께 보여주는 필터가 맨 앞이고, 그 뒤로 형식마다 하나씩 온다")
 	void loadFiltersStartWithAllFormats() {
-		FileNameExtensionFilter[] filters = formats.loadFilters();
+		List<ExtensionFilter> filters = formats.loadFilters();
 
-		assertEquals(3, filters.length);
-		assertArrayEquals(new String[]{"life", "rle"}, filters[0].getExtensions());
-		assertEquals("Pattern Files (*.life, *.rle)", filters[0].getDescription());
-		assertEquals("Life Files (*.life)", filters[1].getDescription());
-		assertEquals("RLE Pattern Files (*.rle)", filters[2].getDescription());
+		assertEquals(List.of(
+				new ExtensionFilter("Pattern Files (*.life, *.rle)", List.of("life", "rle")),
+				new ExtensionFilter("Life Files (*.life)", List.of("life")),
+				new ExtensionFilter("RLE Pattern Files (*.rle)", List.of("rle"))), filters);
 	}
 
 	@Test

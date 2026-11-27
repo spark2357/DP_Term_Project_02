@@ -10,8 +10,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * Grid → Stamp: 스탬프 모드를 켜고 끔
@@ -39,8 +39,7 @@ public class StampCommand implements Command {
             return;
         }
 
-        Optional<File> chosen = dialogs.chooseFile("Stamp",
-                new FileNameExtensionFilter[]{PatternFormats.filterFor(rle)});
+        Optional<File> chosen = dialogs.chooseFile("Stamp", List.of(PatternFormats.filterFor(rle)));
         if (chosen.isEmpty()) {
             return;
         }
