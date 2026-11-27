@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
  *   4. 마우스 클릭: 기본 모드(칠하기)로 클릭한 것을 Undo하면 클릭 전 보드로 돌아옴. 산 셀의 색만 바뀐 클릭도 원래 색으로 돌아옴
  *
  * [커버리지]
- *   - UndoRedoUseCaseTest.java 테스트 대상: UndoCommand, RedoCommand와 TickCommand, StampMode, ToggleMode(칠하기), BlendRule을 함께 쓰는 흐름
+ *   - UndoRedoUseCaseTest.java 테스트 대상: UndoCommand, RedoCommand와 TickCommand, StampMode, BrushMode(칠하기), BlendRule을 함께 쓰는 흐름
  *   - 테스트 제외 대상
  *     - 토글, Clear, Load, 기록 한도, 실행 중 Undo: LifeGameUndoTest에서 확인
  *     - Edit 메뉴 등록과 단축키: EditMenuTest에서 확인
@@ -118,7 +118,7 @@ class UndoRedoUseCaseTest{
 	void undoKeepsStampMode(){
 		// Given: 셀 하나가 있는 보드에 스탬프 모드로 glider를 찍음
 		Pen pen = new Pen(CellColor.DEFAULT);
-		MouseController mouse = new MouseController(new ToggleMode(game, pen));
+		MouseController mouse = new MouseController(new BrushMode(game, pen));
 		StampMode stamp = new StampMode(game, new CellPattern(3, 3, Cells.fromRowColumn("0,1", "1,2", "2,0", "2,1", "2,2")), pen);
 		place(Cells.fromRowColumn("5,5"));
 		Set<Point> before = board.liveCells();
@@ -139,9 +139,9 @@ class UndoRedoUseCaseTest{
 	@Test
 	@DisplayName("execute(): 마우스로 빈 칸을 칠한 뒤 Undo하면 클릭 전 보드로 돌아온다")
 	void undoRevertsClick(){
-		// Given: 셀 하나가 있는 보드에서 빈 칸을 파랑으로 클릭 (ToggleMode는 LifeGame.brush()를 부름)
+		// Given: 셀 하나가 있는 보드에서 빈 칸을 파랑으로 클릭 (BrushMode는 LifeGame.brush()를 부름)
 		Pen pen = new Pen(BLUE);
-		MouseController mouse = new MouseController(new ToggleMode(game, pen));
+		MouseController mouse = new MouseController(new BrushMode(game, pen));
 		place(Cells.fromRowColumn("5,5"));
 		Set<Point> before = board.liveCells();
 		mouse.clicked(10, 10);
@@ -159,7 +159,7 @@ class UndoRedoUseCaseTest{
 	void undoRevertsColorOnlyClick(){
 		// Given: 파랑으로 칠한 셀을 노랑 펜으로 다시 클릭 (셀은 살아 있고 색만 바뀜)
 		Pen pen = new Pen(BLUE);
-		MouseController mouse = new MouseController(new ToggleMode(game, pen));
+		MouseController mouse = new MouseController(new BrushMode(game, pen));
 		mouse.clicked(5, 5);
 		Map<Point, CellColor> before = BoardColors.of(board);
 		pen.setColor(YELLOW);

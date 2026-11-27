@@ -39,7 +39,7 @@ class GridMenuTest{
 	private final RleFormat rle = new RleFormat(LifeTestDriver.SIZE);
 	private final PatternFormats formats = new PatternFormats(List.of(new LifeFormatAdapter(LifeTestDriver.SIZE), rle));
 	private final Pen pen = new Pen(CellColor.DEFAULT);
-	private final MouseController mouse = new MouseController(new ToggleMode(game, pen));
+	private final MouseController mouse = new MouseController(new BrushMode(game, pen));
 	private GridMenu menu;
 
 	@BeforeEach

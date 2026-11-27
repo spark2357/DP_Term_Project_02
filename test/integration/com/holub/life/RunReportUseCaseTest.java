@@ -221,7 +221,7 @@ class RunReportUseCaseTest{
 		ticker.tick();
 		ticker.tick();
 		Pen pen = new Pen(CellColor.DEFAULT);
-		MouseController mouse = new MouseController(new ToggleMode(game, pen));
+		MouseController mouse = new MouseController(new BrushMode(game, pen));
 		CellPattern glider = new CellPattern(3, 3, Cells.fromRowColumn("0,1", "1,2", "2,0", "2,1", "2,2"));
 		mouse.setMode(new StampMode(game, glider, pen));
 
