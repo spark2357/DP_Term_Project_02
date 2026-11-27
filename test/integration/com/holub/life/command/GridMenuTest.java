@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.mouse.*;
 import com.holub.life.support.*;
 import com.holub.ui.MenuSite;
@@ -18,6 +17,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
 
 /**
  * Grid 메뉴 통합 테스트: Grid 메뉴에 등록한 항목의 이름과 순서
@@ -39,7 +44,7 @@ class GridMenuTest{
 	private final RleFormat rle = new RleFormat(LifeTestDriver.SIZE);
 	private final PatternFormats formats = new PatternFormats(List.of(new LifeFormatAdapter(LifeTestDriver.SIZE), rle));
 	private final Pen pen = new Pen(CellColor.DEFAULT);
-	private final MouseController mouse = new MouseController(new ToggleMode(game, pen));
+	private final MouseController mouse = new MouseController(new BrushMode(game, pen));
 	private GridMenu menu;
 
 	@BeforeEach

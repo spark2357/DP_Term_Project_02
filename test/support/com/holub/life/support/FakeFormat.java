@@ -1,7 +1,7 @@
 package com.holub.life.support;
 
-import com.holub.life.LiveCells;
-import com.holub.life.PatternFormat;
+import com.holub.life.model.LiveCells;
+import com.holub.life.model.PatternFormat;
 
 import java.awt.Point;
 import java.io.IOException;

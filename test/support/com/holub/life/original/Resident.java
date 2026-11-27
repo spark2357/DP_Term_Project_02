@@ -6,11 +6,6 @@ import javax.swing.*;
 import com.holub.ui.Colors;	// Contains constants specifying various
 							// colors not defined in java.awt.Color.
 // [수정] 2026-11-27: 옮긴 패키지의 클래스를 쓰도록 import 경로만 바꿈. Universe는 쓰지 않는 import라 지금 코드의 것을 그대로 가리키게 둠
-import com.holub.life.original.Cell;
-import com.holub.life.original.Storable;
-import com.holub.life.original.Direction;
-import com.holub.life.original.Neighborhood;
-import com.holub.life.Universe;
 
 /*** ****************************************************************
  * The Resident class implements a single cell---a "resident" of a

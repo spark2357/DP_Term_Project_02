@@ -1,6 +1,6 @@
 package com.holub.life.command;
 
-import com.holub.life.LifeGame;
+import com.holub.life.game.LifeGame;
 import com.holub.ui.MenuSite;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;

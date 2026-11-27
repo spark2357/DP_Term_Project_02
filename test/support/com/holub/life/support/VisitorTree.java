@@ -1,11 +1,9 @@
 package com.holub.life.support;
 
-import com.holub.life.BirthColorRule;
-import com.holub.life.CellColor;
-import com.holub.life.CellState;
-import com.holub.life.CellVisitor;
-import com.holub.life.Neighborhood;
-import com.holub.life.Resident;
+import com.holub.life.model.BirthColorRule;
+import com.holub.life.model.CellVisitor;
+import com.holub.life.model.Neighborhood;
+import com.holub.life.model.Resident;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -19,7 +17,7 @@ import java.util.function.Supplier;
  */
 public final class VisitorTree{
 	// 가짜 출생 색 규칙: 이 테스트들에서는 아무도 태어나지 않으므로 쓰이지 않음
-	private static final Supplier<BirthColorRule> RULE = () -> parents -> CellState.alive(CellColor.DEFAULT);
+	private static final Supplier<BirthColorRule> RULE = () -> parents -> { throw new AssertionError("아무도 태어나지 않아야 함"); };
 
 	private VisitorTree(){
 	}

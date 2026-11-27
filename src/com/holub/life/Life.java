@@ -6,16 +6,26 @@ import com.holub.ui.MenuSite;
 import com.holub.life.command.EditMenu;
 import com.holub.life.command.GoMenu;
 import com.holub.life.command.GridMenu;
-import com.holub.life.command.SwingDialogs;
+import com.holub.life.view.SwingDialogs;
 import com.holub.life.mouse.MouseController;
-import com.holub.life.mouse.ToggleMode;
+import com.holub.life.mouse.BrushMode;
 import com.holub.life.command.Command;
 import com.holub.life.command.HaltCommand;
 import com.holub.life.command.MacroCommand;
 import com.holub.life.command.ShowRunReportCommand;
 import java.util.function.Consumer;
 import com.holub.life.mouse.Pen;
-import com.holub.life.brush.BrushToolBar;
+import com.holub.life.view.BrushToolBar;
+import com.holub.life.clock.Clock;
+import com.holub.life.clock.SwingTickTimer;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.game.RunRecorder;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.view.Universe;
 
 /*******************************************************************
  * An implemenation of Conway's Game of Life.
@@ -54,7 +64,8 @@ public final class Life extends JFrame
 
 					// [수정] 2026-11-17: 마우스 모드(State)와 Grid 메뉴(Command)를 이곳에서 조립함
 					Pen				pen		 = new Pen( CellColor.DEFAULT );
-					MouseController mouse	 = new MouseController( new ToggleMode( game, pen ) );
+					// [수정] 2026-11-27: 기본 마우스 모드를 칠하기(BrushMode)로 함. ToggleMode는 원본 클릭 그대로 남겨 둠
+					MouseController mouse	 = new MouseController( new BrushMode( game, pen ) );
 					Universe		universe = new Universe( board, game, mouse );
 
 					new GridMenu( game, formats, rle, mouse, pen, new SwingDialogs() ).register();

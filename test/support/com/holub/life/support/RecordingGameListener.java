@@ -1,6 +1,6 @@
 package com.holub.life.support;
 
-import com.holub.life.LifeGame;
+import com.holub.life.game.LifeGame;
 
 import java.util.ArrayList;
 import java.util.List;

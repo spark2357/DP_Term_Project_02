@@ -1,6 +1,6 @@
 package com.holub.life.command;
 
-import com.holub.life.LifeGame;
+import com.holub.life.game.LifeGame;
 
 /**
  * Go → Agonizing, Slow, Medium, Fast: 정해진 간격으로 게임을 시작함

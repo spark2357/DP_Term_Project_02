@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.mouse.*;
 import com.holub.life.support.*;
 
@@ -24,10 +23,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.model.CellPattern;
 
 /**
  * 셀 색과 파일 통합 테스트 (셀 색 기능의 펜 색 칠하기와 E. 패턴 찍기 + Grid → Store/Load): 펜 색으로 칠하고 찍은 보드를 Store/Load Command로 파일에 쓰고 읽음
- * 진짜 LifeGame·Board, 마우스 모드(ToggleMode, StampMode)에 가짜 파일 창(FakeDialogs)과 가짜 리스너를 넣어 화면 없이 실행함. 파일은 임시 폴더(@TempDir)에 씀
+ * 진짜 LifeGame·Board, 마우스 모드(BrushMode, StampMode)에 가짜 파일 창(FakeDialogs)과 가짜 리스너를 넣어 화면 없이 실행함. 파일은 임시 폴더(@TempDir)에 씀
  *
  * [테스트 시나리오]
  *   1. .life: 칠하고 찍은 보드를 Store → Clear → Load하면 자리와 색이 같음
@@ -37,7 +43,7 @@ import org.junit.jupiter.api.io.TempDir;
  *   5. 새 .life 파일 구조: 맨 앞 객체는 Point 목록 (예전 코드도 읽을 수 있는 부분)
  *
  * [커버리지]
- *   - ColorFileCommandTest.java 테스트 대상: StoreCommand, LoadCommand, ClearCommand와 ToggleMode, StampMode(펜 색), LifeFormatAdapter, RleFormat
+ *   - ColorFileCommandTest.java 테스트 대상: StoreCommand, LoadCommand, ClearCommand와 BrushMode, StampMode(펜 색), LifeFormatAdapter, RleFormat
  *   - 테스트 제외 대상
  *     - 실패한 Load가 Undo 기록에 남지 않는지: LifeGameUndoTest에서 확인
  *     - 형식 하나만의 읽기/쓰기 세부: CellColorBoardTest, LifeFormatAdapterTest, RleFormatTest에서 확인
@@ -58,7 +64,7 @@ class ColorFileCommandTest{
 	private final FakeDialogs dialogs = new FakeDialogs();
 	private final PatternFormats formats = new PatternFormats(List.of(new LifeFormatAdapter(SIZE), new RleFormat(SIZE)));
 	private final Pen pen = new Pen(CellColor.DEFAULT);
-	private final MouseController mouse = new MouseController(new ToggleMode(game, pen));
+	private final MouseController mouse = new MouseController(new BrushMode(game, pen));
 	private final RecordingGameListener view = new RecordingGameListener();
 
 	//  1. .life
@@ -179,7 +185,7 @@ class ColorFileCommandTest{
 
 	//  헬퍼
 
-	// 펜 색 셋으로 칠하고(ToggleMode), 초록 펜으로 blinker를 찍음(StampMode)
+	// 펜 색 셋으로 칠하고(BrushMode), 초록 펜으로 blinker를 찍음(StampMode)
 	private void paintColoredBoard(){
 		pen.setColor(BLUE);
 		mouse.clicked(1, 1);

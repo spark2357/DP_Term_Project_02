@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.mouse.*;
 import com.holub.life.support.*;
 
@@ -21,6 +20,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.Tag;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
 
 /**
  * Grid 메뉴 Command 테스트: 파일 창과 오류 창을 가짜 Dialogs로, 화면을 알림을 기록하는 가짜 리스너로 바꿔 GUI 없이 검증
@@ -47,7 +52,7 @@ import org.junit.jupiter.api.Tag;
  *     - Stamp 실패: StampCommandFailureTest에서 확인
  *     - GridMenu의 메뉴 등록: GridMenuTest에서 확인
  *     - 미리보기 그리기 (GUI)
- *     - 클릭(셀 토글) 뒤의 알림: ToggleModeTest에서 확인
+ *     - 클릭(셀 토글) 뒤의 알림: BrushModeTest에서 확인
  */
 class GridCommandTest {
 	private static final int SIZE = LifeTestDriver.SIZE;
@@ -62,7 +67,7 @@ class GridCommandTest {
 	private final RleFormat rle = new RleFormat(SIZE);
 	private final PatternFormats formats = new PatternFormats(List.of(new LifeFormatAdapter(SIZE), rle));
 	private final RecordingGameListener view = new RecordingGameListener();
-	private final MouseController mouse = new MouseController(new ToggleMode(game, new Pen(CellColor.DEFAULT)));
+	private final MouseController mouse = new MouseController(new BrushMode(game, new Pen(CellColor.DEFAULT)));
 	private final StampCommand stamp = new StampCommand(game, rle, mouse, new Pen(CellColor.DEFAULT), dialogs);
 
 	@BeforeEach
@@ -246,7 +251,7 @@ class GridCommandTest {
 		mouse.clicked(5, 5);
 
 		// Then
-		assertInstanceOf(ToggleMode.class, mouse.mode());
+		assertInstanceOf(BrushMode.class, mouse.mode());
 		assertEquals(Cells.fromRowColumn("5,5"), board.liveCells());
 	}
 

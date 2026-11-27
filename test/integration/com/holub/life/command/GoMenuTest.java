@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.support.*;
 import com.holub.ui.MenuSite;
 
@@ -24,6 +23,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
 
 /**
  * Go 메뉴 통합 테스트: Go 메뉴에 등록한 항목과, 항목을 눌렀을 때의 동작

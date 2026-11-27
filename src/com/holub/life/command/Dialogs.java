@@ -1,6 +1,6 @@
 package com.holub.life.command;
 
-import com.holub.life.ExtensionFilter;
+import com.holub.life.format.ExtensionFilter;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;

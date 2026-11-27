@@ -12,7 +12,7 @@ Allen Holub의 HolubLife 1.02(Conway의 Game of Life, Java Swing)를<br />
 <img src="https://img.shields.io/badge/Java-17+-1A1A1A?style=flat&logo=openjdk&logoColor=F5EFE6" alt="Java 17+" />
 <img src="https://img.shields.io/badge/Swing-1A1A1A?style=flat&logoColor=F5EFE6" alt="Swing" />
 <img src="https://img.shields.io/badge/JUnit-5-1A1A1A?style=flat&logo=junit5&logoColor=F5EFE6" alt="JUnit 5" />
-<img src="https://img.shields.io/badge/tests-446_passed-1A1A1A?style=flat" alt="tests 446 passed" />
+<img src="https://img.shields.io/badge/tests-448_passed-1A1A1A?style=flat" alt="tests 448 passed" />
 
 **2026 중앙대학교 설계패턴** · 01분반 02조 · 김태우 · 박신빈 · 안재인
 
@@ -22,16 +22,20 @@ Allen Holub의 HolubLife 1.02(Conway의 Game of Life, Java Swing)를<br />
 
 ```
 src/com/holub/
-├── life/              게임 모델과 화면
+├── life/              Life (main, 조립)
+│   ├── model/         셀과 보드, 셀 색 규칙, 스냅샷과 Undo 기록
+│   ├── stats/         셀 통계 Visitor
+│   ├── format/        파일 형식 (.life, .rle)
+│   ├── clock/         시계와 타이머
+│   ├── game/          LifeGame Facade, 실행 기록
 │   ├── command/       메뉴 Command (Go, Grid, Edit)
 │   ├── mouse/         마우스 모드 (칠하기, 스탬프)
-│   ├── painter/       Swing 셀 그리기
-│   └── brush/         펜 색 툴바
+│   └── view/          Swing 화면 (보드 패널, 셀 그리기, 펜 색 툴바, 파일 창)
 └── ui, tools, io, asynch/   원본 라이브러리
 
 test/
-├── unit/              단위 테스트
-├── integration/       통합 테스트 (original/: 원본 결함 재현)
+├── unit/              단위 테스트 (src와 같은 패키지)
+├── integration/       통합 테스트 (contract/: 원본·Board 공통 Contract, usecase/: 유스케이스, original/: 원본 결함 재현)
 ├── support/           드라이버, 테스트 더블, 원본 코드 사본
 └── resources/         테스트용 패턴 파일
 ```
@@ -80,8 +84,8 @@ java -jar $JUNIT execute --class-path out/main:out/test --scan-class-path <옵�
 
 | 실행 | `<옵션>` | 결과 |
 |---|---|---|
-| 전체 | `--exclude-tag known-defect` | 446개 모두 통과 |
-| 기존 기능 | `--include-tag original` | 108개 모두 통과 |
+| 전체 | `--exclude-tag known-defect` | 448개 모두 통과 |
+| 기존 기능 | `--include-tag original` | 110개 모두 통과 |
 | 기능 확장 | `--include-tag extension` | 296개 모두 통과 |
 | 설계 개선 | `--include-tag improvement` | 42개 모두 통과 |
 | 원본 결함 | `--include-tag known-defect` | 13개 모두 실패 (원본 사본의 결함 재현, 정상) |

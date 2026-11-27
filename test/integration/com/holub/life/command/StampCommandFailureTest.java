@@ -1,6 +1,5 @@
 package com.holub.life.command;
 
-import com.holub.life.*;
 import com.holub.life.mouse.*;
 import com.holub.life.support.*;
 
@@ -22,6 +21,10 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
 
 /**
  * StampCommand 통합 테스트: E. 스탬프 모드 켜기에서 고른 파일을 패턴으로 읽지 못하는 경로
@@ -31,7 +34,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  *   - StampCommandTest는 파일을 읽기 전에 끝나는 경로(취소, 끄기)만 다룸. 이 클래스는 실제 파일을 읽다가 실패하는 경로
  *
  * [테스트 시나리오]
- *   1. 읽을 수 없는 패턴 파일 (깨진 RLE, 보드보다 큰 패턴, .life 파일): 오류 창 하나, 마우스는 기본 모드(ToggleMode) 그대로, 보드도 그대로
+ *   1. 읽을 수 없는 패턴 파일 (깨진 RLE, 보드보다 큰 패턴, .life 파일): 오류 창 하나, 마우스는 기본 모드(BrushMode) 그대로, 보드도 그대로
  *
  * [커버리지]
  *   - StampCommandFailureTest.java 테스트 대상: StampCommand.execute (패턴 읽기 실패)
@@ -51,7 +54,7 @@ class StampCommandFailureTest{
 	private final FakeDialogs dialogs = new FakeDialogs();
 	private final RleFormat rle = new RleFormat(LifeTestDriver.SIZE);
 	private final Pen pen = new Pen(CellColor.DEFAULT);
-	private final MouseController mouse = new MouseController(new ToggleMode(game, pen));
+	private final MouseController mouse = new MouseController(new BrushMode(game, pen));
 
 	static Stream<Arguments> unreadableFiles() throws IOException{
 		return Stream.of(
@@ -63,7 +66,7 @@ class StampCommandFailureTest{
 	@ParameterizedTest(name = "{0}")
 	@MethodSource("unreadableFiles")
 	@DisplayName("execute(): 패턴으로 읽을 수 없는 파일은 오류 창을 하나 띄우고, 마우스는 기본 모드 그대로이고, 보드도 그대로다")
-	void unreadableFileShowsErrorAndKeepsToggleMode(String label, String name, byte[] content) throws IOException{
+	void unreadableFileShowsErrorAndKeepsBrushMode(String label, String name, byte[] content) throws IOException{
 		// Given
 		board.toggle(10, 10);
 		Path file = folder.resolve(name);
@@ -75,7 +78,7 @@ class StampCommandFailureTest{
 
 		// Then
 		assertEquals(1, dialogs.errors.size());
-		assertInstanceOf(ToggleMode.class, mouse.mode());
+		assertInstanceOf(BrushMode.class, mouse.mode());
 		assertEquals(Cells.fromRowColumn("10,10"), board.liveCells());
 	}
 

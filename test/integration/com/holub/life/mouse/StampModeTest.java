@@ -1,6 +1,5 @@
 package com.holub.life.mouse;
 
-import com.holub.life.*;
 import com.holub.life.command.*;
 import com.holub.life.support.*;
 
@@ -19,10 +18,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import com.holub.life.format.LifeFormatAdapter;
+import com.holub.life.format.PatternFormats;
+import com.holub.life.format.RleFormat;
+import com.holub.life.game.LifeGame;
+import com.holub.life.model.Board;
+import com.holub.life.model.CellColor;
+import com.holub.life.model.CellPattern;
 
 /**
  * E. 패턴 찍기 유스케이스 통합 테스트: 스탬프 모드(StampMode)를 MouseController에 넣고 마우스 입력을 보내 화면 없이 확인
- * 진짜 LifeGame·Board에 가짜 시계(FakeTicker)와 가짜 리스너(RecordingGameListener)를 넣음. 조립은 Life.main과 같음 (기본 모드는 ToggleMode, 펜 하나를 같이 씀)
+ * 진짜 LifeGame·Board에 가짜 시계(FakeTicker)와 가짜 리스너(RecordingGameListener)를 넣음. 조립은 Life.main과 같음 (기본 모드는 BrushMode, 펜 하나를 같이 씀)
  *
  * [테스트 시나리오]
  *   1. 찍기: 마우스 셀을 왼쪽 위로 해서 패턴 사각형 안을 덮어씀 (산 칸은 펜 색, 빈 칸은 죽임). 사각형 밖은 그대로, 보드 밖은 잘라냄
@@ -57,7 +63,7 @@ class StampModeTest{
 	private final LifeGame game = new LifeGame(board, ticker);
 	private final RecordingGameListener view = new RecordingGameListener();
 	private final Pen pen = new Pen(CellColor.DEFAULT);
-	private final MouseController mouse = new MouseController(new ToggleMode(game, pen));
+	private final MouseController mouse = new MouseController(new BrushMode(game, pen));
 	private StampMode stamp;
 
 	@BeforeEach
