@@ -28,11 +28,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 /**
  * Go 메뉴 통합 테스트: Go 메뉴에 등록한 항목과, 항목을 눌렀을 때의 동작
  * 진짜 LifeGame·Board와 MenuSite에 가짜 시계(FakeTicker)를 넣어 시간 없이 실행함
+ * 원본 Clock이 리팩터링으로 구조가 많이 달라지고 원본 Go 메뉴는 테스트하기 까다로워, 원본과 비교하는 계약 테스트로 만들 수 없음 → 설계 개선(improvement)으로 분류
  *
  * [테스트 시나리오]
- *   1. 이름과 순서: Halt, Tick (Single Step), Agonizing, Slow, Medium, Fast (원본 Clock.createMenus와 같음)
- *   2. 누르면: Halt는 멈추고, Tick은 한 세대만 진행하고, 속도 항목은 500·150·70·30ms 간격으로 시작함 (원본과 같음)
- *   3. 단축키: 항목마다 수식키 없는 키 하나(Space, T, A, S, D, F)가 붙음 (원본에는 단축키가 없음)
+ *   1. 이름과 순서: Halt, Tick (Single Step), Agonizing, Slow, Medium, Fast (원본 Clock.createMenus와 같음) (설계 개선: Command)
+ *   2. 누르면: Halt는 멈추고, Tick은 한 세대만 진행하고, 속도 항목은 500·150·70·30ms 간격으로 시작함 (원본과 같음) (설계 개선: Command)
+ *   3. 단축키: 항목마다 수식키 없는 키 하나(Space, T, A, S, D, F)가 붙음 (원본에는 단축키가 없음) (기능 확장)
  *
  * [커버리지]
  *   - GoMenuTest.java 테스트 대상: register
@@ -65,7 +66,8 @@ class GoMenuTest {
 	//  1. 이름과 순서
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("register(): 원본과 같은 이름과 순서로 항목을 등록한다")
 	void registersItemsWithOriginalNamesInOrder(){
 		// When
@@ -81,7 +83,8 @@ class GoMenuTest {
 	//  2. 누르면
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("register(): Halt를 누르면 실행 중인 게임이 멈춘다")
 	void clickingHaltStopsGame(){
 		// Given
@@ -95,7 +98,8 @@ class GoMenuTest {
 	}
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("register(): Tick (Single Step)을 누르면 한 세대만 진행하고 시계는 시작하지 않는다")
 	void clickingTickAdvancesOneGeneration(){
 		// Given: blinker
@@ -112,7 +116,8 @@ class GoMenuTest {
 	}
 
 	@ParameterizedTest(name = "{0}: {1}ms")
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@CsvSource({ "Agonizing, 500", "Slow, 150", "Medium, 70", "Fast, 30" })
 	@DisplayName("register(): 속도 항목을 누르면 그 항목의 간격으로 게임을 시작한다")
 	void clickingSpeedStartsGameAtItsInterval(String name, int milliseconds){

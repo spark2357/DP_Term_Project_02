@@ -20,11 +20,12 @@ import org.junit.jupiter.api.Test;
  * SwingTickTimer 통합 테스트: 실제 javax.swing.Timer로 tick이 Swing 이벤트 스레드(EDT)에서 실행되는지, 메뉴가 열려 있으면 tick을 건너뛰는지 확인
  * 원본은 Clock이 java.util.Timer의 별도 스레드에서 tick을 돌려, EDT의 그리기·클릭과 겹쳤음
  * tick이 EDT에서 실행되면 계산, 그리기, 클릭, 메뉴 동작이 한 줄로 하나씩 실행되므로 겹칠 수 없음
+ * 2번은 원본 Clock.tick의 menuIsActive 검사가 Clock 리팩터링으로 SwingTickTimer로 옮겨진 것이라, 원본과 비교하는 계약 테스트로 만들 수 없음 → 설계 개선(improvement)으로 분류
  *
  * [테스트 시나리오]
  *   1. Clock(SwingTickTimer)로 실행하면 tick 리스너가 EDT에서 불림 (결함: 원본은 별도 스레드라
  *      두 세대가 섞인 화면, 마지막 그리기 요청 소실, 클릭 소실, Swing 스레드 밖 Swing 호출이 생겼음)
- *   2. 메뉴가 열려 있는 동안 타이머가 울리면 tick을 건너뜀 (원본 Clock.menuIsActive()와 같은 동작)
+ *   2. 메뉴가 열려 있는 동안 타이머가 울리면 tick을 건너뜀 (원본 Clock.menuIsActive()와 같은 동작) (설계 개선: Adapter)
  *
  *   메뉴가 열린 동안 타이머가 울렸다는 것을 실제 시간에 기대지 않고 아는 방법
  *   - 메뉴 열기, SwingTickTimer 시작(첫 실행은 바로), 확인용 타이머 시작(50ms 뒤 한 번)을 모두 EDT에서 차례로 함
@@ -73,7 +74,8 @@ class SwingTickTimerTest{
 	}
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 메뉴 검사가 원본 Clock에서 SwingTickTimer로 옮겨져 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("start(): 메뉴가 열려 있는 동안에는 타이머가 울려도 tick을 건너뛴다")
 	void tickIsSkippedWhileMenuIsOpen() throws Exception{
 		// Given: tick 수를 세는 타이머와, 50ms 뒤에 그때까지의 tick 수를 읽고 메뉴를 닫는 확인용 타이머
