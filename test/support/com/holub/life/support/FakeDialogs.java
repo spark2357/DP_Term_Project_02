@@ -1,12 +1,12 @@
 package com.holub.life.support;
 
+import com.holub.life.ExtensionFilter;
 import com.holub.life.command.Dialogs;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * 파일 창과 오류 창을 대신하는 가짜 Dialogs (테스트 더블)
@@ -22,7 +22,7 @@ public class FakeDialogs implements Dialogs {
 	};
 
 	@Override
-	public Optional<File> chooseFile(String selectButtonText, FileNameExtensionFilter[] filters) {
+	public Optional<File> chooseFile(String selectButtonText, List<ExtensionFilter> filters) {
 		onChooseFile.run();
 		return Optional.ofNullable(nextFile);
 	}

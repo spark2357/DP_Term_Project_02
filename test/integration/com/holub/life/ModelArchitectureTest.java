@@ -38,7 +38,7 @@ import org.junit.jupiter.api.Test;
  *   - 보드와 셀: Board, BoardView, Cell, Neighborhood, Resident, Direction, Storable, LiveCells, CellPattern, CellPainter
  *   - 셀 상태와 색 규칙: CellState, Alive, Dead, CellColor, BirthColorRule, ClashRule, BlendRule
  *   - 기록과 통계: BoardHistory, BoardSnapshot, CellVisitor, CellStatistics, StatisticsVisitor, RunRecorder, RunReport
- *   - 파일 형식: PatternFormat, PatternFormats, LifeFormatAdapter, RleFormat
+ *   - 파일 형식: PatternFormat, PatternFormats, ExtensionFilter, LifeFormatAdapter, RleFormat
  *   - 게임 Facade와 시계: LifeGame, Clock, TickSource, TickTimer
  *   - 제외(화면 쪽): Life, Universe, SwingTickTimer(Swing Adapter), brush, command(메뉴), mouse, painter 패키지
  *
@@ -67,7 +67,7 @@ import org.junit.jupiter.api.Test;
  *       - com.holub.tools.Log: 디버깅용 로그 설정. MenuSite 안의 수동 확인용 코드만 씀
  *       - com.holub.asynch.ConditionVariable: 원본의 그리기 잠금. 지금 src에서는 쓰는 곳이 없음 (규칙 2가 다시 쓰이지 않는지 확인)
  *       - com.holub.tools.Publisher: Swing과 상관없는 Observer 도구. PublisherTest(단위)에서 확인
- *   - 규칙 1은 지금 PatternFormats가 javax.swing.filechooser.FileNameExtensionFilter를 써서 실패함 (예외로 두지 않기로 정함)
+ *   - 파일 창 필터: PatternFormats는 화면과 무관한 ExtensionFilter를 돌려주고, Swing 필터로 바꾸는 일은 SwingDialogs(화면 쪽)가 함
  */
 @Tag("improvement")
 class ModelArchitectureTest{
@@ -75,7 +75,7 @@ class ModelArchitectureTest{
 			"Board", "BoardView", "Cell", "Neighborhood", "Resident", "Direction", "Storable", "LiveCells", "CellPattern", "CellPainter",
 			"CellState", "Alive", "Dead", "CellColor", "BirthColorRule", "ClashRule", "BlendRule",
 			"BoardHistory", "BoardSnapshot", "CellVisitor", "CellStatistics", "StatisticsVisitor", "RunRecorder", "RunReport",
-			"PatternFormat", "PatternFormats", "LifeFormatAdapter", "RleFormat",
+			"PatternFormat", "PatternFormats", "ExtensionFilter", "LifeFormatAdapter", "RleFormat",
 			"LifeGame", "Clock", "TickSource", "TickTimer");
 
 	private static final Set<String> ALLOWED_AWT = Set.of("java.awt.Point", "java.awt.Rectangle");
