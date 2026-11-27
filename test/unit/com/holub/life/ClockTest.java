@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Clock 단위 테스트: tick을 리스너에게 보내는 시계 (Observer의 Subject, TickTimer Adapter의 Client)
  * 진짜 Swing Timer 대신 가짜 타이머(FakeTickTimer)를 넣어, 시간을 기다리지 않고 검증함
+ * 원본 Clock이 리팩터링으로 구조가 많이 달라져(원본은 싱글톤이고 java.util.Timer를 직접 만들어 가짜 타이머를 넣을 수 없음), 원본과 비교하는 계약 테스트로 만들 수 없음 → 설계 개선(improvement)으로 분류
  *
  *   메서드
  *   - startTicking(ms) : ms > 0이면 타이머를 ms 간격으로 시작, 0이면 멈춤 (Go → 속도 메뉴, Halt)
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
  *   2. 시작: startTicking(ms)는 타이머를 그 간격으로 시작하고, 타이머가 울릴 때마다 tick이 감
  *   3. Halt: stop()하면 타이머가 멈추고 tick이 오지 않음. 멈춘 상태에서 Halt해도 아무 일 없음
  *   4. 속도 변경: 속도를 바꾸면 타이머가 새 간격으로 다시 시작됨
+ *   (1~4 모두 설계 개선: Adapter)
  *
  * [커버리지]
  *   - ClockTest.java 테스트 대상: startTicking, stop, tick, addClockListener, addTickListener
@@ -43,7 +45,8 @@ class ClockTest {
 	}
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("tick(): 한 번 부르면 등록된 리스너가 각각 정확히 한 번 호출된다 (Go → Tick)")
 	void tickDeliversOnceToEachListener() {
 		// Given
@@ -61,7 +64,8 @@ class ClockTest {
 	}
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("startTicking(): 타이머를 그 간격으로 시작하고, 타이머가 울릴 때마다 tick이 간다")
 	void startTickingStartsTimerAndDeliversTicks() {
 		// Given
@@ -81,7 +85,8 @@ class ClockTest {
 	}
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("stop(): Halt하면 타이머가 멈추고 더 이상 tick이 오지 않는다")
 	void haltStopsTicking() {
 		// Given: 실행 중인 시계
@@ -100,7 +105,8 @@ class ClockTest {
 	}
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("stop(), startTicking(0): 멈춘 상태에서 Halt해도 아무 일도 일어나지 않는다")
 	void haltWhenStoppedDoesNothing() {
 		// Given: 시작하지 않은 시계
@@ -118,7 +124,8 @@ class ClockTest {
 	}
 
 	@Test
-	@Tag("original")
+	// [수정] 2026-11-27: 원본 Clock 구조가 달라 원본과 비교할 수 없어 original → improvement
+	@Tag("improvement")
 	@DisplayName("startTicking(): 속도를 바꾸면 타이머가 새 간격으로 다시 시작된다")
 	void changingSpeedRestartsTimerWithNewInterval() {
 		// Given: Agonizing(500ms)로 실행 중
